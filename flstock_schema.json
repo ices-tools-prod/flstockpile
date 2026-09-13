@@ -1,0 +1,87 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://example.org/schemas/flstock.json",
+  "title": "FLStock version record",
+  "description": "One versioned snapshot of an FLStock object (point-estimate, no iter dimension).",
+  "type": "object",
+  "required": ["stock_id", "name", "version", "created_at", "quant", "range", "slots"],
+  "properties": {
+    "stock_id":    { "type": "string", "description": "Stable identifier for the stock, e.g. 'her-irlw'." },
+    "name":        { "type": "string" },
+    "description": { "type": ["string", "null"] },
+    "version":     { "type": "string", "description": "Version tag or hash for this snapshot." },
+    "created_by":  { "type": ["string", "null"] },
+    "created_at":  { "type": "string", "format": "date-time" },
+    "source":      { "type": ["string", "null"], "description": "Provenance note, e.g. originating file or assessment run." },
+
+    "quant": {
+      "type": "string",
+      "description": "Name of the first FLQuant dimension for this stock, e.g. 'age' or 'len'."
+    },
+
+    "range": {
+      "type": "object",
+      "required": ["min", "max", "minyear", "maxyear", "minfbar", "maxfbar"],
+      "properties": {
+        "min":      { "type": "number" },
+        "max":      { "type": "number" },
+        "plusgroup":{ "type": ["number", "null"] },
+        "minyear":  { "type": "number" },
+        "maxyear":  { "type": "number" },
+        "minfbar":  { "type": "number" },
+        "maxfbar":  { "type": "number" }
+      }
+    },
+
+    "slots": {
+      "type": "object",
+      "description": "One entry per FLStock FLQuant slot.",
+      "properties": {
+        "catch":        { "$ref": "#/$defs/slot" },
+        "catch.n":      { "$ref": "#/$defs/slot" },
+        "catch.wt":     { "$ref": "#/$defs/slot" },
+        "discards":     { "$ref": "#/$defs/slot" },
+        "discards.n":   { "$ref": "#/$defs/slot" },
+        "discards.wt":  { "$ref": "#/$defs/slot" },
+        "landings":     { "$ref": "#/$defs/slot" },
+        "landings.n":   { "$ref": "#/$defs/slot" },
+        "landings.wt":  { "$ref": "#/$defs/slot" },
+        "stock":        { "$ref": "#/$defs/slot" },
+        "stock.n":      { "$ref": "#/$defs/slot" },
+        "stock.wt":     { "$ref": "#/$defs/slot" },
+        "m":            { "$ref": "#/$defs/slot" },
+        "mat":          { "$ref": "#/$defs/slot" },
+        "harvest":      { "$ref": "#/$defs/slot" },
+        "harvest.spwn": { "$ref": "#/$defs/slot" },
+        "m.spwn":       { "$ref": "#/$defs/slot" }
+      },
+      "additionalProperties": false
+    }
+  },
+
+  "$defs": {
+    "slot": {
+      "type": "object",
+      "required": ["units", "data"],
+      "properties": {
+        "units": { "type": ["string", "null"] },
+        "data": {
+          "type": "array",
+          "description": "One record per (quant, year) cell. Cells with no value are still recorded, with value: null.",
+          "items": {
+            "type": "object",
+            "required": ["quant", "year", "value"],
+            "properties": {
+              "quant": {
+                "type": "string",
+                "description": "Age or length class for this cell, as a string (e.g. \"3\"), or \"all\" for aggregate slots (catch, discards, landings, stock)."
+              },
+              "year":  { "type": "number" },
+              "value": { "type": ["number", "null"] }
+            }
+          }
+        }
+      }
+    }
+  }
+}
