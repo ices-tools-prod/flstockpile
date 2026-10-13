@@ -27,13 +27,16 @@ remotes::install_github("neilcampbelll/FLstockpile")
 
 ## Usage
 
-Say where the dataset is. This is a data release, so it will not change:
+Say where the dataset is. This is the latest data release:
 
 ``` r
 library(FLStockpile)
 
-options(FLStockpile.url = "https://github.com/neilcampbelll/FLstockpile/releases/download/v2026.001")
+options(FLStockpile.url = "https://github.com/neilcampbelll/FLstockpile/releases/latest/download")
 ```
+
+A release that will not change is at the same address with its tag, for
+example `.../releases/download/v2026.002`.
 
 List the stock assessments. Each one is a stock code and an assessment
 year, and by default the latest version of each is returned:
@@ -86,8 +89,8 @@ summary(stock)
 #>  1   11  11  1982    2025    3   7   
 #> 
 #> Metrics: 
-#>   rec: 9491 - 49819  (NA) 
-#>   ssb: 8875 - 18668  (NA) 
+#>   rec: 9491 - 49819  (1000) 
+#>   ssb: 8875 - 18668  (t) 
 #>   catch: 1277 - 6416  (NA) 
 #>   fbar: 0.20 - 0.53  (f)
 ```

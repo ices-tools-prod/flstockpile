@@ -47,8 +47,7 @@ For each stock there are
   Where the two lines are the same only the green one shows. A panel is
   tinted red where the dataset and SAG differ. Where SAG has no catches, its
   landings and discards are added together and shown instead, or its landings
-  alone if it has no discards. Recruitment is shown in thousands, as it is in
-  SAG, using the units given for the stock numbers.
+  alone if it has no discards.
 
 How the summary is calculated, and the usual reasons for a difference, are in
 [Comparing the dataset with SAG](compare-with-sag.html).
@@ -60,7 +59,7 @@ library(icesSAG)
 library(icesSD)
 library(ggplot2)
 
-options(FLStockpile.url = "https://github.com/neilcampbelll/FLstockpile/releases/download/v2026.001")
+options(FLStockpile.url = "https://github.com/neilcampbelll/FLstockpile/releases/latest/download")
 
 quantities <- c("SSB", "F", "recruitment", "catches")
 slots <- c(
@@ -73,29 +72,16 @@ tolerance <- 0.025
 ```
 
 ```{r}
-# the stock assessments, with the expert group of each
+# the stock assessments, with the species of each from the stock database
 stocks <- stockpile_stocks()
 
-stock_database <- lapply(unique(stocks$assessment_year), function(year) {
+species <- lapply(unique(stocks$assessment_year), function(year) {
   sd <- getSD(year = year)
-  data.frame(
-    stock_code = sd$StockKeyLabel, assessment_year = year,
-    expert_group = sd$ExpertGroup, species = sd$SpeciesCommonName
-  )
+  data.frame(stock_code = sd$StockKeyLabel, assessment_year = year, species = sd$SpeciesCommonName)
 })
-stocks <- merge(stocks, do.call(rbind, stock_database), all.x = TRUE)
-stocks$expert_group[is.na(stocks$expert_group)] <- "Not in the stock database"
+stocks <- merge(stocks, do.call(rbind, species), all.x = TRUE)
 stocks <- stocks[order(stocks$expert_group, stocks$stock_code, stocks$assessment_year), ]
 stocks$assessment <- paste0(stocks$stock_code, " (", stocks$assessment_year, ")")
-
-# the key of each stock assessment in SAG, from the dataset if it has them
-if (is.null(stocks$assessment_key)) {
-  published <- do.call(rbind, lapply(unique(stocks$assessment_year), getListStocks))
-  stocks$assessment_key <- published$AssessmentKey[match(
-    paste(stocks$stock_code, stocks$assessment_year),
-    paste(published$StockKeyLabel, published$AssessmentYear)
-  )]
-}
 
 # the heading of each stock assessment, a link to its record in SAG
 stocks$heading <- ifelse(
@@ -103,27 +89,6 @@ stocks$heading <- ifelse(
   stocks$assessment,
   paste0("[", stocks$assessment, "](https://standardgraphs.ices.dk/ViewCharts.aspx?key=", stocks$assessment_key, ")")
 )
-
-# The number of fish that one unit of the stock numbers stands for, from the
-# units given by the submitter, for example "1000", "10^3" or "thousands".
-# Where no units are given the numbers are taken to be thousands.
-
-numbers_multiplier <- function(units) {
-  if (grepl("^10\\^[0-9]+$", units)) {
-    return(10^as.numeric(sub("10^", "", units, fixed = TRUE)))
-  }
-  if (grepl("^[0-9.]+(e[0-9]+)?$", units)) {
-    return(as.numeric(units))
-  }
-  named <- c(thousands = 1e3, millions = 1e6)
-  if (units %in% names(named)) named[[units]] else 1e3
-}
-
-# The recruitment of a stock in thousands, the units that SAG uses.
-
-recruitment <- function(object) {
-  rec(object) * numbers_multiplier(units(stock.n(object))) / 1000
-}
 
 # The summary of a stock assessment in the dataset: SSB, F, recruitment and
 # catches, from the model estimates and from the observed data.
@@ -134,7 +99,7 @@ dataset_summary <- function(stock) {
   types <- names(colours)[c(stock$observed, stock$estimated)]
   rows <- lapply(types, function(type) {
     object <- stockpile_flstock(stock$stock_code, stock$assessment_year, type = type)
-    found <- list(SSB = ssb(object), F = fbar(object), recruitment = recruitment(object), catches = catch(object))
+    found <- list(SSB = ssb(object), F = fbar(object), recruitment = rec(object), catches = catch(object))
     rows <- lapply(names(found), function(quantity) {
       values <- as.data.frame(found[[quantity]])
       data.frame(type = type, quantity = quantity, year = values$year, dataset = values$data)
@@ -154,6 +119,8 @@ dataset_summary <- function(stock) {
 
 sag_summary <- function(stock) {
   sag <- getSAG(stock$stock_code, stock$assessment_year)
+  # SAG can have more than one assessment of a stock in a year
+  sag <- sag[sag$AssessmentKey == stock$assessment_key, ]
 
   # where SAG has no catches, the landings and discards are used, or the
   # landings alone if there are no discards
@@ -175,8 +142,8 @@ checks <- lapply(seq_len(nrow(stocks)), function(i) {
   if (stock$n_seasons > 1 || stock$n_units > 1 || stock$n_areas > 1) {
     return("Not compared: the stock has more than one season, unit or area.")
   }
-  sag <- try(sag_summary(stock), silent = TRUE)
-  if (inherits(sag, "try-error") || all(is.na(sag$sag))) {
+  sag <- if (is.na(stock$assessment_key)) NULL else try(sag_summary(stock), silent = TRUE)
+  if (is.null(sag) || inherits(sag, "try-error") || all(is.na(sag$sag))) {
     return("Not compared: the stock assessment was not found in SAG.")
   }
   lines <- dataset_summary(stock)

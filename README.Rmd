@@ -35,13 +35,16 @@ remotes::install_github("neilcampbelll/FLstockpile")
 
 ## Usage
 
-Say where the dataset is. This is a data release, so it will not change:
+Say where the dataset is. This is the latest data release:
 
 ```{r}
 library(FLStockpile)
 
-options(FLStockpile.url = "https://github.com/neilcampbelll/FLstockpile/releases/download/v2026.001")
+options(FLStockpile.url = "https://github.com/neilcampbelll/FLstockpile/releases/latest/download")
 ```
+
+A release that will not change is at the same address with its tag, for
+example `.../releases/download/v2026.002`.
 
 List the stock assessments. Each one is a stock code and an assessment year,
 and by default the latest version of each is returned:
