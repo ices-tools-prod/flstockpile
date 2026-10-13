@@ -136,7 +136,14 @@ sources <- stockpile_sources()
 sources <- sources[sources$class == "FLStock", ]
 sources <- merge(sources, stocks[c("stock_code", "assessment_year", "version", "expert_group", "assessment")])
 
+# a guide line from each stock code to the start of its years
+guides <- aggregate(min_year ~ assessment + expert_group, sources, min)
+
 ggplot(sources, aes(y = assessment, colour = type)) +
+  geom_segment(
+    aes(x = -Inf, xend = min_year, yend = assessment),
+    data = guides, colour = "grey80", linewidth = 0.25
+  ) +
   geom_linerange(aes(xmin = min_year, xmax = max_year), linewidth = 1.2, position = position_dodge(width = 0.6)) +
   facet_grid(expert_group ~ ., scales = "free_y", space = "free_y") +
   scale_y_discrete(limits = rev) +
@@ -147,6 +154,7 @@ ggplot(sources, aes(y = assessment, colour = type)) +
     legend.position = "bottom",
     strip.text.y = element_text(angle = 0, hjust = 0),
     panel.grid.major.y = element_blank(),
+    panel.grid.minor.x = element_blank(),
     panel.spacing = unit(0.6, "lines")
   )
 ```
