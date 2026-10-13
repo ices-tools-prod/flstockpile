@@ -9,7 +9,8 @@ Imports: arrow,
          utils
 Suggests: FLCore
 Additional_repositories: https://flr.r-universe.dev
-Config/Needs/website: ggplot2, icesSAG, knitr, rmarkdown
+Config/Needs/website: crosstalk, DT, ggplot2, icesSAG, icesSD, knitr, plotly,
+    rmarkdown
 Description: Read the stock assessment results submitted to ICES, the observed
              data and the model estimates for each stock, from a set of parquet
              files. The results can be used as plain data frames, or converted

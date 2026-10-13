@@ -22,4 +22,5 @@ articles:
 - title: Articles
   navbar: ~
   contents:
+  - articles/stocks-by-expert-group
   - articles/compare-with-sag

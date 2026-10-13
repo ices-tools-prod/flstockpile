@@ -190,6 +190,74 @@ all_same <- aggregate(same ~ stock_code + assessment_year, agreement, all)
 15 of the 36 stock assessments are the same as SAG in every quantity
 that could be compared.
 
+### Explore a stock
+
+Choose a stock to see its summary in the stockpile and in SAG, as a plot
+and as a table. The points are the SAG values and the lines the
+stockpile values.
+
+``` r
+
+library(plotly)
+library(crosstalk)
+library(DT)
+
+# one row per stock and year, with the stockpile and SAG value of each quantity
+explore <- comparisons[c("year", "quantity", "stockpile", "sag")]
+explore$stock <- paste(comparisons$stock_code, comparisons$assessment_year)
+explore <- reshape(explore, idvar = c("stock", "year"), timevar = "quantity", direction = "wide")
+explore <- explore[order(explore$stock, explore$year), ]
+
+shared <- SharedData$new(explore, key = ~ paste(stock, year))
+
+# the plot of one quantity
+panel <- function(quantity) {
+  plot_ly(shared, x = ~year) |>
+    add_markers(
+      y = as.formula(paste0("~sag.", quantity)), name = "SAG", legendgroup = "SAG",
+      showlegend = quantity == "SSB", marker = list(color = "#d95f02")
+    ) |>
+    add_lines(
+      y = as.formula(paste0("~stockpile.", quantity)), name = "stockpile", legendgroup = "stockpile",
+      showlegend = quantity == "SSB", line = list(color = "#1b9e77")
+    ) |>
+    layout(
+      yaxis = list(rangemode = "tozero", title = quantity),
+      xaxis = list(title = "")
+    )
+}
+
+quantities <- c("SSB", "F", "recruitment", "catches")
+values <- c(rbind(paste0("stockpile.", quantities), paste0("sag.", quantities)))
+```
+
+Stock
+
+``` r
+
+subplot(lapply(quantities, panel), nrows = 2, shareX = TRUE, titleY = TRUE, margin = 0.06) |>
+  layout(legend = list(orientation = "h", y = -0.1)) |>
+  config(displayModeBar = FALSE)
+```
+
+``` r
+
+datatable(
+  shared,
+  rownames = FALSE,
+  style = "bootstrap5",
+  class = "compact stripe",
+  colnames = c("stock", "year", gsub(".", " ", values, fixed = TRUE)),
+  options = list(
+    columnDefs = list(list(targets = 0, visible = FALSE)),
+    order = list(list(1, "desc")),
+    pageLength = 10,
+    dom = "tip"
+  )
+) |>
+  formatSignif(values, digits = 4)
+```
+
 ### Where they differ
 
 For each stock and quantity that is not the same, the median over the
