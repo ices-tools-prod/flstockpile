@@ -38,6 +38,7 @@
   <ul class="dropdown-menu" aria-labelledby="dropdown-articles">
 <li><a class="dropdown-item" href="articles/stocks-by-expert-group.html">Stocks and years in the dataset</a></li>
     <li><a class="dropdown-item" href="articles/compare-with-sag.html">Comparing the dataset with SAG</a></li>
+    <li><a class="dropdown-item" href="articles/visual-check.html">Visual check against SAG</a></li>
   </ul>
 </li>
 <li class="nav-item"><a class="nav-link" href="news/index.html">Changelog</a></li>
@@ -176,7 +177,7 @@
 </tr>
 </tbody>
 </table>
-<p><strong>stocks</strong> has <code>latest</code> (is this the most recent version?), <code>case_id</code>, <code>submitted</code>, whether the version has <code>observed</code> data and <code>estimated</code> values, the number of survey <code>indices</code>, and the <code>name</code>, <code>desc</code>, ranges (<code>min_age</code>, <code>max_age</code>, <code>plusgroup</code>, <code>min_year</code>, <code>max_year</code>, <code>min_fbar</code>, <code>max_fbar</code>) and dimensions (<code>n_units</code>, <code>n_seasons</code>, <code>n_areas</code>, <code>n_iters</code>) of the stock.</p>
+<p><strong>stocks</strong> has <code>latest</code> (is this the most recent version?), <code>case_id</code>, the <code>stock_key</code> and <code>expert_group</code> of the stock in the ICES Stock Database, the <code>assessment_key</code> of the published assessment in the ICES Stock Assessment Graphs database, <code>submitted</code>, whether the version has <code>observed</code> data and <code>estimated</code> values, the number of survey <code>indices</code>, and the <code>name</code>, <code>desc</code>, ranges (<code>min_age</code>, <code>max_age</code>, <code>plusgroup</code>, <code>min_year</code>, <code>max_year</code>, <code>min_fbar</code>, <code>max_fbar</code>) and dimensions (<code>n_units</code>, <code>n_seasons</code>, <code>n_areas</code>, <code>n_iters</code>) of the stock.</p>
 <p><strong>sources</strong> has the <code>type</code> (<code>observed</code> or <code>estimated</code>) and <code>class</code> of each submitted object, the <code>submission_id</code> and <code>submitted</code> time of the submission it came from, the <code>file</code> and <code>object</code> name, the submitter’s <code>notes</code>, and the same name, description, ranges and dimensions as in stocks, for that object.</p>
 <p><strong>values</strong> has</p>
 <table class="table">

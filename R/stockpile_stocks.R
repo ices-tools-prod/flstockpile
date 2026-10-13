@@ -20,6 +20,12 @@
 #'   \item{stock_code, assessment_year, version}{identify the version}
 #'   \item{latest}{is this the most recent version of the stock assessment?}
 #'   \item{case_id}{the ICES case number the submissions were made under}
+#'   \item{stock_key}{the key of the stock in the ICES Stock Database, as used
+#'     by the icesSD package}
+#'   \item{expert_group}{the ICES expert group that assesses the stock}
+#'   \item{assessment_key}{the key of the published assessment in the ICES
+#'     Stock Assessment Graphs database, as used by the icesSAG package. Missing
+#'     if the assessment is not published there}
 #'   \item{submitted}{when the most recent submission in the version was made}
 #'   \item{observed, estimated}{does the version have observed data, and model
 #'     estimates?}

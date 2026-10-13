@@ -12,3 +12,39 @@ details.code-fold > summary {
 details.code-fold[open] > summary {
   margin-bottom: 0.5rem;
 }
+
+/* the visual check against SAG */
+.qc-species {
+  margin: -0.5rem 0 0.4rem;
+  color: var(--bs-secondary-color);
+  font-size: 0.875rem;
+}
+
+.qc-labels {
+  margin-bottom: 0.25rem;
+}
+
+.qc-labels span {
+  display: inline-block;
+  margin-right: 0.25rem;
+  padding: 0.1rem 0.55rem;
+  border-radius: 1rem;
+  font-size: 0.8rem;
+  line-height: 1.5;
+}
+
+.qc-same {
+  background: #dff1dc;
+  color: #1e5e2f;
+}
+
+.qc-different {
+  background: #f8d5d1;
+  color: #8a1c13;
+  font-weight: 600;
+}
+
+.qc-none {
+  background: var(--bs-secondary-bg);
+  color: var(--bs-secondary-color);
+}

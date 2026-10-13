@@ -28,6 +28,18 @@
 # Versions are never changed or removed by a later submission, so the data as
 # it stood on any date can be found from the submitted date.
 #
+# Keys to other ICES databases
+#
+# Each stock assessment is looked up, by stock code and assessment year, in
+# the ICES Stock Database (with the icesSD package) for its stock key and
+# expert group, and in the Stock Assessment Graphs database, SAG (with the
+# icesSAG package) for the key of the published assessment. These are the
+# stock_key, expert_group and assessment_key columns of stocks.
+#
+# Where SAG has more than one published assessment for a stock and year, the
+# one to use is taken from the SAG keys file, which is kept by hand. Where
+# there is none, or none has been chosen, the key is missing.
+#
 # Tables, all keyed by stock_code, assessment_year and version
 #
 #   stocks.parquet   one row per version
@@ -69,11 +81,17 @@
 #   file             the file the object was in
 #   object           the name of the object in that file ("" for an rds file)
 #
-# Usage: Rscript make_parquet.R [html file] [extract dir] [types file] [output dir] [package dir]
+#   stock_key        the key of the stock in the ICES Stock Database
+#   expert_group     the expert group that assesses the stock
+#   assessment_key   the key of the published assessment in SAG
+#
+# Usage: Rscript make_parquet.R [html file] [extract dir] [types file] [output dir] [package dir] [SAG keys file]
 
 library(FLCore)
 library(rvest)
 library(arrow)
+library(icesSD)
+library(icesSAG)
 
 args <- commandArgs(trailingOnly = TRUE)
 html_file <- if (length(args) >= 1) args[1] else "ids.html"
@@ -81,6 +99,7 @@ extract_dir <- if (length(args) >= 2) args[2] else "extracted"
 types_file <- if (length(args) >= 3) args[3] else "object_types.csv"
 output_dir <- if (length(args) >= 4) args[4] else "parquet"
 package_dir <- if (length(args) >= 5) args[5] else ".."
+sag_keys_file <- if (length(args) >= 6) args[6] else "sag_keys.csv"
 
 stock_slots <- c(
   "catch", "catch.n", "catch.wt",
@@ -400,6 +419,49 @@ stocks <- lapply(versions, function(version) {
 stocks <- do.call(rbind, stocks)
 stocks$latest <- stocks$version == ave(stocks$version, stocks$stock_code, stocks$assessment_year, FUN = max)
 
+# the keys to the stock database and to SAG, and the expert group
+sag_keys <- read.csv(sag_keys_file)
+keys <- lapply(unique(stocks$assessment_year), function(year) {
+  stock_database <- suppressMessages(getSD(year = year))
+  published <- suppressMessages(getListStocks(year))
+  stock_codes <- unique(stocks$stock_code[stocks$assessment_year == year])
+
+  assessment_keys <- vapply(stock_codes, function(stock_code) {
+    found <- published$AssessmentKey[published$StockKeyLabel == stock_code]
+    chosen <- sag_keys$assessment_key[sag_keys$stock_code == stock_code & sag_keys$assessment_year == year]
+    if (length(found) > 1 && any(chosen %in% found)) {
+      found <- chosen[chosen %in% found]
+    }
+    if (length(found) != 1) {
+      cat(
+        "NO SAG KEY ", stock_code, " ", year, ": ",
+        if (length(found) == 0) "not published in SAG" else paste("choose one in", sag_keys_file, "from", paste(found, collapse = ", ")),
+        "\n",
+        sep = ""
+      )
+      return(NA_integer_)
+    }
+    as.integer(found)
+  }, 1L)
+
+  in_database <- match(stock_codes, stock_database$StockKeyLabel)
+  data.frame(
+    stock_code = stock_codes,
+    assessment_year = year,
+    stock_key = as.integer(stock_database$StockKey[in_database]),
+    expert_group = stock_database$ExpertGroup[in_database],
+    assessment_key = assessment_keys
+  )
+})
+keys <- do.call(rbind, keys)
+keys <- keys[match(paste(stocks$stock_code, stocks$assessment_year), paste(keys$stock_code, keys$assessment_year)), ]
+stocks <- cbind(
+  stocks[1:5],
+  keys[c("stock_key", "expert_group", "assessment_key")],
+  stocks[-(1:5)]
+)
+rownames(stocks) <- NULL
+
 sources <- lapply(versions, function(version) {
   rows <- lapply(version_sources(version), function(source) {
     submission <- submissions[source$submission, ]
@@ -477,7 +539,12 @@ options(FLStockpile.url = output_dir)
 
 stock_sources <- stockpile_sources(version = "all", refresh = TRUE)
 stock_sources <- stock_sources[stock_sources$class == "FLStock", ]
-stock_sources <- merge(stock_sources, stockpile_stocks(version = "all")[c("stock_code", "assessment_year", "version", "latest", "case_id")])
+stock_sources <- merge(
+  stock_sources,
+  stockpile_stocks(version = "all")[c(
+    "stock_code", "assessment_year", "version", "latest", "case_id", "stock_key", "expert_group", "assessment_key"
+  )]
+)
 stock_sources <- stock_sources[order(stock_sources$stock_code, stock_sources$assessment_year, stock_sources$version, stock_sources$type), ]
 
 flstocks <- lapply(seq_len(nrow(stock_sources)), function(i) {
@@ -494,7 +561,10 @@ flstocks <- lapply(seq_len(nrow(stock_sources)), function(i) {
     submission_id = source$submission_id,
     notes = source$notes,
     file = source$file,
-    object = source$object
+    object = source$object,
+    stock_key = source$stock_key,
+    expert_group = source$expert_group,
+    assessment_key = source$assessment_key
   )
 })
 names(flstocks) <- paste0(

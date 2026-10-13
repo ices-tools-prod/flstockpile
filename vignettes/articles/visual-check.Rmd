@@ -1,0 +1,264 @@
+---
+title: "Visual check against SAG"
+---
+
+```{r, include = FALSE}
+knitr::opts_chunk$set(
+  collapse = FALSE,
+  comment = "#>",
+  message = FALSE,
+  warning = FALSE,
+  fig.width = 9,
+  dpi = 110
+)
+options(width = 100)
+
+# code blocks are folded away, and opened by clicking on "Code"
+local({
+  source_hook <- knitr::knit_hooks$get("source")
+  knitr::knit_hooks$set(source = function(x, options) {
+    paste0(
+      "\n<details class=\"code-fold\">\n<summary>Code</summary>\n\n",
+      source_hook(x, options),
+      "\n\n</details>\n"
+    )
+  })
+})
+```
+
+A page to scroll through, to check every stock assessment in the dataset by
+eye against the official results in the ICES Stock Assessment Graphs database,
+[SAG](https://sg.ices.dk). The stocks are grouped by expert group. It is run
+against the live databases each time this site is built.
+
+For each stock there are
+
+- **labels** for the four summary quantities: green where the dataset and SAG
+  are within 2.5% of each other in every year, red where they are not, with
+  the median over the years of the dataset value divided by the SAG value,
+  and grey where the quantity could not be compared;
+- **dots** showing which data are present, for the observed data and for the
+  model estimates: a filled dot where the dataset has values, a ring where it
+  has none;
+- **plots** of the four quantities by year, with the dataset as a line and SAG
+  as points. A panel is tinted red where the two differ.
+
+How the summary is calculated, and the usual reasons for a difference, are in
+[Comparing the dataset with SAG](compare-with-sag.html).
+
+```{r}
+library(FLStockpile)
+library(FLCore)
+library(icesSAG)
+library(icesSD)
+library(ggplot2)
+
+options(FLStockpile.url = "https://github.com/neilcampbelll/FLstockpile/releases/download/v2026.001")
+
+quantities <- c("SSB", "F", "recruitment", "catches")
+slots <- c(
+  "catch", "catch.n", "catch.wt", "landings", "landings.n", "landings.wt",
+  "discards", "discards.n", "discards.wt", "stock", "stock.n", "stock.wt",
+  "m", "mat", "harvest", "harvest.spwn", "m.spwn"
+)
+colours <- c(observed = "#d95f02", estimated = "#1b9e77")
+tolerance <- 0.025
+```
+
+```{r}
+# the stock assessments, with the expert group of each
+stocks <- stockpile_stocks()
+
+stock_database <- lapply(unique(stocks$assessment_year), function(year) {
+  sd <- getSD(year = year)
+  data.frame(
+    stock_code = sd$StockKeyLabel, assessment_year = year,
+    expert_group = sd$ExpertGroup, species = sd$SpeciesCommonName
+  )
+})
+stocks <- merge(stocks, do.call(rbind, stock_database), all.x = TRUE)
+stocks$expert_group[is.na(stocks$expert_group)] <- "Not in the stock database"
+stocks <- stocks[order(stocks$expert_group, stocks$stock_code, stocks$assessment_year), ]
+stocks$assessment <- paste0(stocks$stock_code, " (", stocks$assessment_year, ")")
+
+# The summary of a stock assessment in the dataset: SSB, F and recruitment
+# from the estimates, and catches from the observed data if there are any.
+
+dataset_summary <- function(stock) {
+  estimated <- if (stock$estimated) stockpile_flstock(stock$stock_code, stock$assessment_year, type = "estimated")
+  observed <- if (stock$observed) stockpile_flstock(stock$stock_code, stock$assessment_year, type = "observed")
+
+  found <- list(catches = catch(if (is.null(observed)) estimated else observed))
+  if (!is.null(estimated)) {
+    found <- c(list(SSB = ssb(estimated), F = fbar(estimated), recruitment = rec(estimated)), found)
+  }
+  rows <- lapply(names(found), function(quantity) {
+    values <- as.data.frame(found[[quantity]])
+    data.frame(quantity = quantity, year = values$year, dataset = values$data)
+  })
+  do.call(rbind, rows)
+}
+
+# The summary of a stock assessment in SAG, in the same layout.
+
+sag_summary <- function(stock) {
+  sag <- getSAG(stock$stock_code, stock$assessment_year)
+  rows <- lapply(quantities, function(quantity) {
+    data.frame(quantity = quantity, year = sag$Year, sag = sag[[quantity]])
+  })
+  do.call(rbind, rows)
+}
+
+# The two summaries of every stock, or the reason there are none.
+
+checks <- lapply(seq_len(nrow(stocks)), function(i) {
+  stock <- stocks[i, ]
+  if (stock$n_seasons > 1 || stock$n_units > 1 || stock$n_areas > 1) {
+    return("Not compared: the stock has more than one season, unit or area.")
+  }
+  sag <- try(sag_summary(stock), silent = TRUE)
+  if (inherits(sag, "try-error") || all(is.na(sag$sag))) {
+    return("Not compared: the stock assessment was not found in SAG.")
+  }
+  both <- merge(dataset_summary(stock), sag, all = TRUE)
+  both$quantity <- factor(both$quantity, quantities)
+  both[!is.na(both$dataset) | !is.na(both$sag), ]
+})
+
+# Is each quantity the same in the dataset and in SAG?
+#
+# Returns a data frame with one row per quantity: the status, and the median
+# of the dataset value divided by the SAG value.
+
+agreement <- function(check) {
+  rows <- lapply(quantities, function(quantity) {
+    ratio <- if (is.data.frame(check)) {
+      rows <- check[check$quantity == quantity & !is.na(check$dataset) & !is.na(check$sag) & check$sag != 0, ]
+      rows$dataset / rows$sag
+    }
+    status <- if (length(ratio) == 0) {
+      "not compared"
+    } else if (max(abs(ratio - 1)) < tolerance) {
+      "same"
+    } else {
+      "different"
+    }
+    data.frame(
+      quantity = factor(quantity, quantities), status = status,
+      ratio = if (length(ratio) > 0) median(ratio) else NA
+    )
+  })
+  do.call(rbind, rows)
+}
+
+agreements <- lapply(checks, agreement)
+```
+
+## Overview
+
+Every stock assessment and quantity at a glance.
+
+```{r, fig.height = 10, fig.alt = "A grid of stock assessments, grouped by expert group, against the four summary quantities, coloured by whether the dataset and SAG are the same, different or could not be compared."}
+overview <- do.call(rbind, lapply(seq_along(agreements), function(i) {
+  cbind(stocks[i, c("assessment", "expert_group")], agreements[[i]])
+}))
+status_colours <- c(same = "#a6dba0", different = "#e9695f", "not compared" = "grey92")
+
+ggplot(overview, aes(quantity, assessment, fill = status)) +
+  geom_tile(colour = "white", linewidth = 1.5) +
+  facet_grid(expert_group ~ ., scales = "free_y", space = "free_y") +
+  scale_x_discrete(position = "top") +
+  scale_y_discrete(limits = rev) +
+  scale_fill_manual(values = status_colours, breaks = names(status_colours)) +
+  labs(x = NULL, y = NULL, fill = NULL) +
+  theme_minimal() +
+  theme(
+    legend.position = "bottom",
+    panel.grid = element_blank(),
+    strip.text.y = element_text(angle = 0, hjust = 0),
+    panel.spacing = unit(0.6, "lines")
+  )
+```
+
+```{r}
+# The labels for a stock, as HTML.
+
+labels_html <- function(agreed) {
+  text <- ifelse(
+    agreed$status == "different",
+    paste0(agreed$quantity, " &times;", signif(agreed$ratio, 3)),
+    as.character(agreed$quantity)
+  )
+  class <- c(same = "qc-same", different = "qc-different", "not compared" = "qc-none")[agreed$status]
+  paste0("<p class=\"qc-labels\">", paste0("<span class=\"", class, "\">", text, "</span>", collapse = " "), "</p>")
+}
+
+# The dots for a stock: which slots have values, observed and estimated.
+
+dots_plot <- function(stock) {
+  values <- stockpile_values(stock$stock_code, stock$assessment_year)
+  present <- expand.grid(slot = c(slots, "survey index"), type = names(colours))
+  present$found <- paste(present$slot, present$type) %in%
+    c(paste(values$slot, values$type), paste(values$slot[values$type == "both"], rep(names(colours), each = sum(values$type == "both"))))
+  present$found[present$slot == "survey index"] <- c(stock$indices > 0, FALSE)
+  present$slot <- factor(present$slot, c(slots, "survey index"))
+  present$type <- factor(present$type, rev(names(colours)))
+
+  ggplot(present, aes(slot, type)) +
+    geom_point(data = present[!present$found, ], shape = 1, size = 2.2, colour = "grey80") +
+    geom_point(aes(colour = type), data = present[present$found, ], size = 3) +
+    # the two parts of a slot name go on two lines, to fit
+    scale_x_discrete(position = "top", drop = FALSE, labels = function(slot) gsub("[. ]", "\n", slot)) +
+    scale_y_discrete(drop = FALSE) +
+    scale_colour_manual(values = colours, guide = "none") +
+    labs(x = NULL, y = NULL) +
+    theme_minimal(base_size = 9) +
+    theme(
+      panel.grid = element_blank(),
+      axis.text.x = element_text(colour = "grey40"),
+      axis.text.y = element_text(colour = "grey20")
+    )
+}
+
+# The plots for a stock: the four quantities in the dataset and in SAG.
+
+check_plot <- function(check, agreed) {
+  # every quantity gets a panel, with or without values
+  panels <- data.frame(quantity = factor(quantities, quantities), year = min(check$year), value = 0)
+
+  plot <- ggplot(check, aes(year)) +
+    geom_blank(aes(y = value), data = panels)
+  if (any(agreed$status == "different")) {
+    plot <- plot + geom_rect(
+      data = agreed[agreed$status == "different", ], inherit.aes = FALSE,
+      xmin = -Inf, xmax = Inf, ymin = -Inf, ymax = Inf, fill = "#e9695f", alpha = 0.12
+    )
+  }
+
+  plot +
+    geom_line(aes(y = dataset), data = check[!is.na(check$dataset), ], colour = colours["estimated"], linewidth = 0.7) +
+    geom_point(aes(y = sag), data = check[!is.na(check$sag), ], colour = "grey25", size = 0.7) +
+    facet_wrap(~quantity, nrow = 1, scales = "free_y", drop = FALSE) +
+    scale_y_continuous(labels = function(y) format(y, big.mark = ",", scientific = FALSE, trim = TRUE)) +
+    labs(x = NULL, y = NULL) +
+    theme_minimal(base_size = 9) +
+    theme(
+      panel.grid.minor = element_blank(),
+      strip.text = element_text(hjust = 0, face = "bold")
+    )
+}
+```
+
+```{r, echo = FALSE, results = "asis"}
+for (group in unique(stocks$expert_group)) {
+  cat("\n\n## ", group, "\n\n", sep = "")
+  for (i in which(stocks$expert_group == group)) {
+    # what is written for each stock is in a file of its own
+    text <- knitr::knit_expand(
+      "_visual-check-stock.Rmd", i = i, assessment = stocks$assessment[i],
+      species = if (is.na(stocks$species[i])) "" else stocks$species[i]
+    )
+    cat(knitr::knit_child(text = text, envir = environment(), quiet = TRUE), "\n")
+  }
+}
+```
