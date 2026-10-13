@@ -5,6 +5,14 @@
 ## them as FLStock objects in an R environment.
 ## Requires: duckdb, DBI, FLCore, jsonlite
 
+## Install any missing packages (FLCore comes from the FLR r-universe)
+.flstock_pkgs <- c("DBI", "duckdb", "FLCore", "jsonlite")
+.missing <- .flstock_pkgs[!vapply(.flstock_pkgs, requireNamespace, logical(1), quietly = TRUE)]
+if (length(.missing)) {
+  install.packages(.missing,
+                   repos = c("https://flr.r-universe.dev", "https://cloud.r-project.org"))
+}
+
 library(DBI)
 library(duckdb)
 library(FLCore)
