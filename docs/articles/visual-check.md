@@ -17,8 +17,14 @@ For each stock there are
 - **dots** showing which data are present, for the observed data and for
   the model estimates: a filled dot where the dataset has values, a ring
   where it has none;
-- **plots** of the four quantities by year, with the dataset as a line
-  and SAG as points. A panel is tinted red where the two differ.
+- **plots** of the four quantities by year, with the dataset as lines,
+  green for the model estimates and orange for the observed data, and
+  SAG as points. Where the two lines are the same only the green one
+  shows. A panel is tinted red where the dataset and SAG differ. Where
+  SAG has no catches, its landings and discards are added together and
+  shown instead, or its landings alone if it has no discards.
+  Recruitment is shown in thousands, as it is in SAG, using the units
+  given for the stock numbers.
 
 How the summary is calculated, and the usual reasons for a difference,
 are in [Comparing the dataset with
@@ -81,28 +87,64 @@ stocks$heading <- ifelse(
   paste0("[", stocks$assessment, "](https://standardgraphs.ices.dk/ViewCharts.aspx?key=", stocks$assessment_key, ")")
 )
 
-# The summary of a stock assessment in the dataset: SSB, F and recruitment
-# from the estimates, and catches from the observed data if there are any.
+# The number of fish that one unit of the stock numbers stands for, from the
+# units given by the submitter, for example "1000", "10^3" or "thousands".
+# Where no units are given the numbers are taken to be thousands.
+
+numbers_multiplier <- function(units) {
+  if (grepl("^10\\^[0-9]+$", units)) {
+    return(10^as.numeric(sub("10^", "", units, fixed = TRUE)))
+  }
+  if (grepl("^[0-9.]+(e[0-9]+)?$", units)) {
+    return(as.numeric(units))
+  }
+  named <- c(thousands = 1e3, millions = 1e6)
+  if (units %in% names(named)) named[[units]] else 1e3
+}
+
+# The recruitment of a stock in thousands, the units that SAG uses.
+
+recruitment <- function(object) {
+  rec(object) * numbers_multiplier(units(stock.n(object))) / 1000
+}
+
+# The summary of a stock assessment in the dataset: SSB, F, recruitment and
+# catches, from the model estimates and from the observed data.
+#
+# Returns a data frame with one row per type, quantity and year.
 
 dataset_summary <- function(stock) {
-  estimated <- if (stock$estimated) stockpile_flstock(stock$stock_code, stock$assessment_year, type = "estimated")
-  observed <- if (stock$observed) stockpile_flstock(stock$stock_code, stock$assessment_year, type = "observed")
+  types <- names(colours)[c(stock$observed, stock$estimated)]
+  rows <- lapply(types, function(type) {
+    object <- stockpile_flstock(stock$stock_code, stock$assessment_year, type = type)
+    found <- list(SSB = ssb(object), F = fbar(object), recruitment = recruitment(object), catches = catch(object))
+    rows <- lapply(names(found), function(quantity) {
+      values <- as.data.frame(found[[quantity]])
+      data.frame(type = type, quantity = quantity, year = values$year, dataset = values$data)
+    })
+    rows <- do.call(rbind, rows)
 
-  found <- list(catches = catch(if (is.null(observed)) estimated else observed))
-  if (!is.null(estimated)) {
-    found <- c(list(SSB = ssb(estimated), F = fbar(estimated), recruitment = rec(estimated)), found)
-  }
-  rows <- lapply(names(found), function(quantity) {
-    values <- as.data.frame(found[[quantity]])
-    data.frame(quantity = quantity, year = values$year, dataset = values$data)
+    # with no stock numbers the SSB is calculated as zero, when it is not known
+    no_numbers <- dimnames(stock.n(object))$year[apply(is.na(stock.n(object)), 2, all)]
+    rows[!(rows$quantity == "SSB" & rows$year %in% no_numbers), ]
   })
-  do.call(rbind, rows)
+  rows <- do.call(rbind, rows)
+  rows$quantity <- factor(rows$quantity, quantities)
+  rows[!is.na(rows$dataset), ]
 }
 
 # The summary of a stock assessment in SAG, in the same layout.
 
 sag_summary <- function(stock) {
   sag <- getSAG(stock$stock_code, stock$assessment_year)
+
+  # where SAG has no catches, the landings and discards are used, or the
+  # landings alone if there are no discards
+  sag$catches <- ifelse(
+    !is.na(sag$catches), sag$catches,
+    ifelse(!is.na(sag$discards), sag$landings + sag$discards, sag$landings)
+  )
+
   rows <- lapply(quantities, function(quantity) {
     data.frame(quantity = quantity, year = sag$Year, sag = sag[[quantity]])
   })
@@ -120,9 +162,18 @@ checks <- lapply(seq_len(nrow(stocks)), function(i) {
   if (inherits(sag, "try-error") || all(is.na(sag$sag))) {
     return("Not compared: the stock assessment was not found in SAG.")
   }
-  both <- merge(dataset_summary(stock), sag, all = TRUE)
+  lines <- dataset_summary(stock)
+
+  # SAG is compared with the estimates of SSB, F and recruitment, and with
+  # the observed catches if there are any
+  compared <- ifelse(lines$quantity == "catches" & stock$observed, "observed", "estimated")
+  both <- merge(lines[lines$type == compared, c("quantity", "year", "dataset")], sag, all = TRUE)
   both$quantity <- factor(both$quantity, quantities)
-  both[!is.na(both$dataset) | !is.na(both$sag), ]
+  both <- both[!is.na(both$dataset) | !is.na(both$sag), ]
+
+  # both sets of lines are kept, for the plots
+  attr(both, "lines") <- lines
+  both
 })
 
 # Is each quantity the same in the dataset and in SAG?
@@ -234,6 +285,11 @@ dots_plot <- function(stock) {
 # The plots for a stock: the four quantities in the dataset and in SAG.
 
 check_plot <- function(check, agreed) {
+  # the observed lines are drawn first, so the estimates are on top
+  lines <- attr(check, "lines")
+  lines <- lines[order(lines$type != "observed"), ]
+  lines$type <- factor(lines$type, names(colours))
+
   # every quantity gets a panel, with or without values
   panels <- data.frame(quantity = factor(quantities, quantities), year = min(check$year), value = 0)
 
@@ -247,7 +303,8 @@ check_plot <- function(check, agreed) {
   }
 
   plot +
-    geom_line(aes(y = dataset), data = check[!is.na(check$dataset), ], colour = colours["estimated"], linewidth = 0.7) +
+    geom_line(aes(y = dataset, colour = type), data = lines, linewidth = 0.7) +
+    scale_colour_manual(values = colours, guide = "none") +
     geom_point(aes(y = sag), data = check[!is.na(check$sag), ], colour = "grey25", size = 0.7) +
     facet_wrap(~quantity, nrow = 1, scales = "free_y", drop = FALSE) +
     scale_y_continuous(labels = function(y) format(y, big.mark = ",", scientific = FALSE, trim = TRUE)) +
@@ -266,7 +323,7 @@ check_plot <- function(check, agreed) {
 
 Cod
 
-SSB F recruitment ×1.83 catches
+SSB F recruitment ×1.83 catches ×1
 
 ![Dots showing which data are present for cod.27.1-2.coastN
 (2026).](visual-check_files/figure-html/dots-1-1.png)
@@ -487,7 +544,7 @@ dataset and in SAG.](visual-check_files/figure-html/plots-18-1.png)
 
 Plaice
 
-SSB ×0.996 F ×0.995 recruitment ×0.995 catches
+SSB ×0.996 F ×0.995 recruitment ×0.995 catches ×1.31
 
 ![Dots showing which data are present for ple.27.21-32
 (2026).](visual-check_files/figure-html/dots-19-1.png)
@@ -499,7 +556,7 @@ dataset and in SAG.](visual-check_files/figure-html/plots-19-1.png)
 
 Sole
 
-SSB ×1 F recruitment catches
+SSB ×1 F recruitment catches ×1
 
 ![Dots showing which data are present for sol.27.20-24
 (2026).](visual-check_files/figure-html/dots-20-1.png)
@@ -511,7 +568,7 @@ dataset and in SAG.](visual-check_files/figure-html/plots-20-1.png)
 
 Sprat
 
-SSB F recruitment ×0.001 catches ×0.992
+SSB F recruitment catches ×0.992
 
 ![Dots showing which data are present for spr.27.22-32
 (2024).](visual-check_files/figure-html/dots-21-1.png)
@@ -523,7 +580,7 @@ dataset and in SAG.](visual-check_files/figure-html/plots-21-1.png)
 
 Sprat
 
-SSB F recruitment ×0.001 catches ×0.991
+SSB F recruitment catches ×0.991
 
 ![Dots showing which data are present for spr.27.22-32
 (2026).](visual-check_files/figure-html/dots-22-1.png)
@@ -537,7 +594,7 @@ dataset and in SAG.](visual-check_files/figure-html/plots-22-1.png)
 
 Black-bellied anglerfish
 
-SSB F recruitment ×1 catches ×1.11
+SSB F recruitment ×1 catches ×1.19
 
 ![Dots showing which data are present for ank.27.78abd
 (2026).](visual-check_files/figure-html/dots-23-1.png)
@@ -670,7 +727,7 @@ dataset and in SAG.](visual-check_files/figure-html/plots-33-1.png)
 
 Sole
 
-SSB F recruitment catches
+SSB F recruitment catches ×1
 
 ![Dots showing which data are present for sol.27.7e
 (2026).](visual-check_files/figure-html/dots-34-1.png)
@@ -682,7 +739,7 @@ dataset and in SAG.](visual-check_files/figure-html/plots-34-1.png)
 
 Sole
 
-SSB F recruitment catches
+SSB F recruitment catches ×0.967
 
 ![Dots showing which data are present for sol.27.7fg
 (2026).](visual-check_files/figure-html/dots-35-1.png)
@@ -746,7 +803,7 @@ Not compared: the stock assessment was not found in SAG.
 
 Brill
 
-SSB ×6160 F ×0.336 recruitment catches
+SSB ×6160 F ×0.336 recruitment catches ×0.994
 
 ![Dots showing which data are present for bll.27.3a47de
 (2026).](visual-check_files/figure-html/dots-40-1.png)
@@ -818,7 +875,7 @@ dataset and in SAG.](visual-check_files/figure-html/plots-45-1.png)
 
 Witch
 
-SSB F recruitment catches
+SSB F recruitment catches ×0.985
 
 ![Dots showing which data are present for wit.27.3a47d
 (2026).](visual-check_files/figure-html/dots-46-1.png)

@@ -35,9 +35,10 @@ observed data.}
 this session.}
 }
 \value{
-An \code{FLStock} object, with the same values, units, ranges, name and
-description as the one submitted. A slot that was all missing values comes
-back empty, with the default units of FLCore.
+An \code{FLStock} object, with the same values, ranges, name and
+description as the one submitted, except that numbers are in thousands and
+weights in kg, whatever units they were submitted in. A slot that was all
+missing values comes back empty, with the default units of FLCore.
 }
 \description{
 Get the values for one stock assessment as an \code{FLStock} object. This needs

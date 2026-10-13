@@ -89,8 +89,13 @@ observed data and for the model estimates: a filled dot where the
 dataset has values, a ring where it has none;</li>
 <li>
 <strong>plots</strong> of the four quantities by year, with the
-dataset as a line and SAG as points. A panel is tinted red where the two
-differ.</li>
+dataset as lines, green for the model estimates and orange for the
+observed data, and SAG as points. Where the two lines are the same only
+the green one shows. A panel is tinted red where the dataset and SAG
+differ. Where SAG has no catches, its landings and discards are added
+together and shown instead, or its landings alone if it has no discards.
+Recruitment is shown in thousands, as it is in SAG, using the units
+given for the stock numbers.</li>
 </ul>
 <p>How the summary is calculated, and the usual reasons for a
 difference, are in <a href="compare-with-sag.html">Comparing the dataset
@@ -148,28 +153,64 @@ Code
 <span>  <span class="fu"><a href="https://rdrr.io/r/base/paste.html" class="external-link">paste0</a></span><span class="op">(</span><span class="st">"["</span>, <span class="va">stocks</span><span class="op">$</span><span class="va">assessment</span>, <span class="st">"](https://standardgraphs.ices.dk/ViewCharts.aspx?key="</span>, <span class="va">stocks</span><span class="op">$</span><span class="va">assessment_key</span>, <span class="st">")"</span><span class="op">)</span></span>
 <span><span class="op">)</span></span>
 <span></span>
-<span><span class="co"># The summary of a stock assessment in the dataset: SSB, F and recruitment</span></span>
-<span><span class="co"># from the estimates, and catches from the observed data if there are any.</span></span>
+<span><span class="co"># The number of fish that one unit of the stock numbers stands for, from the</span></span>
+<span><span class="co"># units given by the submitter, for example "1000", "10^3" or "thousands".</span></span>
+<span><span class="co"># Where no units are given the numbers are taken to be thousands.</span></span>
+<span></span>
+<span><span class="va">numbers_multiplier</span> <span class="op">&lt;-</span> <span class="kw">function</span><span class="op">(</span><span class="va">units</span><span class="op">)</span> <span class="op">{</span></span>
+<span>  <span class="kw">if</span> <span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/grep.html" class="external-link">grepl</a></span><span class="op">(</span><span class="st">"^10\\^[0-9]+$"</span>, <span class="va">units</span><span class="op">)</span><span class="op">)</span> <span class="op">{</span></span>
+<span>    <span class="kw"><a href="https://rdrr.io/r/base/function.html" class="external-link">return</a></span><span class="op">(</span><span class="fl">10</span><span class="op">^</span><span class="fu"><a href="https://rdrr.io/r/base/numeric.html" class="external-link">as.numeric</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/grep.html" class="external-link">sub</a></span><span class="op">(</span><span class="st">"10^"</span>, <span class="st">""</span>, <span class="va">units</span>, fixed <span class="op">=</span> <span class="cn">TRUE</span><span class="op">)</span><span class="op">)</span><span class="op">)</span></span>
+<span>  <span class="op">}</span></span>
+<span>  <span class="kw">if</span> <span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/grep.html" class="external-link">grepl</a></span><span class="op">(</span><span class="st">"^[0-9.]+(e[0-9]+)?$"</span>, <span class="va">units</span><span class="op">)</span><span class="op">)</span> <span class="op">{</span></span>
+<span>    <span class="kw"><a href="https://rdrr.io/r/base/function.html" class="external-link">return</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/numeric.html" class="external-link">as.numeric</a></span><span class="op">(</span><span class="va">units</span><span class="op">)</span><span class="op">)</span></span>
+<span>  <span class="op">}</span></span>
+<span>  <span class="va">named</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span>thousands <span class="op">=</span> <span class="fl">1e3</span>, millions <span class="op">=</span> <span class="fl">1e6</span><span class="op">)</span></span>
+<span>  <span class="kw">if</span> <span class="op">(</span><span class="va">units</span> <span class="op"><a href="https://rdrr.io/r/base/match.html" class="external-link">%in%</a></span> <span class="fu"><a href="https://rdrr.io/r/base/names.html" class="external-link">names</a></span><span class="op">(</span><span class="va">named</span><span class="op">)</span><span class="op">)</span> <span class="va">named</span><span class="op">[[</span><span class="va">units</span><span class="op">]</span><span class="op">]</span> <span class="kw">else</span> <span class="fl">1e3</span></span>
+<span><span class="op">}</span></span>
+<span></span>
+<span><span class="co"># The recruitment of a stock in thousands, the units that SAG uses.</span></span>
+<span></span>
+<span><span class="va">recruitment</span> <span class="op">&lt;-</span> <span class="kw">function</span><span class="op">(</span><span class="va">object</span><span class="op">)</span> <span class="op">{</span></span>
+<span>  <span class="fu"><a href="http://flrproject.org/FLCore/reference/accessors.html" class="external-link">rec</a></span><span class="op">(</span><span class="va">object</span><span class="op">)</span> <span class="op">*</span> <span class="fu">numbers_multiplier</span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/units.html" class="external-link">units</a></span><span class="op">(</span><span class="fu"><a href="http://flrproject.org/FLCore/reference/accessors.html" class="external-link">stock.n</a></span><span class="op">(</span><span class="va">object</span><span class="op">)</span><span class="op">)</span><span class="op">)</span> <span class="op">/</span> <span class="fl">1000</span></span>
+<span><span class="op">}</span></span>
+<span></span>
+<span><span class="co"># The summary of a stock assessment in the dataset: SSB, F, recruitment and</span></span>
+<span><span class="co"># catches, from the model estimates and from the observed data.</span></span>
+<span><span class="co">#</span></span>
+<span><span class="co"># Returns a data frame with one row per type, quantity and year.</span></span>
 <span></span>
 <span><span class="va">dataset_summary</span> <span class="op">&lt;-</span> <span class="kw">function</span><span class="op">(</span><span class="va">stock</span><span class="op">)</span> <span class="op">{</span></span>
-<span>  <span class="va">estimated</span> <span class="op">&lt;-</span> <span class="kw">if</span> <span class="op">(</span><span class="va">stock</span><span class="op">$</span><span class="va">estimated</span><span class="op">)</span> <span class="fu"><a href="../reference/stockpile_flstock.html">stockpile_flstock</a></span><span class="op">(</span><span class="va">stock</span><span class="op">$</span><span class="va">stock_code</span>, <span class="va">stock</span><span class="op">$</span><span class="va">assessment_year</span>, type <span class="op">=</span> <span class="st">"estimated"</span><span class="op">)</span></span>
-<span>  <span class="va">observed</span> <span class="op">&lt;-</span> <span class="kw">if</span> <span class="op">(</span><span class="va">stock</span><span class="op">$</span><span class="va">observed</span><span class="op">)</span> <span class="fu"><a href="../reference/stockpile_flstock.html">stockpile_flstock</a></span><span class="op">(</span><span class="va">stock</span><span class="op">$</span><span class="va">stock_code</span>, <span class="va">stock</span><span class="op">$</span><span class="va">assessment_year</span>, type <span class="op">=</span> <span class="st">"observed"</span><span class="op">)</span></span>
+<span>  <span class="va">types</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/names.html" class="external-link">names</a></span><span class="op">(</span><span class="va">colours</span><span class="op">)</span><span class="op">[</span><span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="va">stock</span><span class="op">$</span><span class="va">observed</span>, <span class="va">stock</span><span class="op">$</span><span class="va">estimated</span><span class="op">)</span><span class="op">]</span></span>
+<span>  <span class="va">rows</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/lapply.html" class="external-link">lapply</a></span><span class="op">(</span><span class="va">types</span>, <span class="kw">function</span><span class="op">(</span><span class="va">type</span><span class="op">)</span> <span class="op">{</span></span>
+<span>    <span class="va">object</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/stockpile_flstock.html">stockpile_flstock</a></span><span class="op">(</span><span class="va">stock</span><span class="op">$</span><span class="va">stock_code</span>, <span class="va">stock</span><span class="op">$</span><span class="va">assessment_year</span>, type <span class="op">=</span> <span class="va">type</span><span class="op">)</span></span>
+<span>    <span class="va">found</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span>SSB <span class="op">=</span> <span class="fu"><a href="http://flrproject.org/FLCore/reference/ssb.html" class="external-link">ssb</a></span><span class="op">(</span><span class="va">object</span><span class="op">)</span>, F <span class="op">=</span> <span class="fu"><a href="http://flrproject.org/FLCore/reference/fbar.html" class="external-link">fbar</a></span><span class="op">(</span><span class="va">object</span><span class="op">)</span>, recruitment <span class="op">=</span> <span class="fu">recruitment</span><span class="op">(</span><span class="va">object</span><span class="op">)</span>, catches <span class="op">=</span> <span class="fu"><a href="http://flrproject.org/FLCore/reference/accessors.html" class="external-link">catch</a></span><span class="op">(</span><span class="va">object</span><span class="op">)</span><span class="op">)</span></span>
+<span>    <span class="va">rows</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/lapply.html" class="external-link">lapply</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/names.html" class="external-link">names</a></span><span class="op">(</span><span class="va">found</span><span class="op">)</span>, <span class="kw">function</span><span class="op">(</span><span class="va">quantity</span><span class="op">)</span> <span class="op">{</span></span>
+<span>      <span class="va">values</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/as.data.frame.html" class="external-link">as.data.frame</a></span><span class="op">(</span><span class="va">found</span><span class="op">[[</span><span class="va">quantity</span><span class="op">]</span><span class="op">]</span><span class="op">)</span></span>
+<span>      <span class="fu"><a href="https://rdrr.io/r/base/data.frame.html" class="external-link">data.frame</a></span><span class="op">(</span>type <span class="op">=</span> <span class="va">type</span>, quantity <span class="op">=</span> <span class="va">quantity</span>, year <span class="op">=</span> <span class="va">values</span><span class="op">$</span><span class="va">year</span>, dataset <span class="op">=</span> <span class="va">values</span><span class="op">$</span><span class="va">data</span><span class="op">)</span></span>
+<span>    <span class="op">}</span><span class="op">)</span></span>
+<span>    <span class="va">rows</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/do.call.html" class="external-link">do.call</a></span><span class="op">(</span><span class="va">rbind</span>, <span class="va">rows</span><span class="op">)</span></span>
 <span></span>
-<span>  <span class="va">found</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span>catches <span class="op">=</span> <span class="fu"><a href="http://flrproject.org/FLCore/reference/accessors.html" class="external-link">catch</a></span><span class="op">(</span><span class="kw">if</span> <span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/NULL.html" class="external-link">is.null</a></span><span class="op">(</span><span class="va">observed</span><span class="op">)</span><span class="op">)</span> <span class="va">estimated</span> <span class="kw">else</span> <span class="va">observed</span><span class="op">)</span><span class="op">)</span></span>
-<span>  <span class="kw">if</span> <span class="op">(</span><span class="op">!</span><span class="fu"><a href="https://rdrr.io/r/base/NULL.html" class="external-link">is.null</a></span><span class="op">(</span><span class="va">estimated</span><span class="op">)</span><span class="op">)</span> <span class="op">{</span></span>
-<span>    <span class="va">found</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span>SSB <span class="op">=</span> <span class="fu"><a href="http://flrproject.org/FLCore/reference/ssb.html" class="external-link">ssb</a></span><span class="op">(</span><span class="va">estimated</span><span class="op">)</span>, F <span class="op">=</span> <span class="fu"><a href="http://flrproject.org/FLCore/reference/fbar.html" class="external-link">fbar</a></span><span class="op">(</span><span class="va">estimated</span><span class="op">)</span>, recruitment <span class="op">=</span> <span class="fu"><a href="http://flrproject.org/FLCore/reference/accessors.html" class="external-link">rec</a></span><span class="op">(</span><span class="va">estimated</span><span class="op">)</span><span class="op">)</span>, <span class="va">found</span><span class="op">)</span></span>
-<span>  <span class="op">}</span></span>
-<span>  <span class="va">rows</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/lapply.html" class="external-link">lapply</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/names.html" class="external-link">names</a></span><span class="op">(</span><span class="va">found</span><span class="op">)</span>, <span class="kw">function</span><span class="op">(</span><span class="va">quantity</span><span class="op">)</span> <span class="op">{</span></span>
-<span>    <span class="va">values</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/as.data.frame.html" class="external-link">as.data.frame</a></span><span class="op">(</span><span class="va">found</span><span class="op">[[</span><span class="va">quantity</span><span class="op">]</span><span class="op">]</span><span class="op">)</span></span>
-<span>    <span class="fu"><a href="https://rdrr.io/r/base/data.frame.html" class="external-link">data.frame</a></span><span class="op">(</span>quantity <span class="op">=</span> <span class="va">quantity</span>, year <span class="op">=</span> <span class="va">values</span><span class="op">$</span><span class="va">year</span>, dataset <span class="op">=</span> <span class="va">values</span><span class="op">$</span><span class="va">data</span><span class="op">)</span></span>
+<span>    <span class="co"># with no stock numbers the SSB is calculated as zero, when it is not known</span></span>
+<span>    <span class="va">no_numbers</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/dimnames.html" class="external-link">dimnames</a></span><span class="op">(</span><span class="fu"><a href="http://flrproject.org/FLCore/reference/accessors.html" class="external-link">stock.n</a></span><span class="op">(</span><span class="va">object</span><span class="op">)</span><span class="op">)</span><span class="op">$</span><span class="va">year</span><span class="op">[</span><span class="fu"><a href="https://rdrr.io/r/base/apply.html" class="external-link">apply</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/NA.html" class="external-link">is.na</a></span><span class="op">(</span><span class="fu"><a href="http://flrproject.org/FLCore/reference/accessors.html" class="external-link">stock.n</a></span><span class="op">(</span><span class="va">object</span><span class="op">)</span><span class="op">)</span>, <span class="fl">2</span>, <span class="va">all</span><span class="op">)</span><span class="op">]</span></span>
+<span>    <span class="va">rows</span><span class="op">[</span><span class="op">!</span><span class="op">(</span><span class="va">rows</span><span class="op">$</span><span class="va">quantity</span> <span class="op">==</span> <span class="st">"SSB"</span> <span class="op">&amp;</span> <span class="va">rows</span><span class="op">$</span><span class="va">year</span> <span class="op"><a href="https://rdrr.io/r/base/match.html" class="external-link">%in%</a></span> <span class="va">no_numbers</span><span class="op">)</span>, <span class="op">]</span></span>
 <span>  <span class="op">}</span><span class="op">)</span></span>
-<span>  <span class="fu"><a href="https://rdrr.io/r/base/do.call.html" class="external-link">do.call</a></span><span class="op">(</span><span class="va">rbind</span>, <span class="va">rows</span><span class="op">)</span></span>
+<span>  <span class="va">rows</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/do.call.html" class="external-link">do.call</a></span><span class="op">(</span><span class="va">rbind</span>, <span class="va">rows</span><span class="op">)</span></span>
+<span>  <span class="va">rows</span><span class="op">$</span><span class="va">quantity</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/factor.html" class="external-link">factor</a></span><span class="op">(</span><span class="va">rows</span><span class="op">$</span><span class="va">quantity</span>, <span class="va">quantities</span><span class="op">)</span></span>
+<span>  <span class="va">rows</span><span class="op">[</span><span class="op">!</span><span class="fu"><a href="https://rdrr.io/r/base/NA.html" class="external-link">is.na</a></span><span class="op">(</span><span class="va">rows</span><span class="op">$</span><span class="va">dataset</span><span class="op">)</span>, <span class="op">]</span></span>
 <span><span class="op">}</span></span>
 <span></span>
 <span><span class="co"># The summary of a stock assessment in SAG, in the same layout.</span></span>
 <span></span>
 <span><span class="va">sag_summary</span> <span class="op">&lt;-</span> <span class="kw">function</span><span class="op">(</span><span class="va">stock</span><span class="op">)</span> <span class="op">{</span></span>
 <span>  <span class="va">sag</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/pkg/icesSAG/man/getSAG.html" class="external-link">getSAG</a></span><span class="op">(</span><span class="va">stock</span><span class="op">$</span><span class="va">stock_code</span>, <span class="va">stock</span><span class="op">$</span><span class="va">assessment_year</span><span class="op">)</span></span>
+<span></span>
+<span>  <span class="co"># where SAG has no catches, the landings and discards are used, or the</span></span>
+<span>  <span class="co"># landings alone if there are no discards</span></span>
+<span>  <span class="va">sag</span><span class="op">$</span><span class="va">catches</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/ifelse.html" class="external-link">ifelse</a></span><span class="op">(</span></span>
+<span>    <span class="op">!</span><span class="fu"><a href="https://rdrr.io/r/base/NA.html" class="external-link">is.na</a></span><span class="op">(</span><span class="va">sag</span><span class="op">$</span><span class="va">catches</span><span class="op">)</span>, <span class="va">sag</span><span class="op">$</span><span class="va">catches</span>,</span>
+<span>    <span class="fu"><a href="https://rdrr.io/r/base/ifelse.html" class="external-link">ifelse</a></span><span class="op">(</span><span class="op">!</span><span class="fu"><a href="https://rdrr.io/r/base/NA.html" class="external-link">is.na</a></span><span class="op">(</span><span class="va">sag</span><span class="op">$</span><span class="va">discards</span><span class="op">)</span>, <span class="va">sag</span><span class="op">$</span><span class="va">landings</span> <span class="op">+</span> <span class="va">sag</span><span class="op">$</span><span class="va">discards</span>, <span class="va">sag</span><span class="op">$</span><span class="va">landings</span><span class="op">)</span></span>
+<span>  <span class="op">)</span></span>
+<span></span>
 <span>  <span class="va">rows</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/lapply.html" class="external-link">lapply</a></span><span class="op">(</span><span class="va">quantities</span>, <span class="kw">function</span><span class="op">(</span><span class="va">quantity</span><span class="op">)</span> <span class="op">{</span></span>
 <span>    <span class="fu"><a href="https://rdrr.io/r/base/data.frame.html" class="external-link">data.frame</a></span><span class="op">(</span>quantity <span class="op">=</span> <span class="va">quantity</span>, year <span class="op">=</span> <span class="va">sag</span><span class="op">$</span><span class="va">Year</span>, sag <span class="op">=</span> <span class="va">sag</span><span class="op">[[</span><span class="va">quantity</span><span class="op">]</span><span class="op">]</span><span class="op">)</span></span>
 <span>  <span class="op">}</span><span class="op">)</span></span>
@@ -187,9 +228,18 @@ Code
 <span>  <span class="kw">if</span> <span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/class.html" class="external-link">inherits</a></span><span class="op">(</span><span class="va">sag</span>, <span class="st">"try-error"</span><span class="op">)</span> <span class="op">||</span> <span class="fu"><a href="https://rdrr.io/r/base/all.html" class="external-link">all</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/NA.html" class="external-link">is.na</a></span><span class="op">(</span><span class="va">sag</span><span class="op">$</span><span class="va">sag</span><span class="op">)</span><span class="op">)</span><span class="op">)</span> <span class="op">{</span></span>
 <span>    <span class="kw"><a href="https://rdrr.io/r/base/function.html" class="external-link">return</a></span><span class="op">(</span><span class="st">"Not compared: the stock assessment was not found in SAG."</span><span class="op">)</span></span>
 <span>  <span class="op">}</span></span>
-<span>  <span class="va">both</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/merge.html" class="external-link">merge</a></span><span class="op">(</span><span class="fu">dataset_summary</span><span class="op">(</span><span class="va">stock</span><span class="op">)</span>, <span class="va">sag</span>, all <span class="op">=</span> <span class="cn">TRUE</span><span class="op">)</span></span>
+<span>  <span class="va">lines</span> <span class="op">&lt;-</span> <span class="fu">dataset_summary</span><span class="op">(</span><span class="va">stock</span><span class="op">)</span></span>
+<span></span>
+<span>  <span class="co"># SAG is compared with the estimates of SSB, F and recruitment, and with</span></span>
+<span>  <span class="co"># the observed catches if there are any</span></span>
+<span>  <span class="va">compared</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/ifelse.html" class="external-link">ifelse</a></span><span class="op">(</span><span class="va">lines</span><span class="op">$</span><span class="va">quantity</span> <span class="op">==</span> <span class="st">"catches"</span> <span class="op">&amp;</span> <span class="va">stock</span><span class="op">$</span><span class="va">observed</span>, <span class="st">"observed"</span>, <span class="st">"estimated"</span><span class="op">)</span></span>
+<span>  <span class="va">both</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/merge.html" class="external-link">merge</a></span><span class="op">(</span><span class="va">lines</span><span class="op">[</span><span class="va">lines</span><span class="op">$</span><span class="va">type</span> <span class="op">==</span> <span class="va">compared</span>, <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"quantity"</span>, <span class="st">"year"</span>, <span class="st">"dataset"</span><span class="op">)</span><span class="op">]</span>, <span class="va">sag</span>, all <span class="op">=</span> <span class="cn">TRUE</span><span class="op">)</span></span>
 <span>  <span class="va">both</span><span class="op">$</span><span class="va">quantity</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/factor.html" class="external-link">factor</a></span><span class="op">(</span><span class="va">both</span><span class="op">$</span><span class="va">quantity</span>, <span class="va">quantities</span><span class="op">)</span></span>
-<span>  <span class="va">both</span><span class="op">[</span><span class="op">!</span><span class="fu"><a href="https://rdrr.io/r/base/NA.html" class="external-link">is.na</a></span><span class="op">(</span><span class="va">both</span><span class="op">$</span><span class="va">dataset</span><span class="op">)</span> <span class="op">|</span> <span class="op">!</span><span class="fu"><a href="https://rdrr.io/r/base/NA.html" class="external-link">is.na</a></span><span class="op">(</span><span class="va">both</span><span class="op">$</span><span class="va">sag</span><span class="op">)</span>, <span class="op">]</span></span>
+<span>  <span class="va">both</span> <span class="op">&lt;-</span> <span class="va">both</span><span class="op">[</span><span class="op">!</span><span class="fu"><a href="https://rdrr.io/r/base/NA.html" class="external-link">is.na</a></span><span class="op">(</span><span class="va">both</span><span class="op">$</span><span class="va">dataset</span><span class="op">)</span> <span class="op">|</span> <span class="op">!</span><span class="fu"><a href="https://rdrr.io/r/base/NA.html" class="external-link">is.na</a></span><span class="op">(</span><span class="va">both</span><span class="op">$</span><span class="va">sag</span><span class="op">)</span>, <span class="op">]</span></span>
+<span></span>
+<span>  <span class="co"># both sets of lines are kept, for the plots</span></span>
+<span>  <span class="fu"><a href="https://rdrr.io/r/base/attr.html" class="external-link">attr</a></span><span class="op">(</span><span class="va">both</span>, <span class="st">"lines"</span><span class="op">)</span> <span class="op">&lt;-</span> <span class="va">lines</span></span>
+<span>  <span class="va">both</span></span>
 <span><span class="op">}</span><span class="op">)</span></span>
 <span></span>
 <span><span class="co"># Is each quantity the same in the dataset and in SAG?</span></span>
@@ -291,6 +341,11 @@ Code
 <span><span class="co"># The plots for a stock: the four quantities in the dataset and in SAG.</span></span>
 <span></span>
 <span><span class="va">check_plot</span> <span class="op">&lt;-</span> <span class="kw">function</span><span class="op">(</span><span class="va">check</span>, <span class="va">agreed</span><span class="op">)</span> <span class="op">{</span></span>
+<span>  <span class="co"># the observed lines are drawn first, so the estimates are on top</span></span>
+<span>  <span class="va">lines</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/attr.html" class="external-link">attr</a></span><span class="op">(</span><span class="va">check</span>, <span class="st">"lines"</span><span class="op">)</span></span>
+<span>  <span class="va">lines</span> <span class="op">&lt;-</span> <span class="va">lines</span><span class="op">[</span><span class="fu"><a href="https://rdrr.io/r/base/order.html" class="external-link">order</a></span><span class="op">(</span><span class="va">lines</span><span class="op">$</span><span class="va">type</span> <span class="op">!=</span> <span class="st">"observed"</span><span class="op">)</span>, <span class="op">]</span></span>
+<span>  <span class="va">lines</span><span class="op">$</span><span class="va">type</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/factor.html" class="external-link">factor</a></span><span class="op">(</span><span class="va">lines</span><span class="op">$</span><span class="va">type</span>, <span class="fu"><a href="https://rdrr.io/r/base/names.html" class="external-link">names</a></span><span class="op">(</span><span class="va">colours</span><span class="op">)</span><span class="op">)</span></span>
+<span></span>
 <span>  <span class="co"># every quantity gets a panel, with or without values</span></span>
 <span>  <span class="va">panels</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/data.frame.html" class="external-link">data.frame</a></span><span class="op">(</span>quantity <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/factor.html" class="external-link">factor</a></span><span class="op">(</span><span class="va">quantities</span>, <span class="va">quantities</span><span class="op">)</span>, year <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/Extremes.html" class="external-link">min</a></span><span class="op">(</span><span class="va">check</span><span class="op">$</span><span class="va">year</span><span class="op">)</span>, value <span class="op">=</span> <span class="fl">0</span><span class="op">)</span></span>
 <span></span>
@@ -304,7 +359,8 @@ Code
 <span>  <span class="op">}</span></span>
 <span></span>
 <span>  <span class="va">plot</span> <span class="op">+</span></span>
-<span>    <span class="fu"><a href="https://ggplot2.tidyverse.org/reference/geom_path.html" class="external-link">geom_line</a></span><span class="op">(</span><span class="fu"><a href="https://ggplot2.tidyverse.org/reference/aes.html" class="external-link">aes</a></span><span class="op">(</span>y <span class="op">=</span> <span class="va">dataset</span><span class="op">)</span>, data <span class="op">=</span> <span class="va">check</span><span class="op">[</span><span class="op">!</span><span class="fu"><a href="https://rdrr.io/r/base/NA.html" class="external-link">is.na</a></span><span class="op">(</span><span class="va">check</span><span class="op">$</span><span class="va">dataset</span><span class="op">)</span>, <span class="op">]</span>, colour <span class="op">=</span> <span class="va">colours</span><span class="op">[</span><span class="st">"estimated"</span><span class="op">]</span>, linewidth <span class="op">=</span> <span class="fl">0.7</span><span class="op">)</span> <span class="op">+</span></span>
+<span>    <span class="fu"><a href="https://ggplot2.tidyverse.org/reference/geom_path.html" class="external-link">geom_line</a></span><span class="op">(</span><span class="fu"><a href="https://ggplot2.tidyverse.org/reference/aes.html" class="external-link">aes</a></span><span class="op">(</span>y <span class="op">=</span> <span class="va">dataset</span>, colour <span class="op">=</span> <span class="va">type</span><span class="op">)</span>, data <span class="op">=</span> <span class="va">lines</span>, linewidth <span class="op">=</span> <span class="fl">0.7</span><span class="op">)</span> <span class="op">+</span></span>
+<span>    <span class="fu"><a href="https://ggplot2.tidyverse.org/reference/scale_manual.html" class="external-link">scale_colour_manual</a></span><span class="op">(</span>values <span class="op">=</span> <span class="va">colours</span>, guide <span class="op">=</span> <span class="st">"none"</span><span class="op">)</span> <span class="op">+</span></span>
 <span>    <span class="fu"><a href="https://ggplot2.tidyverse.org/reference/geom_point.html" class="external-link">geom_point</a></span><span class="op">(</span><span class="fu"><a href="https://ggplot2.tidyverse.org/reference/aes.html" class="external-link">aes</a></span><span class="op">(</span>y <span class="op">=</span> <span class="va">sag</span><span class="op">)</span>, data <span class="op">=</span> <span class="va">check</span><span class="op">[</span><span class="op">!</span><span class="fu"><a href="https://rdrr.io/r/base/NA.html" class="external-link">is.na</a></span><span class="op">(</span><span class="va">check</span><span class="op">$</span><span class="va">sag</span><span class="op">)</span>, <span class="op">]</span>, colour <span class="op">=</span> <span class="st">"grey25"</span>, size <span class="op">=</span> <span class="fl">0.7</span><span class="op">)</span> <span class="op">+</span></span>
 <span>    <span class="fu"><a href="https://ggplot2.tidyverse.org/reference/facet_wrap.html" class="external-link">facet_wrap</a></span><span class="op">(</span><span class="op">~</span><span class="va">quantity</span>, nrow <span class="op">=</span> <span class="fl">1</span>, scales <span class="op">=</span> <span class="st">"free_y"</span>, drop <span class="op">=</span> <span class="cn">FALSE</span><span class="op">)</span> <span class="op">+</span></span>
 <span>    <span class="fu"><a href="https://ggplot2.tidyverse.org/reference/scale_continuous.html" class="external-link">scale_y_continuous</a></span><span class="op">(</span>labels <span class="op">=</span> <span class="kw">function</span><span class="op">(</span><span class="va">y</span><span class="op">)</span> <span class="fu"><a href="https://rdrr.io/r/base/format.html" class="external-link">format</a></span><span class="op">(</span><span class="va">y</span>, big.mark <span class="op">=</span> <span class="st">","</span>, scientific <span class="op">=</span> <span class="cn">FALSE</span>, trim <span class="op">=</span> <span class="cn">TRUE</span><span class="op">)</span><span class="op">)</span> <span class="op">+</span></span>
@@ -329,7 +385,7 @@ Code
 Cod
 </p>
 <p class="qc-labels">
-<span class="qc-same">SSB</span> <span class="qc-same">F</span> <span class="qc-different">recruitment ×1.83</span> <span class="qc-none">catches</span>
+<span class="qc-same">SSB</span> <span class="qc-same">F</span> <span class="qc-different">recruitment ×1.83</span> <span class="qc-different">catches ×1</span>
 </p>
 <p><img src="visual-check_files/figure-html/dots-1-1.png" class="r-plt" alt="Dots showing which data are present for cod.27.1-2.coastN (2026)." width="990"></p>
 <p><img src="visual-check_files/figure-html/plots-1-1.png" class="r-plt" alt="SSB, F, recruitment and catches of cod.27.1-2.coastN (2026) by year, in the dataset and in SAG." width="990"></p>
@@ -602,7 +658,7 @@ Herring
 Plaice
 </p>
 <p class="qc-labels">
-<span class="qc-different">SSB ×0.996</span> <span class="qc-different">F ×0.995</span> <span class="qc-different">recruitment ×0.995</span> <span class="qc-none">catches</span>
+<span class="qc-different">SSB ×0.996</span> <span class="qc-different">F ×0.995</span> <span class="qc-different">recruitment ×0.995</span> <span class="qc-different">catches ×1.31</span>
 </p>
 <p><img src="visual-check_files/figure-html/dots-19-1.png" class="r-plt" alt="Dots showing which data are present for ple.27.21-32 (2026)." width="990"></p>
 <p><img src="visual-check_files/figure-html/plots-19-1.png" class="r-plt" alt="SSB, F, recruitment and catches of ple.27.21-32 (2026) by year, in the dataset and in SAG." width="990"></p>
@@ -617,7 +673,7 @@ Sole
 </p>
 <p class="qc-labels">
 <span class="qc-different">SSB ×1</span> <span class="qc-same">F</span>
-<span class="qc-same">recruitment</span> <span class="qc-none">catches</span>
+<span class="qc-same">recruitment</span> <span class="qc-different">catches ×1</span>
 </p>
 <p><img src="visual-check_files/figure-html/dots-20-1.png" class="r-plt" alt="Dots showing which data are present for sol.27.20-24 (2026)." width="990"></p>
 <p><img src="visual-check_files/figure-html/plots-20-1.png" class="r-plt" alt="SSB, F, recruitment and catches of sol.27.20-24 (2026) by year, in the dataset and in SAG." width="990"></p>
@@ -631,7 +687,8 @@ Sole
 Sprat
 </p>
 <p class="qc-labels">
-<span class="qc-same">SSB</span> <span class="qc-same">F</span> <span class="qc-different">recruitment ×0.001</span> <span class="qc-different">catches ×0.992</span>
+<span class="qc-same">SSB</span> <span class="qc-same">F</span> <span class="qc-same">recruitment</span> <span class="qc-different">catches
+×0.992</span>
 </p>
 <p><img src="visual-check_files/figure-html/dots-21-1.png" class="r-plt" alt="Dots showing which data are present for spr.27.22-32 (2024)." width="990"></p>
 <p><img src="visual-check_files/figure-html/plots-21-1.png" class="r-plt" alt="SSB, F, recruitment and catches of spr.27.22-32 (2024) by year, in the dataset and in SAG." width="990"></p>
@@ -645,7 +702,8 @@ Sprat
 Sprat
 </p>
 <p class="qc-labels">
-<span class="qc-same">SSB</span> <span class="qc-same">F</span> <span class="qc-different">recruitment ×0.001</span> <span class="qc-different">catches ×0.991</span>
+<span class="qc-same">SSB</span> <span class="qc-same">F</span> <span class="qc-same">recruitment</span> <span class="qc-different">catches
+×0.991</span>
 </p>
 <p><img src="visual-check_files/figure-html/dots-22-1.png" class="r-plt" alt="Dots showing which data are present for spr.27.22-32 (2026)." width="990"></p>
 <p><img src="visual-check_files/figure-html/plots-22-1.png" class="r-plt" alt="SSB, F, recruitment and catches of spr.27.22-32 (2026) by year, in the dataset and in SAG." width="990"></p>
@@ -663,7 +721,7 @@ Sprat
 Black-bellied anglerfish
 </p>
 <p class="qc-labels">
-<span class="qc-same">SSB</span> <span class="qc-same">F</span> <span class="qc-different">recruitment ×1</span> <span class="qc-different">catches ×1.11</span>
+<span class="qc-same">SSB</span> <span class="qc-same">F</span> <span class="qc-different">recruitment ×1</span> <span class="qc-different">catches ×1.19</span>
 </p>
 <p><img src="visual-check_files/figure-html/dots-23-1.png" class="r-plt" alt="Dots showing which data are present for ank.27.78abd (2026)." width="990"></p>
 <p><img src="visual-check_files/figure-html/plots-23-1.png" class="r-plt" alt="SSB, F, recruitment and catches of ank.27.78abd (2026) by year, in the dataset and in SAG." width="990"></p>
@@ -812,7 +870,7 @@ Megrim
 Sole
 </p>
 <p class="qc-labels">
-<span class="qc-same">SSB</span> <span class="qc-same">F</span> <span class="qc-same">recruitment</span> <span class="qc-none">catches</span>
+<span class="qc-same">SSB</span> <span class="qc-same">F</span> <span class="qc-same">recruitment</span> <span class="qc-same">catches</span>
 </p>
 <p><img src="visual-check_files/figure-html/dots-33-1.png" class="r-plt" alt="Dots showing which data are present for sol.27.7a (2026)." width="990"></p>
 <p><img src="visual-check_files/figure-html/plots-33-1.png" class="r-plt" alt="SSB, F, recruitment and catches of sol.27.7a (2026) by year, in the dataset and in SAG." width="990"></p>
@@ -826,7 +884,8 @@ Sole
 Sole
 </p>
 <p class="qc-labels">
-<span class="qc-same">SSB</span> <span class="qc-same">F</span> <span class="qc-same">recruitment</span> <span class="qc-none">catches</span>
+<span class="qc-same">SSB</span> <span class="qc-same">F</span> <span class="qc-same">recruitment</span> <span class="qc-different">catches
+×1</span>
 </p>
 <p><img src="visual-check_files/figure-html/dots-34-1.png" class="r-plt" alt="Dots showing which data are present for sol.27.7e (2026)." width="990"></p>
 <p><img src="visual-check_files/figure-html/plots-34-1.png" class="r-plt" alt="SSB, F, recruitment and catches of sol.27.7e (2026) by year, in the dataset and in SAG." width="990"></p>
@@ -840,7 +899,8 @@ Sole
 Sole
 </p>
 <p class="qc-labels">
-<span class="qc-same">SSB</span> <span class="qc-same">F</span> <span class="qc-same">recruitment</span> <span class="qc-none">catches</span>
+<span class="qc-same">SSB</span> <span class="qc-same">F</span> <span class="qc-same">recruitment</span> <span class="qc-different">catches
+×0.967</span>
 </p>
 <p><img src="visual-check_files/figure-html/dots-35-1.png" class="r-plt" alt="Dots showing which data are present for sol.27.7fg (2026)." width="990"></p>
 <p><img src="visual-check_files/figure-html/plots-35-1.png" class="r-plt" alt="SSB, F, recruitment and catches of sol.27.7fg (2026) by year, in the dataset and in SAG." width="990"></p>
@@ -866,7 +926,7 @@ Whiting
 Whiting
 </p>
 <p class="qc-labels">
-<span class="qc-same">SSB</span> <span class="qc-same">F</span> <span class="qc-same">recruitment</span> <span class="qc-none">catches</span>
+<span class="qc-same">SSB</span> <span class="qc-same">F</span> <span class="qc-same">recruitment</span> <span class="qc-same">catches</span>
 </p>
 <p><img src="visual-check_files/figure-html/dots-37-1.png" class="r-plt" alt="Dots showing which data are present for whg.27.7b-ce-k (2026)." width="990"></p>
 <p><img src="visual-check_files/figure-html/plots-37-1.png" class="r-plt" alt="SSB, F, recruitment and catches of whg.27.7b-ce-k (2026) by year, in the dataset and in SAG." width="990"></p>
@@ -919,7 +979,7 @@ Brill
 </p>
 <p class="qc-labels">
 <span class="qc-different">SSB ×6160</span> <span class="qc-different">F
-×0.336</span> <span class="qc-none">recruitment</span> <span class="qc-none">catches</span>
+×0.336</span> <span class="qc-none">recruitment</span> <span class="qc-different">catches ×0.994</span>
 </p>
 <p><img src="visual-check_files/figure-html/dots-40-1.png" class="r-plt" alt="Dots showing which data are present for bll.27.3a47de (2026)." width="990"></p>
 <p><img src="visual-check_files/figure-html/plots-40-1.png" class="r-plt" alt="SSB, F, recruitment and catches of bll.27.3a47de (2026) by year, in the dataset and in SAG." width="990"></p>
@@ -1003,7 +1063,8 @@ Whiting
 Witch
 </p>
 <p class="qc-labels">
-<span class="qc-same">SSB</span> <span class="qc-same">F</span> <span class="qc-same">recruitment</span> <span class="qc-none">catches</span>
+<span class="qc-same">SSB</span> <span class="qc-same">F</span> <span class="qc-same">recruitment</span> <span class="qc-different">catches
+×0.985</span>
 </p>
 <p><img src="visual-check_files/figure-html/dots-46-1.png" class="r-plt" alt="Dots showing which data are present for wit.27.3a47d (2026)." width="990"></p>
 <p><img src="visual-check_files/figure-html/plots-46-1.png" class="r-plt" alt="SSB, F, recruitment and catches of wit.27.3a47d (2026) by year, in the dataset and in SAG." width="990"></p>

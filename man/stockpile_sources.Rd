@@ -42,6 +42,8 @@ A data frame with one row per object:
 when it was made}
 \item{file, object}{the submitted file, and the name of the object in it}
 \item{notes}{the notes given by the submitter}
+\item{units_assumed}{were any numbers or weights submitted with no units?
+They are then taken to be in thousands and kg}
 \item{name, desc, quant, min_age, ..., n_iters}{the name, description,
 ranges and dimensions of the object, as in \code{\link[=stockpile_stocks]{stockpile_stocks()}}}
 }

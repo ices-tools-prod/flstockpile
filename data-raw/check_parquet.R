@@ -4,7 +4,9 @@
 # dir, and compared with the FLStock that the FLStockpile package makes from
 # the parquet tables: the values, dimensions and units of every slot, and the
 # ranges, name and description. Where the submitted object has iterations, it
-# is the medians over the iterations that are compared.
+# is the medians over the iterations that are compared. The numbers and
+# weights are stored in thousands and kg, so the submitted values are put in
+# those units before they are compared.
 #
 # The dataset can be a folder or a web address, so this also checks a
 # published copy of the tables.
@@ -29,6 +31,57 @@ stock_slots <- c(
   "m", "mat",
   "harvest", "harvest.spwn", "m.spwn"
 )
+
+number_slots <- c("catch.n", "landings.n", "discards.n", "stock.n")
+weight_slots <- c("catch.wt", "landings.wt", "discards.wt", "stock.wt")
+
+# What to multiply the values of a slot by to put them in the standard units,
+# thousands for numbers and kg for weights, from the units given by the
+# submitter. Returns NA where no units were given, or they are not units of
+# numbers or weights that are known.
+
+unit_multiplier <- function(units, slot_name) {
+  if (units %in% c("NA", "")) {
+    return(NA_real_)
+  }
+  if (slot_name %in% number_slots) {
+    named <- c(thousands = 1e3, millions = 1e6)
+    numbers <- if (grepl("^10\\^[0-9]+$", units)) {
+      10^as.numeric(sub("10^", "", units, fixed = TRUE))
+    } else if (grepl("^[0-9.]+(e[0-9]+)?$", units)) {
+      as.numeric(units)
+    } else {
+      unname(named[units])
+    }
+    multiplier <- numbers / 1000
+  } else {
+    multiplier <- unname(c(kg = 1, g = 0.001, t = 1000, tonnes = 1000)[units])
+  }
+  multiplier
+}
+
+# Put the numbers of an FLStock in thousands and its weights in kg.
+#
+# Where no units were given, or they are not known, the values are taken to
+# be in thousands and kg already. Returns the FLStock, with the slots this was
+# done for, and the units they had, in the "units_assumed" attribute.
+
+standard_units <- function(stock) {
+  assumed <- character()
+  for (slot_name in c(number_slots, weight_slots)) {
+    quant <- slot(stock, slot_name)
+    multiplier <- unit_multiplier(units(quant), slot_name)
+    if (is.na(multiplier)) {
+      if (!all(is.na(quant))) assumed <- c(assumed, paste0(slot_name, " (", units(quant), ")"))
+    } else if (multiplier != 1) {
+      quant <- quant * multiplier
+    }
+    units(quant) <- if (slot_name %in% number_slots) "1000" else "kg"
+    slot(stock, slot_name) <- quant
+  }
+  attr(stock, "units_assumed") <- assumed
+  stock
+}
 
 # Read a submitted object.
 #
@@ -73,7 +126,7 @@ sources <- sources[sources$class == "FLStock", ]
 problems <- character()
 for (i in seq_len(nrow(sources))) {
   source <- sources[i, ]
-  submitted <- read_submitted(source$submission_id, source$file, source$object)
+  submitted <- standard_units(read_submitted(source$submission_id, source$file, source$object))
   stored <- stockpile_flstock(source$stock_code, source$assessment_year, source$version, type = source$type)
 
   problem <- function(...) {
@@ -91,7 +144,7 @@ for (i in seq_len(nrow(sources))) {
     is <- slot(stored, slot_name)
     if (!identical(dimnames(was), dimnames(is))) {
       problem(slot_name, "dimensions")
-    } else if (!identical(c(was), c(is))) {
+    } else if (!isTRUE(all.equal(c(was), c(is), tolerance = 1e-12))) {
       problem(slot_name, "values")
     } else if (!identical(units(was), units(is)) && !all(is.na(was))) {
       # a slot that is all missing is not stored, so has lost its units

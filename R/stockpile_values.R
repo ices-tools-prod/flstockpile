@@ -28,7 +28,11 @@
 #'   \item{year, unit, season, area}{the year, and the unit, season and area
 #'     as named by the submitter}
 #'   \item{value}{the value. Missing values are not stored}
-#'   \item{units}{the units of measurement given by the submitter}
+#'   \item{units}{the units of measurement. Numbers (`catch.n`, `landings.n`,
+#'     `discards.n`, `stock.n`) are always in thousands, `"1000"`, and weights
+#'     (`catch.wt`, `landings.wt`, `discards.wt`, `stock.wt`) in `"kg"`, whatever
+#'     units they were submitted in. The units of the other slots are those given
+#'     by the submitter}
 #' }
 #'
 #' @seealso [stockpile_flstock()] to get the values as an `FLStock`.

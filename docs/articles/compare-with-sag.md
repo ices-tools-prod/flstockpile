@@ -33,11 +33,36 @@ The summary of a stock in the dataset is calculated from its `FLStock`
 object. The spawning stock biomass, mean fishing mortality and
 recruitment come from the model estimates. The catches in SAG are
 usually the observed catches, so the catches come from the observed data
-where the dataset has them, and from the estimates otherwise.
+where the dataset has them, and from the estimates otherwise. Where SAG
+has no catches for a year, its landings and discards are added together
+and used instead, or its landings alone if it has no discards. SAG holds
+recruitment in thousands, so the recruitment is converted to thousands
+using the units given for the stock numbers.
 
 Code
 
 ``` r
+
+# The number of fish that one unit of the stock numbers stands for, from the
+# units given by the submitter, for example "1000", "10^3" or "thousands".
+# Where no units are given the numbers are taken to be thousands.
+
+numbers_multiplier <- function(units) {
+  if (grepl("^10\\^[0-9]+$", units)) {
+    return(10^as.numeric(sub("10^", "", units, fixed = TRUE)))
+  }
+  if (grepl("^[0-9.]+(e[0-9]+)?$", units)) {
+    return(as.numeric(units))
+  }
+  named <- c(thousands = 1e3, millions = 1e6)
+  if (units %in% names(named)) named[[units]] else 1e3
+}
+
+# The recruitment of a stock in thousands, the units that SAG uses.
+
+recruitment <- function(object) {
+  rec(object) * numbers_multiplier(units(stock.n(object))) / 1000
+}
 
 # The summary of a stock assessment in the dataset.
 #
@@ -52,7 +77,7 @@ dataset_summary <- function(stock_code, assessment_year) {
     catch(estimated)
   }
 
-  quantities <- list(SSB = ssb(estimated), F = fbar(estimated), recruitment = rec(estimated), catches = catches)
+  quantities <- list(SSB = ssb(estimated), F = fbar(estimated), recruitment = recruitment(estimated), catches = catches)
   rows <- lapply(names(quantities), function(quantity) {
     values <- as.data.frame(quantities[[quantity]])
     data.frame(quantity = quantity, year = values$year, dataset = values$data)
@@ -64,6 +89,14 @@ dataset_summary <- function(stock_code, assessment_year) {
 
 sag_summary <- function(stock_code, assessment_year) {
   sag <- getSAG(stock_code, assessment_year)
+
+  # where SAG has no catches, the landings and discards are used, or the
+  # landings alone if there are no discards
+  sag$catches <- ifelse(
+    !is.na(sag$catches), sag$catches,
+    ifelse(!is.na(sag$discards), sag$landings + sag$discards, sag$landings)
+  )
+
   rows <- lapply(c("SSB", "F", "recruitment", "catches"), function(quantity) {
     data.frame(quantity = quantity, year = sag$Year, sag = sag[[quantity]])
   })
@@ -201,9 +234,9 @@ table(agreement$quantity, ifelse(agreement$same, "same", "different"))
 
     #>              
     #>               different same
-    #>   catches            14   12
+    #>   catches            21   14
     #>   F                   7   29
-    #>   recruitment         7   27
+    #>   recruitment         5   29
     #>   SSB                 5   31
 
 Code
@@ -213,7 +246,7 @@ Code
 all_same <- aggregate(same ~ stock_code + assessment_year, agreement, all)
 ```
 
-15 of the 36 stock assessments are the same as SAG in every quantity
+12 of the 36 stock assessments are the same as SAG in every quantity
 that could be compared.
 
 ### Explore a stock
@@ -321,10 +354,10 @@ knitr::kable(ratios[order(ratios$stock_code), ], row.names = FALSE)
 
 | stock_code | assessment_year | catches | F | recruitment | SSB |
 |:---|---:|:---|:---|:---|:---|
-| ank.27.78abd | 2026 | 1.11 (0.926 to 1.31) |  | 1 (1 to 2.22) |  |
+| ank.27.78abd | 2026 | 1.19 (0.926 to 1.73) |  | 1 (1 to 2.22) |  |
 | ank.27.8c9a | 2026 | 1.01 (0.957 to 1.05) |  |  | 1.61 (1.43 to 1.76) |
-| bll.27.3a47de | 2026 | \- | 0.336 (0.335 to 0.336) | \- | 6160 (5110 to 10100) |
-| cod.27.1-2.coastN | 2026 | \- |  | 1.83 (1.3 to 2.84) |  |
+| bll.27.3a47de | 2026 | 0.994 (0.833 to 1.1) | 0.336 (0.335 to 0.336) | \- | 6160 (5110 to 10100) |
+| cod.27.1-2.coastN | 2026 | 1 (0.991 to 1.13) |  | 1.83 (1.3 to 2.84) |  |
 | had.27.46a20 | 2026 | 0.991 (0.759 to 1.28) |  | 1 (0.518 to 1) |  |
 | had.27.5a | 2026 |  | 1.34 (0.995 to 1.98) |  |  |
 | had.27.6b | 2026 | 0.975 (0.608 to 1.29) |  |  |  |
@@ -335,13 +368,16 @@ knitr::kable(ratios[order(ratios$stock_code), ], row.names = FALSE)
 | hke.27.8c9a | 2026 | 0.999 (0.909 to 1.01) |  |  |  |
 | lez.27.4a6a | 2026 | 1 (0.961 to 1.07) | 0.169 (0.148 to 0.194) | \- | 36400 (36100 to 37000) |
 | mon.27.8c9a | 2026 | 1.01 (0.985 to 1.06) |  |  |  |
-| ple.27.21-32 | 2026 | \- | 0.995 (0.962 to 2.12) | 0.995 (0.937 to 1.7) | 0.996 (0.917 to 1.02) |
+| ple.27.21-32 | 2026 | 1.31 (1.13 to 1.58) | 0.995 (0.962 to 2.12) | 0.995 (0.937 to 1.7) | 0.996 (0.917 to 1.02) |
 | pok.27.5a | 2026 |  | 1.14 (0.95 to 1.45) |  |  |
-| sol.27.20-24 | 2026 | \- |  |  | 1 (0.892 to 1.11) |
+| sol.27.20-24 | 2026 | 1 (0.891 to 1.07) |  |  | 1 (0.892 to 1.11) |
+| sol.27.7e | 2026 | 1 (0.935 to 1) |  |  |  |
+| sol.27.7fg | 2026 | 0.967 (0.677 to 1) |  |  |  |
 | sol.27.8ab | 2026 | 1 (0.896 to 1.13) |  |  |  |
-| spr.27.22-32 | 2024 | 0.992 (0.937 to 1.02) |  | 0.001 (0.000999 to 0.00101) |  |
-| spr.27.22-32 | 2026 | 0.991 (0.937 to 1.02) |  | 0.001 (0.000997 to 0.001) |  |
+| spr.27.22-32 | 2024 | 0.992 (0.937 to 1.02) |  |  |  |
+| spr.27.22-32 | 2026 | 0.991 (0.937 to 1.02) |  |  |  |
 | whg.27.47d | 2026 |  |  | 1 (0.861 to 1) |  |
+| wit.27.3a47d | 2026 | 0.985 (0.89 to 0.991) |  |  |  |
 
 There are several reasons for a difference, and most of them are not
 errors:
@@ -349,9 +385,10 @@ errors:
 - **Catches.** The dataset catches are the estimates where no observed
   data were submitted, and SAG usually has the observed catches. A
   median close to 1 with a range around it is what that looks like.
-- **Units.** SAG may hold a quantity in different units, for example
-  recruitment in millions against thousands in the stock object, giving
-  a ratio of 0.001 or 1000.
+- **Units.** SAG may hold a quantity in different units, giving a ratio
+  such as 0.001 or 1000. Recruitment is converted using the units given
+  for the stock numbers, but they are not always given, and other
+  quantities are not converted.
 - **Relative quantities.** For some stocks SAG holds the biomass and
   fishing pressure relative to a reference point, such as B/B_(MSY), or
   a harvest rate in place of a fishing mortality. The description of

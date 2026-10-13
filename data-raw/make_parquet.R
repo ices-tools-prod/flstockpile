@@ -53,6 +53,17 @@
 # the same in the observed and estimated objects and is stored once. age is
 # NA for slots that are totals over ages. Missing values are not stored.
 #
+# Units
+#
+# The numbers (catch.n, landings.n, discards.n, stock.n) are stored in
+# thousands and the weights (catch.wt, landings.wt, discards.wt, stock.wt) in
+# kg, whatever units they were submitted in, so that numbers times weights are
+# tonnes for every stock. Where the submitter gave no units, the values are
+# taken to be in thousands and kg already, and the same is done where the
+# units given are not units of numbers or weights; the units_assumed column of
+# sources says where this was done. The units of the other slots are as
+# submitted.
+#
 # Iterations
 #
 # Where an object has iterations, which are likely to be simulations from a
@@ -210,6 +221,57 @@ guess_type <- function(stock, object, file) {
   c("estimated", "default")
 }
 
+number_slots <- c("catch.n", "landings.n", "discards.n", "stock.n")
+weight_slots <- c("catch.wt", "landings.wt", "discards.wt", "stock.wt")
+
+# What to multiply the values of a slot by to put them in the standard units,
+# thousands for numbers and kg for weights, from the units given by the
+# submitter. Returns NA where no units were given, or they are not units of
+# numbers or weights that are known.
+
+unit_multiplier <- function(units, slot_name) {
+  if (units %in% c("NA", "")) {
+    return(NA_real_)
+  }
+  if (slot_name %in% number_slots) {
+    named <- c(thousands = 1e3, millions = 1e6)
+    numbers <- if (grepl("^10\\^[0-9]+$", units)) {
+      10^as.numeric(sub("10^", "", units, fixed = TRUE))
+    } else if (grepl("^[0-9.]+(e[0-9]+)?$", units)) {
+      as.numeric(units)
+    } else {
+      unname(named[units])
+    }
+    multiplier <- numbers / 1000
+  } else {
+    multiplier <- unname(c(kg = 1, g = 0.001, t = 1000, tonnes = 1000)[units])
+  }
+  multiplier
+}
+
+# Put the numbers of an FLStock in thousands and its weights in kg.
+#
+# Where no units were given, or they are not known, the values are taken to
+# be in thousands and kg already. Returns the FLStock, with the slots this was
+# done for, and the units they had, in the "units_assumed" attribute.
+
+standard_units <- function(stock) {
+  assumed <- character()
+  for (slot_name in c(number_slots, weight_slots)) {
+    quant <- slot(stock, slot_name)
+    multiplier <- unit_multiplier(units(quant), slot_name)
+    if (is.na(multiplier)) {
+      if (!all(is.na(quant))) assumed <- c(assumed, paste0(slot_name, " (", units(quant), ")"))
+    } else if (multiplier != 1) {
+      quant <- quant * multiplier
+    }
+    units(quant) <- if (slot_name %in% number_slots) "1000" else "kg"
+    slot(stock, slot_name) <- quant
+  }
+  attr(stock, "units_assumed") <- assumed
+  stock
+}
+
 # The values in an FLQuant as a long table, without the missing values.
 #
 # Where there are iterations, the values are the medians over them.
@@ -285,6 +347,17 @@ for (i in seq_len(nrow(submissions))) {
   for (found in do.call(c, lapply(files, file_objects))) {
     found$submission <- i
     found$class <- if (is_a(found$data, "FLStock")) "FLStock" else "FLIndex"
+    found$units_assumed <- FALSE
+    if (found$class == "FLStock") {
+      found$data <- standard_units(found$data)
+      found$units_assumed <- length(attr(found$data, "units_assumed")) > 0
+      # units that were given, but are not units of numbers or weights
+      not_known <- grep("(NA)", attr(found$data, "units_assumed"), fixed = TRUE, invert = TRUE, value = TRUE)
+      if (length(not_known) > 0) {
+        cat("UNITS NOT KNOWN ", submissions$stock_code[i], " ", found$file, ": ", paste(not_known, collapse = ", "), "\n", sep = "")
+      }
+      attr(found$data, "units_assumed") <- NULL
+    }
     objects[[length(objects) + 1]] <- found
   }
 }
@@ -473,6 +546,7 @@ sources <- lapply(versions, function(version) {
       file = source$file,
       object = source$object,
       notes = submission$notes,
+      units_assumed = source$units_assumed,
       object_info(source$data)
     )
   })
@@ -527,6 +601,10 @@ for (name in names(tables)) {
   write_parquet(tables[[name]], file)
   cat(format(nrow(tables[[name]]), big.mark = ","), " rows written to ", file, "\n", sep = "")
 }
+cat(
+  sum(sources$units_assumed), "of", sum(sources$class == "FLStock"),
+  "FLStock objects had numbers or weights with no units, taken to be thousands and kg\n"
+)
 cat(
   nrow(stocks), "versions of", nrow(unique(stocks[c("stock_code", "assessment_year")])),
   "stock assessments, from", length(unique(sources$submission_id)), "submissions\n"

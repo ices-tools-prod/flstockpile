@@ -48,7 +48,11 @@ A data frame with one row per value:
 \item{year, unit, season, area}{the year, and the unit, season and area
 as named by the submitter}
 \item{value}{the value. Missing values are not stored}
-\item{units}{the units of measurement given by the submitter}
+\item{units}{the units of measurement. Numbers (\code{catch.n}, \code{landings.n},
+\code{discards.n}, \code{stock.n}) are always in thousands, \code{"1000"}, and weights
+(\code{catch.wt}, \code{landings.wt}, \code{discards.wt}, \code{stock.wt}) in \code{"kg"}, whatever
+units they were submitted in. The units of the other slots are those given
+by the submitter}
 }
 }
 \description{
