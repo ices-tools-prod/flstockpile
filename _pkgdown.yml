@@ -1,0 +1,25 @@
+url: https://neilcampbelll.github.io/FLstockpile/
+destination: docs
+
+template:
+  bootstrap: 5
+
+reference:
+- title: Location of the stockpile
+  contents:
+  - stockpile_url
+- title: Tables
+  contents:
+  - stockpile_stocks
+  - stockpile_sources
+  - stockpile_values
+  - stockpile_indices
+- title: FLStock objects
+  contents:
+  - stockpile_flstock
+
+articles:
+- title: Articles
+  navbar: ~
+  contents:
+  - articles/compare-with-sag

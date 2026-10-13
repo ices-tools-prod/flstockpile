@@ -1,4 +1,7 @@
 ^README\.Rmd$
 ^LICENSE\.md$
 ^data-raw$
-^submissions$
+^_pkgdown\.yml$
+^docs$
+^pkgdown$
+^vignettes/articles$

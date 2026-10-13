@@ -9,12 +9,13 @@ Imports: arrow,
          utils
 Suggests: FLCore
 Additional_repositories: https://flr.r-universe.dev
+Config/Needs/website: ggplot2, icesSAG, knitr, rmarkdown
 Description: Read the stock assessment results submitted to ICES, the observed
              data and the model estimates for each stock, from a set of parquet
              files. The results can be used as plain data frames, or converted
              to 'FLStock' objects if the 'FLCore' package is installed.
 License: MIT + file LICENSE
-URL: https://github.com/neilcampbelll/FLstockpile
+URL: https://neilcampbelll.github.io/FLstockpile/, https://github.com/neilcampbelll/FLstockpile
 BugReports: https://github.com/neilcampbelll/FLstockpile/issues
 Encoding: UTF-8
 Language: en-GB

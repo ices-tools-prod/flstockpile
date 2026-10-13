@@ -26,6 +26,7 @@ The location of the tables is set with \code{\link[=stockpile_url]{stockpile_url
 \seealso{
 Useful links:
 \itemize{
+  \item \url{https://neilcampbelll.github.io/FLstockpile/}
   \item \url{https://github.com/neilcampbelll/FLstockpile}
   \item Report bugs at \url{https://github.com/neilcampbelll/FLstockpile/issues}
 }
