@@ -3,8 +3,10 @@
 This article shows what has been submitted to the dataset: which stocks,
 which years they cover, and whether there are observed data, model
 estimates or both. The stocks are grouped by the ICES expert group that
-assesses them, which is looked up in the ICES Stock Database with the
-[icesSD](https://github.com/ices-tools-prod/icesSD) package.
+assesses them. The data category and species of each stock, and the
+other stocks of each expert group, are looked up in the ICES Stock
+Database with the [icesSD](https://github.com/ices-tools-prod/icesSD)
+package.
 
 It is run against the live stock database each time this site is built.
 
@@ -16,15 +18,15 @@ library(FLStockpile)
 library(icesSD)
 library(ggplot2)
 
-options(FLStockpile.url = "https://github.com/neilcampbelll/FLstockpile/releases/download/v2026.001")
+options(FLStockpile.url = "https://github.com/neilcampbelll/FLstockpile/releases/latest/download")
 ```
 
 ## Expert groups
 
-The stock database lists the stocks that are active in a year, with the
-expert group and data category of each. The latest version of each stock
-assessment in the dataset is matched to it by stock code and assessment
-year.
+The dataset has the expert group of each stock assessment. The stock
+database lists the stocks that are active in a year, with the data
+category and species of each, and is matched to the latest version of
+each stock assessment in the dataset by stock code and assessment year.
 
 Code
 
@@ -44,8 +46,8 @@ stock_database <- lapply(unique(stocks$assessment_year), function(year) {
 })
 stock_database <- do.call(rbind, stock_database)
 
-stocks <- merge(stocks, stock_database, all.x = TRUE)
-stocks$expert_group[is.na(stocks$expert_group)] <- "not in the stock database"
+# the expert group of each stock assessment is in the dataset
+stocks <- merge(stocks, stock_database[c("stock_code", "assessment_year", "data_category", "species")], all.x = TRUE)
 
 # what the dataset has for each stock assessment
 stocks$contents <- ifelse(

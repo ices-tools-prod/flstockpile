@@ -25,14 +25,17 @@ remotes::install_github("neilcampbelll/FLstockpile")
 
 ## Usage
 
-Say where the dataset is. This is a data release, so it will not change:
+Say where the dataset is. This is the latest data release:
 
 ``` r
 
 library(FLStockpile)
 
-options(FLStockpile.url = "https://github.com/neilcampbelll/FLstockpile/releases/download/v2026.001")
+options(FLStockpile.url = "https://github.com/neilcampbelll/FLstockpile/releases/latest/download")
 ```
+
+A release that will not change is at the same address with its tag, for
+example `.../releases/download/v2026.002`.
 
 List the stock assessments. Each one is a stock code and an assessment
 year, and by default the latest version of each is returned:
@@ -88,8 +91,8 @@ summary(stock)
 #>  1   11  11  1982    2025    3   7   
 #> 
 #> Metrics: 
-#>   rec: 9491 - 49819  (NA) 
-#>   ssb: 8875 - 18668  (NA) 
+#>   rec: 9491 - 49819  (1000) 
+#>   ssb: 8875 - 18668  (t) 
 #>   catch: 1277 - 6416  (NA) 
 #>   fbar: 0.20 - 0.53  (f)
 ```
@@ -148,7 +151,9 @@ and the `name`, `desc`, ranges (`min_age`, `max_age`, `plusgroup`,
 each submitted object, the `submission_id` and `submitted` time of the
 submission it came from, the `file` and `object` name, the submitter’s
 `notes`, and the same name, description, ranges and dimensions as in
-stocks, for that object.
+stocks, for that object. `units_assumed` says whether any numbers or
+weights were submitted with no units, in which case they are taken to be
+in thousands and kg.
 
 **values** has
 
@@ -159,7 +164,7 @@ stocks, for that object.
 | `age` | the age, or missing for a total over ages |
 | `year`, `unit`, `season`, `area` | the year, and the unit, season and area as named by the submitter |
 | `value` | the value; missing values are not stored |
-| `units` | the units of measurement given by the submitter |
+| `units` | the units of measurement: numbers are always in thousands (`1000`) and weights in `kg`; the units of the other slots are those given by the submitter |
 
 Where a submitted object had iterations, the values are the medians over
 the iterations.

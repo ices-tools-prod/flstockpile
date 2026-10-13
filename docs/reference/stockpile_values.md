@@ -90,7 +90,11 @@ A data frame with one row per value:
 
 - units:
 
-  the units of measurement given by the submitter
+  the units of measurement. Numbers (`catch.n`, `landings.n`,
+  `discards.n`, `stock.n`) are always in thousands, `"1000"`, and
+  weights (`catch.wt`, `landings.wt`, `discards.wt`, `stock.wt`) in
+  `"kg"`, whatever units they were submitted in. The units of the other
+  slots are those given by the submitter
 
 ## Details
 

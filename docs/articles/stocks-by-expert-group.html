@@ -71,9 +71,9 @@
 <p>This article shows what has been submitted to the dataset: which
 stocks, which years they cover, and whether there are observed data,
 model estimates or both. The stocks are grouped by the ICES expert group
-that assesses them, which is looked up in the ICES Stock Database with
-the <a href="https://github.com/ices-tools-prod/icesSD" class="external-link">icesSD</a>
-package.</p>
+that assesses them. The data category and species of each stock, and the
+other stocks of each expert group, are looked up in the ICES Stock
+Database with the <a href="https://github.com/ices-tools-prod/icesSD" class="external-link">icesSD</a> package.</p>
 <p>It is run against the live stock database each time this site is
 built.</p>
 <details class="code-fold"><summary>
@@ -83,14 +83,15 @@ Code
 <span><span class="kw"><a href="https://rdrr.io/r/base/library.html" class="external-link">library</a></span><span class="op">(</span><span class="va"><a href="https://sd.ices.dk" class="external-link">icesSD</a></span><span class="op">)</span></span>
 <span><span class="kw"><a href="https://rdrr.io/r/base/library.html" class="external-link">library</a></span><span class="op">(</span><span class="va"><a href="https://ggplot2.tidyverse.org" class="external-link">ggplot2</a></span><span class="op">)</span></span>
 <span></span>
-<span><span class="fu"><a href="https://rdrr.io/r/base/options.html" class="external-link">options</a></span><span class="op">(</span>FLStockpile.url <span class="op">=</span> <span class="st">"https://github.com/neilcampbelll/FLstockpile/releases/download/v2026.001"</span><span class="op">)</span></span></code></pre></div>
+<span><span class="fu"><a href="https://rdrr.io/r/base/options.html" class="external-link">options</a></span><span class="op">(</span>FLStockpile.url <span class="op">=</span> <span class="st">"https://github.com/neilcampbelll/FLstockpile/releases/latest/download"</span><span class="op">)</span></span></code></pre></div>
 </details><div class="section level2">
 <h2 id="expert-groups">Expert groups<a class="anchor" aria-label="anchor" href="#expert-groups"></a>
 </h2>
-<p>The stock database lists the stocks that are active in a year, with
-the expert group and data category of each. The latest version of each
-stock assessment in the dataset is matched to it by stock code and
-assessment year.</p>
+<p>The dataset has the expert group of each stock assessment. The stock
+database lists the stocks that are active in a year, with the data
+category and species of each, and is matched to the latest version of
+each stock assessment in the dataset by stock code and assessment
+year.</p>
 <details class="code-fold"><summary>
 Code
 </summary><div class="sourceCode" id="cb2"><pre class="downlit sourceCode r">
@@ -108,8 +109,8 @@ Code
 <span><span class="op">}</span><span class="op">)</span></span>
 <span><span class="va">stock_database</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/do.call.html" class="external-link">do.call</a></span><span class="op">(</span><span class="va">rbind</span>, <span class="va">stock_database</span><span class="op">)</span></span>
 <span></span>
-<span><span class="va">stocks</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/merge.html" class="external-link">merge</a></span><span class="op">(</span><span class="va">stocks</span>, <span class="va">stock_database</span>, all.x <span class="op">=</span> <span class="cn">TRUE</span><span class="op">)</span></span>
-<span><span class="va">stocks</span><span class="op">$</span><span class="va">expert_group</span><span class="op">[</span><span class="fu"><a href="https://rdrr.io/r/base/NA.html" class="external-link">is.na</a></span><span class="op">(</span><span class="va">stocks</span><span class="op">$</span><span class="va">expert_group</span><span class="op">)</span><span class="op">]</span> <span class="op">&lt;-</span> <span class="st">"not in the stock database"</span></span>
+<span><span class="co"># the expert group of each stock assessment is in the dataset</span></span>
+<span><span class="va">stocks</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/merge.html" class="external-link">merge</a></span><span class="op">(</span><span class="va">stocks</span>, <span class="va">stock_database</span><span class="op">[</span><span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"stock_code"</span>, <span class="st">"assessment_year"</span>, <span class="st">"data_category"</span>, <span class="st">"species"</span><span class="op">)</span><span class="op">]</span>, all.x <span class="op">=</span> <span class="cn">TRUE</span><span class="op">)</span></span>
 <span></span>
 <span><span class="co"># what the dataset has for each stock assessment</span></span>
 <span><span class="va">stocks</span><span class="op">$</span><span class="va">contents</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/ifelse.html" class="external-link">ifelse</a></span><span class="op">(</span></span>

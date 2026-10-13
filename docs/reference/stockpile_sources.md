@@ -76,6 +76,11 @@ A data frame with one row per object:
 
   the notes given by the submitter
 
+- units_assumed:
+
+  were any numbers or weights submitted with no units? They are then
+  taken to be in thousands and kg
+
 - name, desc, quant, min_age, ..., n_iters:
 
   the name, description, ranges and dimensions of the object, as in
