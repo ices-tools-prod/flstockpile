@@ -24,8 +24,13 @@ source("flstock_db.R")
   "harvest", "harvest.spwn", "m.spwn"
 )
 
+load("data/FLStocks.Rdata")
 
-data(ple4)
+cod.27.12coastN
+
+plot(cod.27.12coastN)
+
+# data(ple4)
 
 flstock_to_json(
   stock      = ple4,
