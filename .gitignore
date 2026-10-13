@@ -1,2 +1,10 @@
-
-submissions/
+# raw submissions, which include email addresses, and files made from them
+data-raw/ids.html
+data-raw/ids.txt
+data-raw/zip/
+data-raw/extracted/
+data-raw/parquet/
+data-raw/inventory.csv
+data-raw/inventory.html
+data-raw/inventory_files/
+data-raw/flstocks.rds
