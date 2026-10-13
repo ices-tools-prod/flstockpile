@@ -136,11 +136,13 @@ version of a stock assessment.
 | `indices.parquet` | survey index value | [`stockpile_indices()`](https://neilcampbelll.github.io/FLstockpile/reference/stockpile_indices.md) |
 
 **stocks** has `latest` (is this the most recent version?), `case_id`,
-`submitted`, whether the version has `observed` data and `estimated`
-values, the number of survey `indices`, and the `name`, `desc`, ranges
-(`min_age`, `max_age`, `plusgroup`, `min_year`, `max_year`, `min_fbar`,
-`max_fbar`) and dimensions (`n_units`, `n_seasons`, `n_areas`,
-`n_iters`) of the stock.
+the `stock_key` and `expert_group` of the stock in the ICES Stock
+Database, the `assessment_key` of the published assessment in the ICES
+Stock Assessment Graphs database, `submitted`, whether the version has
+`observed` data and `estimated` values, the number of survey `indices`,
+and the `name`, `desc`, ranges (`min_age`, `max_age`, `plusgroup`,
+`min_year`, `max_year`, `min_fbar`, `max_fbar`) and dimensions
+(`n_units`, `n_seasons`, `n_areas`, `n_iters`) of the stock.
 
 **sources** has the `type` (`observed` or `estimated`) and `class` of
 each submitted object, the `submission_id` and `submitted` time of the

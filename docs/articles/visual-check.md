@@ -8,6 +8,8 @@ built.
 
 For each stock there are
 
+- a **heading** that is a link to the record of the stock assessment in
+  SAG, where it has one;
 - **labels** for the four summary quantities: green where the dataset
   and SAG are within 2.5% of each other in every year, red where they
   are not, with the median over the years of the dataset value divided
@@ -62,6 +64,22 @@ stocks <- merge(stocks, do.call(rbind, stock_database), all.x = TRUE)
 stocks$expert_group[is.na(stocks$expert_group)] <- "Not in the stock database"
 stocks <- stocks[order(stocks$expert_group, stocks$stock_code, stocks$assessment_year), ]
 stocks$assessment <- paste0(stocks$stock_code, " (", stocks$assessment_year, ")")
+
+# the key of each stock assessment in SAG, from the dataset if it has them
+if (is.null(stocks$assessment_key)) {
+  published <- do.call(rbind, lapply(unique(stocks$assessment_year), getListStocks))
+  stocks$assessment_key <- published$AssessmentKey[match(
+    paste(stocks$stock_code, stocks$assessment_year),
+    paste(published$StockKeyLabel, published$AssessmentYear)
+  )]
+}
+
+# the heading of each stock assessment, a link to its record in SAG
+stocks$heading <- ifelse(
+  is.na(stocks$assessment_key),
+  stocks$assessment,
+  paste0("[", stocks$assessment, "](https://standardgraphs.ices.dk/ViewCharts.aspx?key=", stocks$assessment_key, ")")
+)
 
 # The summary of a stock assessment in the dataset: SSB, F and recruitment
 # from the estimates, and catches from the observed data if there are any.
@@ -244,7 +262,7 @@ check_plot <- function(check, agreed) {
 
 ## AFWG
 
-### cod.27.1-2.coastN (2026)
+### [cod.27.1-2.coastN (2026)](https://standardgraphs.ices.dk/ViewCharts.aspx?key=22637)
 
 Cod
 
@@ -259,7 +277,7 @@ SAG.](visual-check_files/figure-html/plots-1-1.png)
 
 ## HAWG
 
-### her.27.20-24 (2026)
+### [her.27.20-24 (2026)](https://standardgraphs.ices.dk/ViewCharts.aspx?key=21294)
 
 Herring
 
@@ -271,7 +289,7 @@ SSB F ×1 recruitment catches ×0.983
 ![SSB, F, recruitment and catches of her.27.20-24 (2026) by year, in the
 dataset and in SAG.](visual-check_files/figure-html/plots-2-1.png)
 
-### her.27.6aS7bc (2026)
+### [her.27.6aS7bc (2026)](https://standardgraphs.ices.dk/ViewCharts.aspx?key=21289)
 
 Herring
 
@@ -283,7 +301,7 @@ SSB F recruitment catches ×1
 ![SSB, F, recruitment and catches of her.27.6aS7bc (2026) by year, in
 the dataset and in SAG.](visual-check_files/figure-html/plots-3-1.png)
 
-### san.sa.1r (2026)
+### [san.sa.1r (2026)](https://standardgraphs.ices.dk/ViewCharts.aspx?key=21280)
 
 Sandeel
 
@@ -294,7 +312,7 @@ SSB F recruitment catches
 
 Not compared: the stock has more than one season, unit or area.
 
-### san.sa.2r (2026)
+### [san.sa.2r (2026)](https://standardgraphs.ices.dk/ViewCharts.aspx?key=21281)
 
 Sandeel
 
@@ -305,7 +323,7 @@ SSB F recruitment catches
 
 Not compared: the stock has more than one season, unit or area.
 
-### san.sa.3r (2026)
+### [san.sa.3r (2026)](https://standardgraphs.ices.dk/ViewCharts.aspx?key=21282)
 
 Sandeel
 
@@ -318,7 +336,7 @@ Not compared: the stock has more than one season, unit or area.
 
 ## NIPAG
 
-### pra.27.3a4a (2026)
+### [pra.27.3a4a (2026)](https://standardgraphs.ices.dk/ViewCharts.aspx?key=22618)
 
 Northern shrimp
 
@@ -331,7 +349,7 @@ Not compared: the stock has more than one season, unit or area.
 
 ## NWWG
 
-### caa.27.5a (2026)
+### [caa.27.5a (2026)](https://standardgraphs.ices.dk/ViewCharts.aspx?key=22633)
 
 Wolffish
 
@@ -343,7 +361,7 @@ SSB F recruitment catches
 ![SSB, F, recruitment and catches of caa.27.5a (2026) by year, in the
 dataset and in SAG.](visual-check_files/figure-html/plots-8-1.png)
 
-### cod.21.1.isc (2026)
+### [cod.21.1.isc (2026)](https://standardgraphs.ices.dk/ViewCharts.aspx?key=22435)
 
 Cod
 
@@ -355,7 +373,7 @@ SSB F recruitment catches
 ![SSB, F, recruitment and catches of cod.21.1.isc (2026) by year, in the
 dataset and in SAG.](visual-check_files/figure-html/plots-9-1.png)
 
-### cod.21.1.osc (2026)
+### [cod.21.1.osc (2026)](https://standardgraphs.ices.dk/ViewCharts.aspx?key=22541)
 
 Cod
 
@@ -367,7 +385,7 @@ SSB F recruitment catches
 ![SSB, F, recruitment and catches of cod.21.1.osc (2026) by year, in the
 dataset and in SAG.](visual-check_files/figure-html/plots-10-1.png)
 
-### had.27.5a (2026)
+### [had.27.5a (2026)](https://standardgraphs.ices.dk/ViewCharts.aspx?key=22494)
 
 Haddock
 
@@ -379,7 +397,7 @@ SSB F ×1.34 recruitment catches
 ![SSB, F, recruitment and catches of had.27.5a (2026) by year, in the
 dataset and in SAG.](visual-check_files/figure-html/plots-11-1.png)
 
-### her.27.5a (2026)
+### [her.27.5a (2026)](https://standardgraphs.ices.dk/ViewCharts.aspx?key=22455)
 
 Herring
 
@@ -391,7 +409,7 @@ SSB F ×1.2 recruitment catches ×1
 ![SSB, F, recruitment and catches of her.27.5a (2026) by year, in the
 dataset and in SAG.](visual-check_files/figure-html/plots-12-1.png)
 
-### lin.27.5a (2026)
+### [lin.27.5a (2026)](https://standardgraphs.ices.dk/ViewCharts.aspx?key=22475)
 
 Ling
 
@@ -403,7 +421,7 @@ SSB F recruitment catches
 ![SSB, F, recruitment and catches of lin.27.5a (2026) by year, in the
 dataset and in SAG.](visual-check_files/figure-html/plots-13-1.png)
 
-### ple.27.5a (2026)
+### [ple.27.5a (2026)](https://standardgraphs.ices.dk/ViewCharts.aspx?key=22531)
 
 Plaice
 
@@ -415,7 +433,7 @@ SSB F recruitment catches
 ![SSB, F, recruitment and catches of ple.27.5a (2026) by year, in the
 dataset and in SAG.](visual-check_files/figure-html/plots-14-1.png)
 
-### pok.27.5a (2026)
+### [pok.27.5a (2026)](https://standardgraphs.ices.dk/ViewCharts.aspx?key=22624)
 
 Saithe
 
@@ -427,7 +445,7 @@ SSB F ×1.14 recruitment catches
 ![SSB, F, recruitment and catches of pok.27.5a (2026) by year, in the
 dataset and in SAG.](visual-check_files/figure-html/plots-15-1.png)
 
-### usk.27.5a14 (2026)
+### [usk.27.5a14 (2026)](https://standardgraphs.ices.dk/ViewCharts.aspx?key=22530)
 
 Tusk
 
@@ -441,7 +459,7 @@ dataset and in SAG.](visual-check_files/figure-html/plots-16-1.png)
 
 ## WGBFAS
 
-### her.27.3031 (2024)
+### [her.27.3031 (2024)](https://standardgraphs.ices.dk/ViewCharts.aspx?key=19122)
 
 Herring
 
@@ -453,7 +471,7 @@ SSB F recruitment catches
 ![SSB, F, recruitment and catches of her.27.3031 (2024) by year, in the
 dataset and in SAG.](visual-check_files/figure-html/plots-17-1.png)
 
-### her.27.3031 (2026)
+### [her.27.3031 (2026)](https://standardgraphs.ices.dk/ViewCharts.aspx?key=22377)
 
 Herring
 
@@ -465,7 +483,7 @@ SSB F recruitment catches
 ![SSB, F, recruitment and catches of her.27.3031 (2026) by year, in the
 dataset and in SAG.](visual-check_files/figure-html/plots-18-1.png)
 
-### ple.27.21-32 (2026)
+### [ple.27.21-32 (2026)](https://standardgraphs.ices.dk/ViewCharts.aspx?key=22470)
 
 Plaice
 
@@ -477,7 +495,7 @@ SSB ×0.996 F ×0.995 recruitment ×0.995 catches
 ![SSB, F, recruitment and catches of ple.27.21-32 (2026) by year, in the
 dataset and in SAG.](visual-check_files/figure-html/plots-19-1.png)
 
-### sol.27.20-24 (2026)
+### [sol.27.20-24 (2026)](https://standardgraphs.ices.dk/ViewCharts.aspx?key=21317)
 
 Sole
 
@@ -489,7 +507,7 @@ SSB ×1 F recruitment catches
 ![SSB, F, recruitment and catches of sol.27.20-24 (2026) by year, in the
 dataset and in SAG.](visual-check_files/figure-html/plots-20-1.png)
 
-### spr.27.22-32 (2024)
+### [spr.27.22-32 (2024)](https://standardgraphs.ices.dk/ViewCharts.aspx?key=18621)
 
 Sprat
 
@@ -501,7 +519,7 @@ SSB F recruitment ×0.001 catches ×0.992
 ![SSB, F, recruitment and catches of spr.27.22-32 (2024) by year, in the
 dataset and in SAG.](visual-check_files/figure-html/plots-21-1.png)
 
-### spr.27.22-32 (2026)
+### [spr.27.22-32 (2026)](https://standardgraphs.ices.dk/ViewCharts.aspx?key=22378)
 
 Sprat
 
@@ -515,7 +533,7 @@ dataset and in SAG.](visual-check_files/figure-html/plots-22-1.png)
 
 ## WGBIE
 
-### ank.27.78abd (2026)
+### [ank.27.78abd (2026)](https://standardgraphs.ices.dk/ViewCharts.aspx?key=23768)
 
 Black-bellied anglerfish
 
@@ -527,7 +545,7 @@ SSB F recruitment ×1 catches ×1.11
 ![SSB, F, recruitment and catches of ank.27.78abd (2026) by year, in the
 dataset and in SAG.](visual-check_files/figure-html/plots-23-1.png)
 
-### ank.27.8c9a (2026)
+### [ank.27.8c9a (2026)](https://standardgraphs.ices.dk/ViewCharts.aspx?key=23769)
 
 Black-bellied anglerfish
 
@@ -539,7 +557,7 @@ SSB ×1.61 F recruitment catches ×1.01
 ![SSB, F, recruitment and catches of ank.27.8c9a (2026) by year, in the
 dataset and in SAG.](visual-check_files/figure-html/plots-24-1.png)
 
-### hke.27.3a46-8abd (2026)
+### [hke.27.3a46-8abd (2026)](https://standardgraphs.ices.dk/ViewCharts.aspx?key=22627)
 
 Hake
 
@@ -551,7 +569,7 @@ SSB F recruitment catches ×1.01
 ![SSB, F, recruitment and catches of hke.27.3a46-8abd (2026) by year, in
 the dataset and in SAG.](visual-check_files/figure-html/plots-25-1.png)
 
-### hke.27.8c9a (2026)
+### [hke.27.8c9a (2026)](https://standardgraphs.ices.dk/ViewCharts.aspx?key=23751)
 
 Hake
 
@@ -574,7 +592,7 @@ SSB F recruitment catches
 
 Not compared: the stock assessment was not found in SAG.
 
-### mon.27.8c9a (2026)
+### [mon.27.8c9a (2026)](https://standardgraphs.ices.dk/ViewCharts.aspx?key=22608)
 
 White anglerfish
 
@@ -586,7 +604,7 @@ SSB F recruitment catches ×1.01
 ![SSB, F, recruitment and catches of mon.27.8c9a (2026) by year, in the
 dataset and in SAG.](visual-check_files/figure-html/plots-28-1.png)
 
-### sol.27.8ab (2026)
+### [sol.27.8ab (2026)](https://standardgraphs.ices.dk/ViewCharts.aspx?key=22607)
 
 Sole
 
@@ -600,7 +618,7 @@ dataset and in SAG.](visual-check_files/figure-html/plots-29-1.png)
 
 ## WGCSE
 
-### had.27.6b (2026)
+### [had.27.6b (2026)](https://standardgraphs.ices.dk/ViewCharts.aspx?key=24779)
 
 Haddock
 
@@ -612,7 +630,7 @@ SSB F recruitment catches ×0.975
 ![SSB, F, recruitment and catches of had.27.6b (2026) by year, in the
 dataset and in SAG.](visual-check_files/figure-html/plots-30-1.png)
 
-### had.27.7b-k (2026)
+### [had.27.7b-k (2026)](https://standardgraphs.ices.dk/ViewCharts.aspx?key=22561)
 
 Haddock
 
@@ -624,7 +642,7 @@ SSB F recruitment catches ×0.997
 ![SSB, F, recruitment and catches of had.27.7b-k (2026) by year, in the
 dataset and in SAG.](visual-check_files/figure-html/plots-31-1.png)
 
-### lez.27.4a6a (2026)
+### [lez.27.4a6a (2026)](https://standardgraphs.ices.dk/ViewCharts.aspx?key=23776)
 
 Megrim
 
@@ -636,7 +654,7 @@ SSB ×36400 F ×0.169 recruitment catches ×1
 ![SSB, F, recruitment and catches of lez.27.4a6a (2026) by year, in the
 dataset and in SAG.](visual-check_files/figure-html/plots-32-1.png)
 
-### sol.27.7a (2026)
+### [sol.27.7a (2026)](https://standardgraphs.ices.dk/ViewCharts.aspx?key=22641)
 
 Sole
 
@@ -648,7 +666,7 @@ SSB F recruitment catches
 ![SSB, F, recruitment and catches of sol.27.7a (2026) by year, in the
 dataset and in SAG.](visual-check_files/figure-html/plots-33-1.png)
 
-### sol.27.7e (2026)
+### [sol.27.7e (2026)](https://standardgraphs.ices.dk/ViewCharts.aspx?key=22656)
 
 Sole
 
@@ -660,7 +678,7 @@ SSB F recruitment catches
 ![SSB, F, recruitment and catches of sol.27.7e (2026) by year, in the
 dataset and in SAG.](visual-check_files/figure-html/plots-34-1.png)
 
-### sol.27.7fg (2026)
+### [sol.27.7fg (2026)](https://standardgraphs.ices.dk/ViewCharts.aspx?key=22663)
 
 Sole
 
@@ -683,7 +701,7 @@ SSB F recruitment catches
 
 Not compared: the stock assessment was not found in SAG.
 
-### whg.27.7b-ce-k (2026)
+### [whg.27.7b-ce-k (2026)](https://standardgraphs.ices.dk/ViewCharts.aspx?key=23780)
 
 Whiting
 
@@ -697,7 +715,7 @@ the dataset and in SAG.](visual-check_files/figure-html/plots-37-1.png)
 
 ## WGHANSA
 
-### hom.27.9a (2026)
+### [hom.27.9a (2026)](https://standardgraphs.ices.dk/ViewCharts.aspx?key=23760)
 
 Horse mackerel
 
@@ -724,7 +742,7 @@ Not compared: the stock assessment was not found in SAG.
 
 ## WGNSSK
 
-### bll.27.3a47de (2026)
+### [bll.27.3a47de (2026)](https://standardgraphs.ices.dk/ViewCharts.aspx?key=22409)
 
 Brill
 
@@ -736,7 +754,7 @@ SSB ×6160 F ×0.336 recruitment catches
 ![SSB, F, recruitment and catches of bll.27.3a47de (2026) by year, in
 the dataset and in SAG.](visual-check_files/figure-html/plots-40-1.png)
 
-### had.27.46a20 (2026)
+### [had.27.46a20 (2026)](https://standardgraphs.ices.dk/ViewCharts.aspx?key=22417)
 
 Haddock
 
@@ -748,7 +766,7 @@ SSB F recruitment ×1 catches ×0.991
 ![SSB, F, recruitment and catches of had.27.46a20 (2026) by year, in the
 dataset and in SAG.](visual-check_files/figure-html/plots-41-1.png)
 
-### ple.27.420 (2026)
+### [ple.27.420 (2026)](https://standardgraphs.ices.dk/ViewCharts.aspx?key=22489)
 
 Plaice
 
@@ -760,7 +778,7 @@ SSB F recruitment catches
 ![SSB, F, recruitment and catches of ple.27.420 (2026) by year, in the
 dataset and in SAG.](visual-check_files/figure-html/plots-42-1.png)
 
-### sol.27.7d (2026)
+### [sol.27.7d (2026)](https://standardgraphs.ices.dk/ViewCharts.aspx?key=22546)
 
 Sole
 
@@ -772,7 +790,7 @@ SSB F recruitment catches
 ![SSB, F, recruitment and catches of sol.27.7d (2026) by year, in the
 dataset and in SAG.](visual-check_files/figure-html/plots-43-1.png)
 
-### tur.27.4 (2026)
+### [tur.27.4 (2026)](https://standardgraphs.ices.dk/ViewCharts.aspx?key=22472)
 
 Turbot
 
@@ -784,7 +802,7 @@ SSB F recruitment catches
 ![SSB, F, recruitment and catches of tur.27.4 (2026) by year, in the
 dataset and in SAG.](visual-check_files/figure-html/plots-44-1.png)
 
-### whg.27.47d (2026)
+### [whg.27.47d (2026)](https://standardgraphs.ices.dk/ViewCharts.aspx?key=22488)
 
 Whiting
 
@@ -796,7 +814,7 @@ SSB F recruitment ×1 catches
 ![SSB, F, recruitment and catches of whg.27.47d (2026) by year, in the
 dataset and in SAG.](visual-check_files/figure-html/plots-45-1.png)
 
-### wit.27.3a47d (2026)
+### [wit.27.3a47d (2026)](https://standardgraphs.ices.dk/ViewCharts.aspx?key=22534)
 
 Witch
 
@@ -810,7 +828,7 @@ dataset and in SAG.](visual-check_files/figure-html/plots-46-1.png)
 
 ## WGWIDE
 
-### whb.27.1-91214 (2026)
+### [whb.27.1-91214 (2026)](https://standardgraphs.ices.dk/ViewCharts.aspx?key=25908)
 
 Blue whiting
 

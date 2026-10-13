@@ -33,6 +33,8 @@ against the live databases each time this site is built.
 
 For each stock there are
 
+- a **heading** that is a link to the record of the stock assessment in SAG,
+  where it has one;
 - **labels** for the four summary quantities: green where the dataset and SAG
   are within 2.5% of each other in every year, red where they are not, with
   the median over the years of the dataset value divided by the SAG value,
@@ -80,6 +82,22 @@ stocks <- merge(stocks, do.call(rbind, stock_database), all.x = TRUE)
 stocks$expert_group[is.na(stocks$expert_group)] <- "Not in the stock database"
 stocks <- stocks[order(stocks$expert_group, stocks$stock_code, stocks$assessment_year), ]
 stocks$assessment <- paste0(stocks$stock_code, " (", stocks$assessment_year, ")")
+
+# the key of each stock assessment in SAG, from the dataset if it has them
+if (is.null(stocks$assessment_key)) {
+  published <- do.call(rbind, lapply(unique(stocks$assessment_year), getListStocks))
+  stocks$assessment_key <- published$AssessmentKey[match(
+    paste(stocks$stock_code, stocks$assessment_year),
+    paste(published$StockKeyLabel, published$AssessmentYear)
+  )]
+}
+
+# the heading of each stock assessment, a link to its record in SAG
+stocks$heading <- ifelse(
+  is.na(stocks$assessment_key),
+  stocks$assessment,
+  paste0("[", stocks$assessment, "](https://standardgraphs.ices.dk/ViewCharts.aspx?key=", stocks$assessment_key, ")")
+)
 
 # The summary of a stock assessment in the dataset: SSB, F and recruitment
 # from the estimates, and catches from the observed data if there are any.
@@ -255,7 +273,7 @@ for (group in unique(stocks$expert_group)) {
   for (i in which(stocks$expert_group == group)) {
     # what is written for each stock is in a file of its own
     text <- knitr::knit_expand(
-      "_visual-check-stock.Rmd", i = i, assessment = stocks$assessment[i],
+      "_visual-check-stock.Rmd", i = i, heading = stocks$heading[i], assessment = stocks$assessment[i],
       species = if (is.na(stocks$species[i])) "" else stocks$species[i]
     )
     cat(knitr::knit_child(text = text, envir = environment(), quiet = TRUE), "\n")

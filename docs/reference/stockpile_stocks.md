@@ -63,6 +63,21 @@ A data frame with one row per version:
 
   the ICES case number the submissions were made under
 
+- stock_key:
+
+  the key of the stock in the ICES Stock Database, as used by the icesSD
+  package
+
+- expert_group:
+
+  the ICES expert group that assesses the stock
+
+- assessment_key:
+
+  the key of the published assessment in the ICES Stock Assessment
+  Graphs database, as used by the icesSAG package. Missing if the
+  assessment is not published there
+
 - submitted:
 
   when the most recent submission in the version was made

@@ -75,6 +75,8 @@ grouped by expert group. It is run against the live databases each time
 this site is built.</p>
 <p>For each stock there are</p>
 <ul>
+<li>a <strong>heading</strong> that is a link to the record of the stock
+assessment in SAG, where it has one;</li>
 <li>
 <strong>labels</strong> for the four summary quantities: green where
 the dataset and SAG are within 2.5% of each other in every year, red
@@ -129,6 +131,22 @@ Code
 <span><span class="va">stocks</span><span class="op">$</span><span class="va">expert_group</span><span class="op">[</span><span class="fu"><a href="https://rdrr.io/r/base/NA.html" class="external-link">is.na</a></span><span class="op">(</span><span class="va">stocks</span><span class="op">$</span><span class="va">expert_group</span><span class="op">)</span><span class="op">]</span> <span class="op">&lt;-</span> <span class="st">"Not in the stock database"</span></span>
 <span><span class="va">stocks</span> <span class="op">&lt;-</span> <span class="va">stocks</span><span class="op">[</span><span class="fu"><a href="https://rdrr.io/r/base/order.html" class="external-link">order</a></span><span class="op">(</span><span class="va">stocks</span><span class="op">$</span><span class="va">expert_group</span>, <span class="va">stocks</span><span class="op">$</span><span class="va">stock_code</span>, <span class="va">stocks</span><span class="op">$</span><span class="va">assessment_year</span><span class="op">)</span>, <span class="op">]</span></span>
 <span><span class="va">stocks</span><span class="op">$</span><span class="va">assessment</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/paste.html" class="external-link">paste0</a></span><span class="op">(</span><span class="va">stocks</span><span class="op">$</span><span class="va">stock_code</span>, <span class="st">" ("</span>, <span class="va">stocks</span><span class="op">$</span><span class="va">assessment_year</span>, <span class="st">")"</span><span class="op">)</span></span>
+<span></span>
+<span><span class="co"># the key of each stock assessment in SAG, from the dataset if it has them</span></span>
+<span><span class="kw">if</span> <span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/NULL.html" class="external-link">is.null</a></span><span class="op">(</span><span class="va">stocks</span><span class="op">$</span><span class="va">assessment_key</span><span class="op">)</span><span class="op">)</span> <span class="op">{</span></span>
+<span>  <span class="va">published</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/do.call.html" class="external-link">do.call</a></span><span class="op">(</span><span class="va">rbind</span>, <span class="fu"><a href="https://rdrr.io/r/base/lapply.html" class="external-link">lapply</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/unique.html" class="external-link">unique</a></span><span class="op">(</span><span class="va">stocks</span><span class="op">$</span><span class="va">assessment_year</span><span class="op">)</span>, <span class="va">getListStocks</span><span class="op">)</span><span class="op">)</span></span>
+<span>  <span class="va">stocks</span><span class="op">$</span><span class="va">assessment_key</span> <span class="op">&lt;-</span> <span class="va">published</span><span class="op">$</span><span class="va">AssessmentKey</span><span class="op">[</span><span class="fu"><a href="https://rdrr.io/r/base/match.html" class="external-link">match</a></span><span class="op">(</span></span>
+<span>    <span class="fu"><a href="https://rdrr.io/r/base/paste.html" class="external-link">paste</a></span><span class="op">(</span><span class="va">stocks</span><span class="op">$</span><span class="va">stock_code</span>, <span class="va">stocks</span><span class="op">$</span><span class="va">assessment_year</span><span class="op">)</span>,</span>
+<span>    <span class="fu"><a href="https://rdrr.io/r/base/paste.html" class="external-link">paste</a></span><span class="op">(</span><span class="va">published</span><span class="op">$</span><span class="va">StockKeyLabel</span>, <span class="va">published</span><span class="op">$</span><span class="va">AssessmentYear</span><span class="op">)</span></span>
+<span>  <span class="op">)</span><span class="op">]</span></span>
+<span><span class="op">}</span></span>
+<span></span>
+<span><span class="co"># the heading of each stock assessment, a link to its record in SAG</span></span>
+<span><span class="va">stocks</span><span class="op">$</span><span class="va">heading</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/ifelse.html" class="external-link">ifelse</a></span><span class="op">(</span></span>
+<span>  <span class="fu"><a href="https://rdrr.io/r/base/NA.html" class="external-link">is.na</a></span><span class="op">(</span><span class="va">stocks</span><span class="op">$</span><span class="va">assessment_key</span><span class="op">)</span>,</span>
+<span>  <span class="va">stocks</span><span class="op">$</span><span class="va">assessment</span>,</span>
+<span>  <span class="fu"><a href="https://rdrr.io/r/base/paste.html" class="external-link">paste0</a></span><span class="op">(</span><span class="st">"["</span>, <span class="va">stocks</span><span class="op">$</span><span class="va">assessment</span>, <span class="st">"](https://standardgraphs.ices.dk/ViewCharts.aspx?key="</span>, <span class="va">stocks</span><span class="op">$</span><span class="va">assessment_key</span>, <span class="st">")"</span><span class="op">)</span></span>
+<span><span class="op">)</span></span>
 <span></span>
 <span><span class="co"># The summary of a stock assessment in the dataset: SSB, F and recruitment</span></span>
 <span><span class="co"># from the estimates, and catches from the observed data if there are any.</span></span>
@@ -303,7 +321,9 @@ Code
 <h2 id="afwg">AFWG<a class="anchor" aria-label="anchor" href="#afwg"></a>
 </h2>
 <div class="section level3">
-<h3 id="cod-27-1-2-coastn-2026">cod.27.1-2.coastN (2026)<a class="anchor" aria-label="anchor" href="#cod-27-1-2-coastn-2026"></a>
+<h3 id="cod-27-1-2-coastn-2026">
+<a href="https://standardgraphs.ices.dk/ViewCharts.aspx?key=22637" class="external-link">cod.27.1-2.coastN
+(2026)</a><a class="anchor" aria-label="anchor" href="#cod-27-1-2-coastn-2026"></a>
 </h3>
 <p class="qc-species">
 Cod
@@ -319,7 +339,9 @@ Cod
 <h2 id="hawg">HAWG<a class="anchor" aria-label="anchor" href="#hawg"></a>
 </h2>
 <div class="section level3">
-<h3 id="her-27-20-24-2026">her.27.20-24 (2026)<a class="anchor" aria-label="anchor" href="#her-27-20-24-2026"></a>
+<h3 id="her-27-20-24-2026">
+<a href="https://standardgraphs.ices.dk/ViewCharts.aspx?key=21294" class="external-link">her.27.20-24
+(2026)</a><a class="anchor" aria-label="anchor" href="#her-27-20-24-2026"></a>
 </h3>
 <p class="qc-species">
 Herring
@@ -332,7 +354,9 @@ Herring
 <p><img src="visual-check_files/figure-html/plots-2-1.png" class="r-plt" alt="SSB, F, recruitment and catches of her.27.20-24 (2026) by year, in the dataset and in SAG." width="990"></p>
 </div>
 <div class="section level3">
-<h3 id="her-27-6as7bc-2026">her.27.6aS7bc (2026)<a class="anchor" aria-label="anchor" href="#her-27-6as7bc-2026"></a>
+<h3 id="her-27-6as7bc-2026">
+<a href="https://standardgraphs.ices.dk/ViewCharts.aspx?key=21289" class="external-link">her.27.6aS7bc
+(2026)</a><a class="anchor" aria-label="anchor" href="#her-27-6as7bc-2026"></a>
 </h3>
 <p class="qc-species">
 Herring
@@ -345,7 +369,9 @@ Herring
 <p><img src="visual-check_files/figure-html/plots-3-1.png" class="r-plt" alt="SSB, F, recruitment and catches of her.27.6aS7bc (2026) by year, in the dataset and in SAG." width="990"></p>
 </div>
 <div class="section level3">
-<h3 id="san-sa-1r-2026">san.sa.1r (2026)<a class="anchor" aria-label="anchor" href="#san-sa-1r-2026"></a>
+<h3 id="san-sa-1r-2026">
+<a href="https://standardgraphs.ices.dk/ViewCharts.aspx?key=21280" class="external-link">san.sa.1r
+(2026)</a><a class="anchor" aria-label="anchor" href="#san-sa-1r-2026"></a>
 </h3>
 <p class="qc-species">
 Sandeel
@@ -357,7 +383,9 @@ Sandeel
 <p>Not compared: the stock has more than one season, unit or area.</p>
 </div>
 <div class="section level3">
-<h3 id="san-sa-2r-2026">san.sa.2r (2026)<a class="anchor" aria-label="anchor" href="#san-sa-2r-2026"></a>
+<h3 id="san-sa-2r-2026">
+<a href="https://standardgraphs.ices.dk/ViewCharts.aspx?key=21281" class="external-link">san.sa.2r
+(2026)</a><a class="anchor" aria-label="anchor" href="#san-sa-2r-2026"></a>
 </h3>
 <p class="qc-species">
 Sandeel
@@ -369,7 +397,9 @@ Sandeel
 <p>Not compared: the stock has more than one season, unit or area.</p>
 </div>
 <div class="section level3">
-<h3 id="san-sa-3r-2026">san.sa.3r (2026)<a class="anchor" aria-label="anchor" href="#san-sa-3r-2026"></a>
+<h3 id="san-sa-3r-2026">
+<a href="https://standardgraphs.ices.dk/ViewCharts.aspx?key=21282" class="external-link">san.sa.3r
+(2026)</a><a class="anchor" aria-label="anchor" href="#san-sa-3r-2026"></a>
 </h3>
 <p class="qc-species">
 Sandeel
@@ -385,7 +415,9 @@ Sandeel
 <h2 id="nipag">NIPAG<a class="anchor" aria-label="anchor" href="#nipag"></a>
 </h2>
 <div class="section level3">
-<h3 id="pra-27-3a4a-2026">pra.27.3a4a (2026)<a class="anchor" aria-label="anchor" href="#pra-27-3a4a-2026"></a>
+<h3 id="pra-27-3a4a-2026">
+<a href="https://standardgraphs.ices.dk/ViewCharts.aspx?key=22618" class="external-link">pra.27.3a4a
+(2026)</a><a class="anchor" aria-label="anchor" href="#pra-27-3a4a-2026"></a>
 </h3>
 <p class="qc-species">
 Northern shrimp
@@ -401,7 +433,9 @@ Northern shrimp
 <h2 id="nwwg">NWWG<a class="anchor" aria-label="anchor" href="#nwwg"></a>
 </h2>
 <div class="section level3">
-<h3 id="caa-27-5a-2026">caa.27.5a (2026)<a class="anchor" aria-label="anchor" href="#caa-27-5a-2026"></a>
+<h3 id="caa-27-5a-2026">
+<a href="https://standardgraphs.ices.dk/ViewCharts.aspx?key=22633" class="external-link">caa.27.5a
+(2026)</a><a class="anchor" aria-label="anchor" href="#caa-27-5a-2026"></a>
 </h3>
 <p class="qc-species">
 Wolffish
@@ -413,7 +447,9 @@ Wolffish
 <p><img src="visual-check_files/figure-html/plots-8-1.png" class="r-plt" alt="SSB, F, recruitment and catches of caa.27.5a (2026) by year, in the dataset and in SAG." width="990"></p>
 </div>
 <div class="section level3">
-<h3 id="cod-21-1-isc-2026">cod.21.1.isc (2026)<a class="anchor" aria-label="anchor" href="#cod-21-1-isc-2026"></a>
+<h3 id="cod-21-1-isc-2026">
+<a href="https://standardgraphs.ices.dk/ViewCharts.aspx?key=22435" class="external-link">cod.21.1.isc
+(2026)</a><a class="anchor" aria-label="anchor" href="#cod-21-1-isc-2026"></a>
 </h3>
 <p class="qc-species">
 Cod
@@ -425,7 +461,9 @@ Cod
 <p><img src="visual-check_files/figure-html/plots-9-1.png" class="r-plt" alt="SSB, F, recruitment and catches of cod.21.1.isc (2026) by year, in the dataset and in SAG." width="990"></p>
 </div>
 <div class="section level3">
-<h3 id="cod-21-1-osc-2026">cod.21.1.osc (2026)<a class="anchor" aria-label="anchor" href="#cod-21-1-osc-2026"></a>
+<h3 id="cod-21-1-osc-2026">
+<a href="https://standardgraphs.ices.dk/ViewCharts.aspx?key=22541" class="external-link">cod.21.1.osc
+(2026)</a><a class="anchor" aria-label="anchor" href="#cod-21-1-osc-2026"></a>
 </h3>
 <p class="qc-species">
 Cod
@@ -437,7 +475,9 @@ Cod
 <p><img src="visual-check_files/figure-html/plots-10-1.png" class="r-plt" alt="SSB, F, recruitment and catches of cod.21.1.osc (2026) by year, in the dataset and in SAG." width="990"></p>
 </div>
 <div class="section level3">
-<h3 id="had-27-5a-2026">had.27.5a (2026)<a class="anchor" aria-label="anchor" href="#had-27-5a-2026"></a>
+<h3 id="had-27-5a-2026">
+<a href="https://standardgraphs.ices.dk/ViewCharts.aspx?key=22494" class="external-link">had.27.5a
+(2026)</a><a class="anchor" aria-label="anchor" href="#had-27-5a-2026"></a>
 </h3>
 <p class="qc-species">
 Haddock
@@ -450,7 +490,9 @@ Haddock
 <p><img src="visual-check_files/figure-html/plots-11-1.png" class="r-plt" alt="SSB, F, recruitment and catches of had.27.5a (2026) by year, in the dataset and in SAG." width="990"></p>
 </div>
 <div class="section level3">
-<h3 id="her-27-5a-2026">her.27.5a (2026)<a class="anchor" aria-label="anchor" href="#her-27-5a-2026"></a>
+<h3 id="her-27-5a-2026">
+<a href="https://standardgraphs.ices.dk/ViewCharts.aspx?key=22455" class="external-link">her.27.5a
+(2026)</a><a class="anchor" aria-label="anchor" href="#her-27-5a-2026"></a>
 </h3>
 <p class="qc-species">
 Herring
@@ -463,7 +505,9 @@ Herring
 <p><img src="visual-check_files/figure-html/plots-12-1.png" class="r-plt" alt="SSB, F, recruitment and catches of her.27.5a (2026) by year, in the dataset and in SAG." width="990"></p>
 </div>
 <div class="section level3">
-<h3 id="lin-27-5a-2026">lin.27.5a (2026)<a class="anchor" aria-label="anchor" href="#lin-27-5a-2026"></a>
+<h3 id="lin-27-5a-2026">
+<a href="https://standardgraphs.ices.dk/ViewCharts.aspx?key=22475" class="external-link">lin.27.5a
+(2026)</a><a class="anchor" aria-label="anchor" href="#lin-27-5a-2026"></a>
 </h3>
 <p class="qc-species">
 Ling
@@ -475,7 +519,9 @@ Ling
 <p><img src="visual-check_files/figure-html/plots-13-1.png" class="r-plt" alt="SSB, F, recruitment and catches of lin.27.5a (2026) by year, in the dataset and in SAG." width="990"></p>
 </div>
 <div class="section level3">
-<h3 id="ple-27-5a-2026">ple.27.5a (2026)<a class="anchor" aria-label="anchor" href="#ple-27-5a-2026"></a>
+<h3 id="ple-27-5a-2026">
+<a href="https://standardgraphs.ices.dk/ViewCharts.aspx?key=22531" class="external-link">ple.27.5a
+(2026)</a><a class="anchor" aria-label="anchor" href="#ple-27-5a-2026"></a>
 </h3>
 <p class="qc-species">
 Plaice
@@ -487,7 +533,9 @@ Plaice
 <p><img src="visual-check_files/figure-html/plots-14-1.png" class="r-plt" alt="SSB, F, recruitment and catches of ple.27.5a (2026) by year, in the dataset and in SAG." width="990"></p>
 </div>
 <div class="section level3">
-<h3 id="pok-27-5a-2026">pok.27.5a (2026)<a class="anchor" aria-label="anchor" href="#pok-27-5a-2026"></a>
+<h3 id="pok-27-5a-2026">
+<a href="https://standardgraphs.ices.dk/ViewCharts.aspx?key=22624" class="external-link">pok.27.5a
+(2026)</a><a class="anchor" aria-label="anchor" href="#pok-27-5a-2026"></a>
 </h3>
 <p class="qc-species">
 Saithe
@@ -500,7 +548,9 @@ Saithe
 <p><img src="visual-check_files/figure-html/plots-15-1.png" class="r-plt" alt="SSB, F, recruitment and catches of pok.27.5a (2026) by year, in the dataset and in SAG." width="990"></p>
 </div>
 <div class="section level3">
-<h3 id="usk-27-5a14-2026">usk.27.5a14 (2026)<a class="anchor" aria-label="anchor" href="#usk-27-5a14-2026"></a>
+<h3 id="usk-27-5a14-2026">
+<a href="https://standardgraphs.ices.dk/ViewCharts.aspx?key=22530" class="external-link">usk.27.5a14
+(2026)</a><a class="anchor" aria-label="anchor" href="#usk-27-5a14-2026"></a>
 </h3>
 <p class="qc-species">
 Tusk
@@ -516,7 +566,9 @@ Tusk
 <h2 id="wgbfas">WGBFAS<a class="anchor" aria-label="anchor" href="#wgbfas"></a>
 </h2>
 <div class="section level3">
-<h3 id="her-27-3031-2024">her.27.3031 (2024)<a class="anchor" aria-label="anchor" href="#her-27-3031-2024"></a>
+<h3 id="her-27-3031-2024">
+<a href="https://standardgraphs.ices.dk/ViewCharts.aspx?key=19122" class="external-link">her.27.3031
+(2024)</a><a class="anchor" aria-label="anchor" href="#her-27-3031-2024"></a>
 </h3>
 <p class="qc-species">
 Herring
@@ -528,7 +580,9 @@ Herring
 <p><img src="visual-check_files/figure-html/plots-17-1.png" class="r-plt" alt="SSB, F, recruitment and catches of her.27.3031 (2024) by year, in the dataset and in SAG." width="990"></p>
 </div>
 <div class="section level3">
-<h3 id="her-27-3031-2026">her.27.3031 (2026)<a class="anchor" aria-label="anchor" href="#her-27-3031-2026"></a>
+<h3 id="her-27-3031-2026">
+<a href="https://standardgraphs.ices.dk/ViewCharts.aspx?key=22377" class="external-link">her.27.3031
+(2026)</a><a class="anchor" aria-label="anchor" href="#her-27-3031-2026"></a>
 </h3>
 <p class="qc-species">
 Herring
@@ -540,7 +594,9 @@ Herring
 <p><img src="visual-check_files/figure-html/plots-18-1.png" class="r-plt" alt="SSB, F, recruitment and catches of her.27.3031 (2026) by year, in the dataset and in SAG." width="990"></p>
 </div>
 <div class="section level3">
-<h3 id="ple-27-21-32-2026">ple.27.21-32 (2026)<a class="anchor" aria-label="anchor" href="#ple-27-21-32-2026"></a>
+<h3 id="ple-27-21-32-2026">
+<a href="https://standardgraphs.ices.dk/ViewCharts.aspx?key=22470" class="external-link">ple.27.21-32
+(2026)</a><a class="anchor" aria-label="anchor" href="#ple-27-21-32-2026"></a>
 </h3>
 <p class="qc-species">
 Plaice
@@ -552,7 +608,9 @@ Plaice
 <p><img src="visual-check_files/figure-html/plots-19-1.png" class="r-plt" alt="SSB, F, recruitment and catches of ple.27.21-32 (2026) by year, in the dataset and in SAG." width="990"></p>
 </div>
 <div class="section level3">
-<h3 id="sol-27-20-24-2026">sol.27.20-24 (2026)<a class="anchor" aria-label="anchor" href="#sol-27-20-24-2026"></a>
+<h3 id="sol-27-20-24-2026">
+<a href="https://standardgraphs.ices.dk/ViewCharts.aspx?key=21317" class="external-link">sol.27.20-24
+(2026)</a><a class="anchor" aria-label="anchor" href="#sol-27-20-24-2026"></a>
 </h3>
 <p class="qc-species">
 Sole
@@ -565,7 +623,9 @@ Sole
 <p><img src="visual-check_files/figure-html/plots-20-1.png" class="r-plt" alt="SSB, F, recruitment and catches of sol.27.20-24 (2026) by year, in the dataset and in SAG." width="990"></p>
 </div>
 <div class="section level3">
-<h3 id="spr-27-22-32-2024">spr.27.22-32 (2024)<a class="anchor" aria-label="anchor" href="#spr-27-22-32-2024"></a>
+<h3 id="spr-27-22-32-2024">
+<a href="https://standardgraphs.ices.dk/ViewCharts.aspx?key=18621" class="external-link">spr.27.22-32
+(2024)</a><a class="anchor" aria-label="anchor" href="#spr-27-22-32-2024"></a>
 </h3>
 <p class="qc-species">
 Sprat
@@ -577,7 +637,9 @@ Sprat
 <p><img src="visual-check_files/figure-html/plots-21-1.png" class="r-plt" alt="SSB, F, recruitment and catches of spr.27.22-32 (2024) by year, in the dataset and in SAG." width="990"></p>
 </div>
 <div class="section level3">
-<h3 id="spr-27-22-32-2026">spr.27.22-32 (2026)<a class="anchor" aria-label="anchor" href="#spr-27-22-32-2026"></a>
+<h3 id="spr-27-22-32-2026">
+<a href="https://standardgraphs.ices.dk/ViewCharts.aspx?key=22378" class="external-link">spr.27.22-32
+(2026)</a><a class="anchor" aria-label="anchor" href="#spr-27-22-32-2026"></a>
 </h3>
 <p class="qc-species">
 Sprat
@@ -593,7 +655,9 @@ Sprat
 <h2 id="wgbie">WGBIE<a class="anchor" aria-label="anchor" href="#wgbie"></a>
 </h2>
 <div class="section level3">
-<h3 id="ank-27-78abd-2026">ank.27.78abd (2026)<a class="anchor" aria-label="anchor" href="#ank-27-78abd-2026"></a>
+<h3 id="ank-27-78abd-2026">
+<a href="https://standardgraphs.ices.dk/ViewCharts.aspx?key=23768" class="external-link">ank.27.78abd
+(2026)</a><a class="anchor" aria-label="anchor" href="#ank-27-78abd-2026"></a>
 </h3>
 <p class="qc-species">
 Black-bellied anglerfish
@@ -605,7 +669,9 @@ Black-bellied anglerfish
 <p><img src="visual-check_files/figure-html/plots-23-1.png" class="r-plt" alt="SSB, F, recruitment and catches of ank.27.78abd (2026) by year, in the dataset and in SAG." width="990"></p>
 </div>
 <div class="section level3">
-<h3 id="ank-27-8c9a-2026">ank.27.8c9a (2026)<a class="anchor" aria-label="anchor" href="#ank-27-8c9a-2026"></a>
+<h3 id="ank-27-8c9a-2026">
+<a href="https://standardgraphs.ices.dk/ViewCharts.aspx?key=23769" class="external-link">ank.27.8c9a
+(2026)</a><a class="anchor" aria-label="anchor" href="#ank-27-8c9a-2026"></a>
 </h3>
 <p class="qc-species">
 Black-bellied anglerfish
@@ -617,7 +683,9 @@ Black-bellied anglerfish
 <p><img src="visual-check_files/figure-html/plots-24-1.png" class="r-plt" alt="SSB, F, recruitment and catches of ank.27.8c9a (2026) by year, in the dataset and in SAG." width="990"></p>
 </div>
 <div class="section level3">
-<h3 id="hke-27-3a46-8abd-2026">hke.27.3a46-8abd (2026)<a class="anchor" aria-label="anchor" href="#hke-27-3a46-8abd-2026"></a>
+<h3 id="hke-27-3a46-8abd-2026">
+<a href="https://standardgraphs.ices.dk/ViewCharts.aspx?key=22627" class="external-link">hke.27.3a46-8abd
+(2026)</a><a class="anchor" aria-label="anchor" href="#hke-27-3a46-8abd-2026"></a>
 </h3>
 <p class="qc-species">
 Hake
@@ -630,7 +698,9 @@ Hake
 <p><img src="visual-check_files/figure-html/plots-25-1.png" class="r-plt" alt="SSB, F, recruitment and catches of hke.27.3a46-8abd (2026) by year, in the dataset and in SAG." width="990"></p>
 </div>
 <div class="section level3">
-<h3 id="hke-27-8c9a-2026">hke.27.8c9a (2026)<a class="anchor" aria-label="anchor" href="#hke-27-8c9a-2026"></a>
+<h3 id="hke-27-8c9a-2026">
+<a href="https://standardgraphs.ices.dk/ViewCharts.aspx?key=23751" class="external-link">hke.27.8c9a
+(2026)</a><a class="anchor" aria-label="anchor" href="#hke-27-8c9a-2026"></a>
 </h3>
 <p class="qc-species">
 Hake
@@ -655,7 +725,9 @@ Megrim
 <p>Not compared: the stock assessment was not found in SAG.</p>
 </div>
 <div class="section level3">
-<h3 id="mon-27-8c9a-2026">mon.27.8c9a (2026)<a class="anchor" aria-label="anchor" href="#mon-27-8c9a-2026"></a>
+<h3 id="mon-27-8c9a-2026">
+<a href="https://standardgraphs.ices.dk/ViewCharts.aspx?key=22608" class="external-link">mon.27.8c9a
+(2026)</a><a class="anchor" aria-label="anchor" href="#mon-27-8c9a-2026"></a>
 </h3>
 <p class="qc-species">
 White anglerfish
@@ -668,7 +740,9 @@ White anglerfish
 <p><img src="visual-check_files/figure-html/plots-28-1.png" class="r-plt" alt="SSB, F, recruitment and catches of mon.27.8c9a (2026) by year, in the dataset and in SAG." width="990"></p>
 </div>
 <div class="section level3">
-<h3 id="sol-27-8ab-2026">sol.27.8ab (2026)<a class="anchor" aria-label="anchor" href="#sol-27-8ab-2026"></a>
+<h3 id="sol-27-8ab-2026">
+<a href="https://standardgraphs.ices.dk/ViewCharts.aspx?key=22607" class="external-link">sol.27.8ab
+(2026)</a><a class="anchor" aria-label="anchor" href="#sol-27-8ab-2026"></a>
 </h3>
 <p class="qc-species">
 Sole
@@ -685,7 +759,9 @@ Sole
 <h2 id="wgcse">WGCSE<a class="anchor" aria-label="anchor" href="#wgcse"></a>
 </h2>
 <div class="section level3">
-<h3 id="had-27-6b-2026">had.27.6b (2026)<a class="anchor" aria-label="anchor" href="#had-27-6b-2026"></a>
+<h3 id="had-27-6b-2026">
+<a href="https://standardgraphs.ices.dk/ViewCharts.aspx?key=24779" class="external-link">had.27.6b
+(2026)</a><a class="anchor" aria-label="anchor" href="#had-27-6b-2026"></a>
 </h3>
 <p class="qc-species">
 Haddock
@@ -698,7 +774,9 @@ Haddock
 <p><img src="visual-check_files/figure-html/plots-30-1.png" class="r-plt" alt="SSB, F, recruitment and catches of had.27.6b (2026) by year, in the dataset and in SAG." width="990"></p>
 </div>
 <div class="section level3">
-<h3 id="had-27-7b-k-2026">had.27.7b-k (2026)<a class="anchor" aria-label="anchor" href="#had-27-7b-k-2026"></a>
+<h3 id="had-27-7b-k-2026">
+<a href="https://standardgraphs.ices.dk/ViewCharts.aspx?key=22561" class="external-link">had.27.7b-k
+(2026)</a><a class="anchor" aria-label="anchor" href="#had-27-7b-k-2026"></a>
 </h3>
 <p class="qc-species">
 Haddock
@@ -711,7 +789,9 @@ Haddock
 <p><img src="visual-check_files/figure-html/plots-31-1.png" class="r-plt" alt="SSB, F, recruitment and catches of had.27.7b-k (2026) by year, in the dataset and in SAG." width="990"></p>
 </div>
 <div class="section level3">
-<h3 id="lez-27-4a6a-2026">lez.27.4a6a (2026)<a class="anchor" aria-label="anchor" href="#lez-27-4a6a-2026"></a>
+<h3 id="lez-27-4a6a-2026">
+<a href="https://standardgraphs.ices.dk/ViewCharts.aspx?key=23776" class="external-link">lez.27.4a6a
+(2026)</a><a class="anchor" aria-label="anchor" href="#lez-27-4a6a-2026"></a>
 </h3>
 <p class="qc-species">
 Megrim
@@ -724,7 +804,9 @@ Megrim
 <p><img src="visual-check_files/figure-html/plots-32-1.png" class="r-plt" alt="SSB, F, recruitment and catches of lez.27.4a6a (2026) by year, in the dataset and in SAG." width="990"></p>
 </div>
 <div class="section level3">
-<h3 id="sol-27-7a-2026">sol.27.7a (2026)<a class="anchor" aria-label="anchor" href="#sol-27-7a-2026"></a>
+<h3 id="sol-27-7a-2026">
+<a href="https://standardgraphs.ices.dk/ViewCharts.aspx?key=22641" class="external-link">sol.27.7a
+(2026)</a><a class="anchor" aria-label="anchor" href="#sol-27-7a-2026"></a>
 </h3>
 <p class="qc-species">
 Sole
@@ -736,7 +818,9 @@ Sole
 <p><img src="visual-check_files/figure-html/plots-33-1.png" class="r-plt" alt="SSB, F, recruitment and catches of sol.27.7a (2026) by year, in the dataset and in SAG." width="990"></p>
 </div>
 <div class="section level3">
-<h3 id="sol-27-7e-2026">sol.27.7e (2026)<a class="anchor" aria-label="anchor" href="#sol-27-7e-2026"></a>
+<h3 id="sol-27-7e-2026">
+<a href="https://standardgraphs.ices.dk/ViewCharts.aspx?key=22656" class="external-link">sol.27.7e
+(2026)</a><a class="anchor" aria-label="anchor" href="#sol-27-7e-2026"></a>
 </h3>
 <p class="qc-species">
 Sole
@@ -748,7 +832,9 @@ Sole
 <p><img src="visual-check_files/figure-html/plots-34-1.png" class="r-plt" alt="SSB, F, recruitment and catches of sol.27.7e (2026) by year, in the dataset and in SAG." width="990"></p>
 </div>
 <div class="section level3">
-<h3 id="sol-27-7fg-2026">sol.27.7fg (2026)<a class="anchor" aria-label="anchor" href="#sol-27-7fg-2026"></a>
+<h3 id="sol-27-7fg-2026">
+<a href="https://standardgraphs.ices.dk/ViewCharts.aspx?key=22663" class="external-link">sol.27.7fg
+(2026)</a><a class="anchor" aria-label="anchor" href="#sol-27-7fg-2026"></a>
 </h3>
 <p class="qc-species">
 Sole
@@ -772,7 +858,9 @@ Whiting
 <p>Not compared: the stock assessment was not found in SAG.</p>
 </div>
 <div class="section level3">
-<h3 id="whg-27-7b-ce-k-2026">whg.27.7b-ce-k (2026)<a class="anchor" aria-label="anchor" href="#whg-27-7b-ce-k-2026"></a>
+<h3 id="whg-27-7b-ce-k-2026">
+<a href="https://standardgraphs.ices.dk/ViewCharts.aspx?key=23780" class="external-link">whg.27.7b-ce-k
+(2026)</a><a class="anchor" aria-label="anchor" href="#whg-27-7b-ce-k-2026"></a>
 </h3>
 <p class="qc-species">
 Whiting
@@ -788,7 +876,9 @@ Whiting
 <h2 id="wghansa">WGHANSA<a class="anchor" aria-label="anchor" href="#wghansa"></a>
 </h2>
 <div class="section level3">
-<h3 id="hom-27-9a-2026">hom.27.9a (2026)<a class="anchor" aria-label="anchor" href="#hom-27-9a-2026"></a>
+<h3 id="hom-27-9a-2026">
+<a href="https://standardgraphs.ices.dk/ViewCharts.aspx?key=23760" class="external-link">hom.27.9a
+(2026)</a><a class="anchor" aria-label="anchor" href="#hom-27-9a-2026"></a>
 </h3>
 <p class="qc-species">
 Horse mackerel
@@ -820,7 +910,9 @@ Norway lobster
 <h2 id="wgnssk">WGNSSK<a class="anchor" aria-label="anchor" href="#wgnssk"></a>
 </h2>
 <div class="section level3">
-<h3 id="bll-27-3a47de-2026">bll.27.3a47de (2026)<a class="anchor" aria-label="anchor" href="#bll-27-3a47de-2026"></a>
+<h3 id="bll-27-3a47de-2026">
+<a href="https://standardgraphs.ices.dk/ViewCharts.aspx?key=22409" class="external-link">bll.27.3a47de
+(2026)</a><a class="anchor" aria-label="anchor" href="#bll-27-3a47de-2026"></a>
 </h3>
 <p class="qc-species">
 Brill
@@ -833,7 +925,9 @@ Brill
 <p><img src="visual-check_files/figure-html/plots-40-1.png" class="r-plt" alt="SSB, F, recruitment and catches of bll.27.3a47de (2026) by year, in the dataset and in SAG." width="990"></p>
 </div>
 <div class="section level3">
-<h3 id="had-27-46a20-2026">had.27.46a20 (2026)<a class="anchor" aria-label="anchor" href="#had-27-46a20-2026"></a>
+<h3 id="had-27-46a20-2026">
+<a href="https://standardgraphs.ices.dk/ViewCharts.aspx?key=22417" class="external-link">had.27.46a20
+(2026)</a><a class="anchor" aria-label="anchor" href="#had-27-46a20-2026"></a>
 </h3>
 <p class="qc-species">
 Haddock
@@ -845,7 +939,9 @@ Haddock
 <p><img src="visual-check_files/figure-html/plots-41-1.png" class="r-plt" alt="SSB, F, recruitment and catches of had.27.46a20 (2026) by year, in the dataset and in SAG." width="990"></p>
 </div>
 <div class="section level3">
-<h3 id="ple-27-420-2026">ple.27.420 (2026)<a class="anchor" aria-label="anchor" href="#ple-27-420-2026"></a>
+<h3 id="ple-27-420-2026">
+<a href="https://standardgraphs.ices.dk/ViewCharts.aspx?key=22489" class="external-link">ple.27.420
+(2026)</a><a class="anchor" aria-label="anchor" href="#ple-27-420-2026"></a>
 </h3>
 <p class="qc-species">
 Plaice
@@ -857,7 +953,9 @@ Plaice
 <p><img src="visual-check_files/figure-html/plots-42-1.png" class="r-plt" alt="SSB, F, recruitment and catches of ple.27.420 (2026) by year, in the dataset and in SAG." width="990"></p>
 </div>
 <div class="section level3">
-<h3 id="sol-27-7d-2026">sol.27.7d (2026)<a class="anchor" aria-label="anchor" href="#sol-27-7d-2026"></a>
+<h3 id="sol-27-7d-2026">
+<a href="https://standardgraphs.ices.dk/ViewCharts.aspx?key=22546" class="external-link">sol.27.7d
+(2026)</a><a class="anchor" aria-label="anchor" href="#sol-27-7d-2026"></a>
 </h3>
 <p class="qc-species">
 Sole
@@ -869,7 +967,9 @@ Sole
 <p><img src="visual-check_files/figure-html/plots-43-1.png" class="r-plt" alt="SSB, F, recruitment and catches of sol.27.7d (2026) by year, in the dataset and in SAG." width="990"></p>
 </div>
 <div class="section level3">
-<h3 id="tur-27-4-2026">tur.27.4 (2026)<a class="anchor" aria-label="anchor" href="#tur-27-4-2026"></a>
+<h3 id="tur-27-4-2026">
+<a href="https://standardgraphs.ices.dk/ViewCharts.aspx?key=22472" class="external-link">tur.27.4
+(2026)</a><a class="anchor" aria-label="anchor" href="#tur-27-4-2026"></a>
 </h3>
 <p class="qc-species">
 Turbot
@@ -881,7 +981,9 @@ Turbot
 <p><img src="visual-check_files/figure-html/plots-44-1.png" class="r-plt" alt="SSB, F, recruitment and catches of tur.27.4 (2026) by year, in the dataset and in SAG." width="990"></p>
 </div>
 <div class="section level3">
-<h3 id="whg-27-47d-2026">whg.27.47d (2026)<a class="anchor" aria-label="anchor" href="#whg-27-47d-2026"></a>
+<h3 id="whg-27-47d-2026">
+<a href="https://standardgraphs.ices.dk/ViewCharts.aspx?key=22488" class="external-link">whg.27.47d
+(2026)</a><a class="anchor" aria-label="anchor" href="#whg-27-47d-2026"></a>
 </h3>
 <p class="qc-species">
 Whiting
@@ -893,7 +995,9 @@ Whiting
 <p><img src="visual-check_files/figure-html/plots-45-1.png" class="r-plt" alt="SSB, F, recruitment and catches of whg.27.47d (2026) by year, in the dataset and in SAG." width="990"></p>
 </div>
 <div class="section level3">
-<h3 id="wit-27-3a47d-2026">wit.27.3a47d (2026)<a class="anchor" aria-label="anchor" href="#wit-27-3a47d-2026"></a>
+<h3 id="wit-27-3a47d-2026">
+<a href="https://standardgraphs.ices.dk/ViewCharts.aspx?key=22534" class="external-link">wit.27.3a47d
+(2026)</a><a class="anchor" aria-label="anchor" href="#wit-27-3a47d-2026"></a>
 </h3>
 <p class="qc-species">
 Witch
@@ -909,7 +1013,9 @@ Witch
 <h2 id="wgwide">WGWIDE<a class="anchor" aria-label="anchor" href="#wgwide"></a>
 </h2>
 <div class="section level3">
-<h3 id="whb-27-1-91214-2026">whb.27.1-91214 (2026)<a class="anchor" aria-label="anchor" href="#whb-27-1-91214-2026"></a>
+<h3 id="whb-27-1-91214-2026">
+<a href="https://standardgraphs.ices.dk/ViewCharts.aspx?key=25908" class="external-link">whb.27.1-91214
+(2026)</a><a class="anchor" aria-label="anchor" href="#whb-27-1-91214-2026"></a>
 </h3>
 <p class="qc-species">
 Blue whiting
