@@ -49,16 +49,45 @@ flstock_github_url <- "https://raw.githubusercontent.com/neilcampbelll/FLstockpi
   con
 }
 
-#' Export the SQLite flstock_versions table to a Parquet file
+## Unpack every stock's slots into one long table:
+## stock_id, version, slot, quant, year, value, units
+.flstock_values_sql <- "
+WITH parsed AS (
+  SELECT stock_id, version,
+         json_transform(json, '{\"slots\": \"MAP(VARCHAR, STRUCT(units VARCHAR, data STRUCT(quant VARCHAR, year INTEGER, value DOUBLE)[]))\"}').slots AS slots
+  FROM flstock_versions
+),
+s AS (
+  SELECT stock_id, version, unnest(map_entries(slots)) AS e FROM parsed
+),
+r AS (
+  SELECT stock_id, version, e.key AS slot, e.value.units AS units,
+         unnest(e.value.data) AS d
+  FROM s
+)
+SELECT stock_id, version, slot, d.quant AS quant, d.year AS year, d.value AS value, units
+FROM r
+ORDER BY stock_id, version, slot, year, quant
+"
+
+#' Export the SQLite flstock_versions table to two Parquet files
+#'
+#' `parquet_path` gets one row per stock version, with the full JSON (used by
+#' load_flstocks()). `values_path` gets the same data unpacked into one row per
+#' stock, version, slot, quant and year, for querying directly (e.g. in a browser).
 #'
 #' @param db_path path to the SQLite database
-#' @param parquet_path output .parquet path
-export_flstock_parquet <- function(db_path, parquet_path) {
+#' @param parquet_path output .parquet path for the stock versions
+#' @param values_path output .parquet path for the long values table
+export_flstock_parquet <- function(db_path, parquet_path = "flstocks.parquet",
+                                   values_path = sub("\\.parquet$", "_values.parquet", parquet_path)) {
   con <- .flstock_duckdb_con(db_path)
   on.exit(dbDisconnect(con, shutdown = TRUE))
   dbExecute(con, sprintf(
     "COPY flstock_versions TO '%s' (FORMAT parquet)", parquet_path))
-  invisible(parquet_path)
+  dbExecute(con, sprintf(
+    "COPY (%s) TO '%s' (FORMAT parquet)", .flstock_values_sql, values_path))
+  invisible(c(parquet_path, values_path))
 }
 
 #' Load FLStock objects into an environment
@@ -116,5 +145,5 @@ load_flstocks <- function(path, stock_id = NULL, version = NULL, envir = .Global
 # load_flstocks("flstocks.sqlite", stock_id = "ple.27.4a",
 #               version = "WGNSSK 2026 Final")
 #
-# export_flstock_parquet("flstocks.sqlite", "flstocks.parquet")
+# export_flstock_parquet("flstocks.sqlite")   # writes flstocks.parquet and flstocks_values.parquet
 # load_flstocks("flstocks.parquet")
