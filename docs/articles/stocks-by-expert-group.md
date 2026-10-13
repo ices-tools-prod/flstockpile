@@ -8,6 +8,8 @@ assesses them, which is looked up in the ICES Stock Database with the
 
 It is run against the live stock database each time this site is built.
 
+Code
+
 ``` r
 
 library(FLStockpile)
@@ -23,6 +25,8 @@ The stock database lists the stocks that are active in a year, with the
 expert group and data category of each. The latest version of each stock
 assessment in the dataset is matched to it by stock code and assessment
 year.
+
+Code
 
 ``` r
 
@@ -59,6 +63,8 @@ contents_colours <- c("observed and estimated" = "#1b9e77", "estimated only" = "
 The dataset has 47 stock assessments, of 45 stocks, from 11 expert
 groups.
 
+Code
+
 ``` r
 
 ggplot(stocks, aes(y = reorder(expert_group, expert_group, length), fill = contents)) +
@@ -81,6 +87,8 @@ The dataset holds age-based assessments, which are mostly the stocks in
 data category 1. For the most recent assessment year, the number of
 stocks each expert group has in the stock database, the number of those
 in category 1, and the number that are in the dataset:
+
+Code
 
 ``` r
 
@@ -120,6 +128,8 @@ The years covered by the observed data and by the model estimates of
 each stock, from the ranges of the submitted objects. Where the
 estimates run past the assessment year, they include a forecast.
 
+Code
+
 ``` r
 
 sources <- stockpile_sources()
@@ -147,6 +157,8 @@ estimates.](stocks-by-expert-group_files/figure-html/unnamed-chunk-6-1.png)
 
 The same as a table, with the ages and what else is known about each
 stock:
+
+Code
 
 ``` r
 
@@ -218,6 +230,8 @@ knitr::kable(
 When each version of a stock assessment was submitted. A stock with more
 than one version has been corrected since it was first submitted.
 
+Code
+
 ``` r
 
 versions <- stockpile_stocks(version = "all")
@@ -238,6 +252,8 @@ group, with first versions and corrections marked
 differently.](stocks-by-expert-group_files/figure-html/unnamed-chunk-8-1.png)
 
 The stock assessments with more than one version:
+
+Code
 
 ``` r
 

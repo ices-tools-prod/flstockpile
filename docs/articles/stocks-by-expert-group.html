@@ -10,7 +10,8 @@
 <link href="../deps/bootstrap-5.3.1/bootstrap.min.css" rel="stylesheet">
 <script src="../deps/bootstrap-5.3.1/bootstrap.bundle.min.js"></script><link href="../deps/font-awesome-6.5.2/css/all.min.css" rel="stylesheet">
 <link href="../deps/font-awesome-6.5.2/css/v4-shims.min.css" rel="stylesheet">
-<script src="../deps/headroom-0.11.0/headroom.min.js"></script><script src="../deps/headroom-0.11.0/jQuery.headroom.min.js"></script><script src="../deps/bootstrap-toc-1.0.1/bootstrap-toc.min.js"></script><script src="../deps/clipboard.js-2.0.11/clipboard.min.js"></script><script src="../deps/search-1.0.0/autocomplete.jquery.min.js"></script><script src="../deps/search-1.0.0/fuse.min.js"></script><script src="../deps/search-1.0.0/mark.min.js"></script><!-- pkgdown --><script src="../pkgdown.js"></script><meta property="og:title" content="Stocks and years in the dataset">
+<script src="../deps/headroom-0.11.0/headroom.min.js"></script><script src="../deps/headroom-0.11.0/jQuery.headroom.min.js"></script><script src="../deps/bootstrap-toc-1.0.1/bootstrap-toc.min.js"></script><script src="../deps/clipboard.js-2.0.11/clipboard.min.js"></script><script src="../deps/search-1.0.0/autocomplete.jquery.min.js"></script><script src="../deps/search-1.0.0/fuse.min.js"></script><script src="../deps/search-1.0.0/mark.min.js"></script><!-- pkgdown --><script src="../pkgdown.js"></script><link href="../extra.css" rel="stylesheet">
+<meta property="og:title" content="Stocks and years in the dataset">
 </head>
 <body>
     <a href="#main" class="visually-hidden-focusable">Skip to contents</a>
@@ -74,20 +75,24 @@ the <a href="https://github.com/ices-tools-prod/icesSD" class="external-link">ic
 package.</p>
 <p>It is run against the live stock database each time this site is
 built.</p>
-<div class="sourceCode" id="cb1"><pre class="downlit sourceCode r">
+<details class="code-fold"><summary>
+Code
+</summary><div class="sourceCode" id="cb1"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="kw"><a href="https://rdrr.io/r/base/library.html" class="external-link">library</a></span><span class="op">(</span><span class="va"><a href="https://neilcampbelll.github.io/FLstockpile/">FLStockpile</a></span><span class="op">)</span></span>
 <span><span class="kw"><a href="https://rdrr.io/r/base/library.html" class="external-link">library</a></span><span class="op">(</span><span class="va"><a href="https://sd.ices.dk" class="external-link">icesSD</a></span><span class="op">)</span></span>
 <span><span class="kw"><a href="https://rdrr.io/r/base/library.html" class="external-link">library</a></span><span class="op">(</span><span class="va"><a href="https://ggplot2.tidyverse.org" class="external-link">ggplot2</a></span><span class="op">)</span></span>
 <span></span>
 <span><span class="fu"><a href="https://rdrr.io/r/base/options.html" class="external-link">options</a></span><span class="op">(</span>FLStockpile.url <span class="op">=</span> <span class="st">"https://github.com/neilcampbelll/FLstockpile/releases/download/v2026.001"</span><span class="op">)</span></span></code></pre></div>
-<div class="section level2">
+</details><div class="section level2">
 <h2 id="expert-groups">Expert groups<a class="anchor" aria-label="anchor" href="#expert-groups"></a>
 </h2>
 <p>The stock database lists the stocks that are active in a year, with
 the expert group and data category of each. The latest version of each
 stock assessment in the dataset is matched to it by stock code and
 assessment year.</p>
-<div class="sourceCode" id="cb2"><pre class="downlit sourceCode r">
+<details class="code-fold"><summary>
+Code
+</summary><div class="sourceCode" id="cb2"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">stocks</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/stockpile_stocks.html">stockpile_stocks</a></span><span class="op">(</span><span class="op">)</span></span>
 <span></span>
 <span><span class="va">stock_database</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/lapply.html" class="external-link">lapply</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/unique.html" class="external-link">unique</a></span><span class="op">(</span><span class="va">stocks</span><span class="op">$</span><span class="va">assessment_year</span><span class="op">)</span>, <span class="kw">function</span><span class="op">(</span><span class="va">year</span><span class="op">)</span> <span class="op">{</span></span>
@@ -116,9 +121,11 @@ assessment year.</p>
 <span><span class="va">stocks</span><span class="op">$</span><span class="va">assessment</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/paste.html" class="external-link">paste0</a></span><span class="op">(</span><span class="va">stocks</span><span class="op">$</span><span class="va">stock_code</span>, <span class="st">" ("</span>, <span class="va">stocks</span><span class="op">$</span><span class="va">assessment_year</span>, <span class="st">")"</span><span class="op">)</span></span>
 <span></span>
 <span><span class="va">contents_colours</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"observed and estimated"</span> <span class="op">=</span> <span class="st">"#1b9e77"</span>, <span class="st">"estimated only"</span> <span class="op">=</span> <span class="st">"#7570b3"</span>, <span class="st">"observed only"</span> <span class="op">=</span> <span class="st">"#d95f02"</span><span class="op">)</span></span></code></pre></div>
-<p>The dataset has 47 stock assessments, of 45 stocks, from 11 expert
+</details><p>The dataset has 47 stock assessments, of 45 stocks, from 11 expert
 groups.</p>
-<div class="sourceCode" id="cb3"><pre class="downlit sourceCode r">
+<details class="code-fold"><summary>
+Code
+</summary><div class="sourceCode" id="cb3"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="https://ggplot2.tidyverse.org/reference/ggplot.html" class="external-link">ggplot</a></span><span class="op">(</span><span class="va">stocks</span>, <span class="fu"><a href="https://ggplot2.tidyverse.org/reference/aes.html" class="external-link">aes</a></span><span class="op">(</span>y <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/stats/reorder.factor.html" class="external-link">reorder</a></span><span class="op">(</span><span class="va">expert_group</span>, <span class="va">expert_group</span>, <span class="va">length</span><span class="op">)</span>, fill <span class="op">=</span> <span class="va">contents</span><span class="op">)</span><span class="op">)</span> <span class="op">+</span></span>
 <span>  <span class="fu"><a href="https://ggplot2.tidyverse.org/reference/geom_bar.html" class="external-link">geom_bar</a></span><span class="op">(</span><span class="op">)</span> <span class="op">+</span></span>
 <span>  <span class="fu"><a href="https://ggplot2.tidyverse.org/reference/scale_continuous.html" class="external-link">scale_x_continuous</a></span><span class="op">(</span>breaks <span class="op">=</span> <span class="kw">function</span><span class="op">(</span><span class="va">limits</span><span class="op">)</span> <span class="fu"><a href="https://rdrr.io/r/base/seq.html" class="external-link">seq</a></span><span class="op">(</span><span class="fl">0</span>, <span class="va">limits</span><span class="op">[</span><span class="fl">2</span><span class="op">]</span>, by <span class="op">=</span> <span class="fl">2</span><span class="op">)</span><span class="op">)</span> <span class="op">+</span></span>
@@ -126,7 +133,7 @@ groups.</p>
 <span>  <span class="fu"><a href="https://ggplot2.tidyverse.org/reference/labs.html" class="external-link">labs</a></span><span class="op">(</span>x <span class="op">=</span> <span class="st">"stock assessments in the dataset"</span>, y <span class="op">=</span> <span class="cn">NULL</span>, fill <span class="op">=</span> <span class="cn">NULL</span><span class="op">)</span> <span class="op">+</span></span>
 <span>  <span class="fu"><a href="https://ggplot2.tidyverse.org/reference/ggtheme.html" class="external-link">theme_minimal</a></span><span class="op">(</span><span class="op">)</span> <span class="op">+</span></span>
 <span>  <span class="fu"><a href="https://ggplot2.tidyverse.org/reference/theme.html" class="external-link">theme</a></span><span class="op">(</span>legend.position <span class="op">=</span> <span class="st">"bottom"</span><span class="op">)</span></span></code></pre></div>
-<p><img src="stocks-by-expert-group_files/figure-html/unnamed-chunk-4-1.png" class="r-plt" alt="Horizontal bar chart of the number of stock assessments in the dataset for each expert group, with the bars divided into observed and estimated, estimated only and observed only." width="768"></p>
+</details><p><img src="stocks-by-expert-group_files/figure-html/unnamed-chunk-4-1.png" class="r-plt" alt="Horizontal bar chart of the number of stock assessments in the dataset for each expert group, with the bars divided into observed and estimated, estimated only and observed only." width="768"></p>
 <div class="section level3">
 <h3 id="how-much-of-each-expert-groups-work-is-in-the-dataset">How much of each expert group’s work is in the dataset<a class="anchor" aria-label="anchor" href="#how-much-of-each-expert-groups-work-is-in-the-dataset"></a>
 </h3>
@@ -134,7 +141,9 @@ groups.</p>
 in data category 1. For the most recent assessment year, the number of
 stocks each expert group has in the stock database, the number of those
 in category 1, and the number that are in the dataset:</p>
-<div class="sourceCode" id="cb4"><pre class="downlit sourceCode r">
+<details class="code-fold"><summary>
+Code
+</summary><div class="sourceCode" id="cb4"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">latest_year</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/Extremes.html" class="external-link">max</a></span><span class="op">(</span><span class="va">stocks</span><span class="op">$</span><span class="va">assessment_year</span><span class="op">)</span></span>
 <span><span class="va">active</span> <span class="op">&lt;-</span> <span class="va">stock_database</span><span class="op">[</span><span class="va">stock_database</span><span class="op">$</span><span class="va">assessment_year</span> <span class="op">==</span> <span class="va">latest_year</span>, <span class="op">]</span></span>
 <span><span class="va">active</span><span class="op">$</span><span class="va">category_1</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/Round.html" class="external-link">floor</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/numeric.html" class="external-link">as.numeric</a></span><span class="op">(</span><span class="va">active</span><span class="op">$</span><span class="va">data_category</span><span class="op">)</span><span class="op">)</span> <span class="op">==</span> <span class="fl">1</span></span>
@@ -149,7 +158,7 @@ in category 1, and the number that are in the dataset:</p>
 <span>  row.names <span class="op">=</span> <span class="cn">FALSE</span>,</span>
 <span>  col.names <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"Expert group"</span>, <span class="fu"><a href="https://rdrr.io/r/base/paste.html" class="external-link">paste</a></span><span class="op">(</span><span class="st">"Stocks in"</span>, <span class="va">latest_year</span><span class="op">)</span>, <span class="st">"In category 1"</span>, <span class="st">"In the dataset"</span><span class="op">)</span></span>
 <span><span class="op">)</span></span></code></pre></div>
-<table class="table">
+</details><table class="table">
 <thead><tr class="header">
 <th align="left">Expert group</th>
 <th align="right">Stocks in 2026</th>
@@ -233,7 +242,9 @@ in category 1, and the number that are in the dataset:</p>
 <p>The years covered by the observed data and by the model estimates of
 each stock, from the ranges of the submitted objects. Where the
 estimates run past the assessment year, they include a forecast.</p>
-<div class="sourceCode" id="cb5"><pre class="downlit sourceCode r">
+<details class="code-fold"><summary>
+Code
+</summary><div class="sourceCode" id="cb5"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">sources</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/stockpile_sources.html">stockpile_sources</a></span><span class="op">(</span><span class="op">)</span></span>
 <span><span class="va">sources</span> <span class="op">&lt;-</span> <span class="va">sources</span><span class="op">[</span><span class="va">sources</span><span class="op">$</span><span class="va">class</span> <span class="op">==</span> <span class="st">"FLStock"</span>, <span class="op">]</span></span>
 <span><span class="va">sources</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/merge.html" class="external-link">merge</a></span><span class="op">(</span><span class="va">sources</span>, <span class="va">stocks</span><span class="op">[</span><span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"stock_code"</span>, <span class="st">"assessment_year"</span>, <span class="st">"version"</span>, <span class="st">"expert_group"</span>, <span class="st">"assessment"</span><span class="op">)</span><span class="op">]</span><span class="op">)</span></span>
@@ -251,10 +262,12 @@ estimates run past the assessment year, they include a forecast.</p>
 <span>    panel.grid.major.y <span class="op">=</span> <span class="fu"><a href="https://ggplot2.tidyverse.org/reference/element.html" class="external-link">element_blank</a></span><span class="op">(</span><span class="op">)</span>,</span>
 <span>    panel.spacing <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/grid/unit.html" class="external-link">unit</a></span><span class="op">(</span><span class="fl">0.6</span>, <span class="st">"lines"</span><span class="op">)</span></span>
 <span>  <span class="op">)</span></span></code></pre></div>
-<p><img src="stocks-by-expert-group_files/figure-html/unnamed-chunk-6-1.png" class="r-plt" alt="For each stock assessment, grouped by expert group, horizontal lines showing the range of years covered by the observed data and by the model estimates." width="768"></p>
+</details><p><img src="stocks-by-expert-group_files/figure-html/unnamed-chunk-6-1.png" class="r-plt" alt="For each stock assessment, grouped by expert group, horizontal lines showing the range of years covered by the observed data and by the model estimates." width="768"></p>
 <p>The same as a table, with the ages and what else is known about each
 stock:</p>
-<div class="sourceCode" id="cb6"><pre class="downlit sourceCode r">
+<details class="code-fold"><summary>
+Code
+</summary><div class="sourceCode" id="cb6"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">ranges</span> <span class="op">&lt;-</span> <span class="va">stocks</span><span class="op">[</span><span class="fu"><a href="https://rdrr.io/r/base/order.html" class="external-link">order</a></span><span class="op">(</span><span class="va">stocks</span><span class="op">$</span><span class="va">expert_group</span>, <span class="va">stocks</span><span class="op">$</span><span class="va">stock_code</span>, <span class="va">stocks</span><span class="op">$</span><span class="va">assessment_year</span><span class="op">)</span>, <span class="op">]</span></span>
 <span><span class="va">ranges</span><span class="op">$</span><span class="va">years</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/paste.html" class="external-link">paste</a></span><span class="op">(</span><span class="va">ranges</span><span class="op">$</span><span class="va">min_year</span>, <span class="va">ranges</span><span class="op">$</span><span class="va">max_year</span>, sep <span class="op">=</span> <span class="st">"–"</span><span class="op">)</span></span>
 <span><span class="va">ranges</span><span class="op">$</span><span class="va">ages</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/paste.html" class="external-link">paste</a></span><span class="op">(</span><span class="va">ranges</span><span class="op">$</span><span class="va">min_age</span>, <span class="va">ranges</span><span class="op">$</span><span class="va">max_age</span>, sep <span class="op">=</span> <span class="st">"–"</span><span class="op">)</span></span>
@@ -266,7 +279,7 @@ stock:</p>
 <span>    <span class="st">"Expert group"</span>, <span class="st">"Stock"</span>, <span class="st">"Species"</span>, <span class="st">"Assessment year"</span>, <span class="st">"Category"</span>, <span class="st">"Years"</span>, <span class="st">"Ages"</span>, <span class="st">"Contents"</span>, <span class="st">"Survey indices"</span></span>
 <span>  <span class="op">)</span></span>
 <span><span class="op">)</span></span></code></pre></div>
-<table class="table">
+</details><table class="table">
 <colgroup>
 <col width="9%">
 <col width="13%">
@@ -816,7 +829,9 @@ stock:</p>
 <p>When each version of a stock assessment was submitted. A stock with
 more than one version has been corrected since it was first
 submitted.</p>
-<div class="sourceCode" id="cb7"><pre class="downlit sourceCode r">
+<details class="code-fold"><summary>
+Code
+</summary><div class="sourceCode" id="cb7"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">versions</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/stockpile_stocks.html">stockpile_stocks</a></span><span class="op">(</span>version <span class="op">=</span> <span class="st">"all"</span><span class="op">)</span></span>
 <span><span class="va">versions</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/merge.html" class="external-link">merge</a></span><span class="op">(</span><span class="va">versions</span>, <span class="fu"><a href="https://rdrr.io/r/base/unique.html" class="external-link">unique</a></span><span class="op">(</span><span class="va">stocks</span><span class="op">[</span><span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"stock_code"</span>, <span class="st">"assessment_year"</span>, <span class="st">"expert_group"</span><span class="op">)</span><span class="op">]</span><span class="op">)</span><span class="op">)</span></span>
 <span><span class="va">versions</span><span class="op">$</span><span class="va">submission</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/ifelse.html" class="external-link">ifelse</a></span><span class="op">(</span><span class="va">versions</span><span class="op">$</span><span class="va">version</span> <span class="op">==</span> <span class="fl">1</span>, <span class="st">"first version"</span>, <span class="st">"correction"</span><span class="op">)</span></span>
@@ -828,9 +843,11 @@ submitted.</p>
 <span>  <span class="fu"><a href="https://ggplot2.tidyverse.org/reference/labs.html" class="external-link">labs</a></span><span class="op">(</span>x <span class="op">=</span> <span class="st">"submitted"</span>, y <span class="op">=</span> <span class="cn">NULL</span>, colour <span class="op">=</span> <span class="cn">NULL</span><span class="op">)</span> <span class="op">+</span></span>
 <span>  <span class="fu"><a href="https://ggplot2.tidyverse.org/reference/ggtheme.html" class="external-link">theme_minimal</a></span><span class="op">(</span><span class="op">)</span> <span class="op">+</span></span>
 <span>  <span class="fu"><a href="https://ggplot2.tidyverse.org/reference/theme.html" class="external-link">theme</a></span><span class="op">(</span>legend.position <span class="op">=</span> <span class="st">"bottom"</span><span class="op">)</span></span></code></pre></div>
-<p><img src="stocks-by-expert-group_files/figure-html/unnamed-chunk-8-1.png" class="r-plt" alt="Dates on which versions of stock assessments were submitted, by expert group, with first versions and corrections marked differently." width="768"></p>
+</details><p><img src="stocks-by-expert-group_files/figure-html/unnamed-chunk-8-1.png" class="r-plt" alt="Dates on which versions of stock assessments were submitted, by expert group, with first versions and corrections marked differently." width="768"></p>
 <p>The stock assessments with more than one version:</p>
-<div class="sourceCode" id="cb8"><pre class="downlit sourceCode r">
+<details class="code-fold"><summary>
+Code
+</summary><div class="sourceCode" id="cb8"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">corrected</span> <span class="op">&lt;-</span> <span class="va">versions</span><span class="op">[</span><span class="fu"><a href="https://rdrr.io/r/stats/ave.html" class="external-link">ave</a></span><span class="op">(</span><span class="va">versions</span><span class="op">$</span><span class="va">version</span>, <span class="va">versions</span><span class="op">$</span><span class="va">stock_code</span>, <span class="va">versions</span><span class="op">$</span><span class="va">assessment_year</span>, FUN <span class="op">=</span> <span class="va">max</span><span class="op">)</span> <span class="op">&gt;</span> <span class="fl">1</span>, <span class="op">]</span></span>
 <span><span class="va">corrected</span> <span class="op">&lt;-</span> <span class="va">corrected</span><span class="op">[</span><span class="fu"><a href="https://rdrr.io/r/base/order.html" class="external-link">order</a></span><span class="op">(</span><span class="va">corrected</span><span class="op">$</span><span class="va">stock_code</span>, <span class="va">corrected</span><span class="op">$</span><span class="va">version</span><span class="op">)</span>, <span class="op">]</span></span>
 <span><span class="va">corrected</span><span class="op">$</span><span class="va">submitted</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/format.html" class="external-link">format</a></span><span class="op">(</span><span class="va">corrected</span><span class="op">$</span><span class="va">submitted</span>, <span class="st">"%Y-%m-%d"</span><span class="op">)</span></span>
@@ -840,7 +857,7 @@ submitted.</p>
 <span>  row.names <span class="op">=</span> <span class="cn">FALSE</span>,</span>
 <span>  col.names <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"Expert group"</span>, <span class="st">"Stock"</span>, <span class="st">"Assessment year"</span>, <span class="st">"Version"</span>, <span class="st">"Submitted"</span>, <span class="st">"Latest"</span><span class="op">)</span></span>
 <span><span class="op">)</span></span></code></pre></div>
-<table style="width:100%;" class="table">
+</details><table style="width:100%;" class="table">
 <colgroup>
 <col width="17%">
 <col width="24%">

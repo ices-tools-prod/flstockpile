@@ -15,6 +15,8 @@ calculate the summary. It is run against the live SAG database each time
 this site is built, so the results change as assessments are published
 or corrected.
 
+Code
+
 ``` r
 
 library(FLStockpile)
@@ -32,6 +34,8 @@ object. The spawning stock biomass, mean fishing mortality and
 recruitment come from the model estimates. The catches in SAG are
 usually the observed catches, so the catches come from the observed data
 where the dataset has them, and from the estimates otherwise.
+
+Code
 
 ``` r
 
@@ -81,24 +85,36 @@ compare_summaries <- function(stock_code, assessment_year) {
 Sole in the eastern English Channel, `sol.27.7d`, has both observed data
 and model estimates in the dataset.
 
+Code
+
 ``` r
 
 sole <- compare_summaries("sol.27.7d", 2026)
 tail(sole[sole$quantity == "SSB", ], 5)
-#>     quantity year   dataset   sag     ratio
-#> 172      SSB 2021 11937.797 11938 0.9999830
-#> 173      SSB 2022  9691.269  9691 1.0000278
-#> 174      SSB 2023 10193.933 10194 0.9999934
-#> 175      SSB 2024 10143.750 10144 0.9999753
-#> 176      SSB 2025  8874.998  8875 0.9999998
-tail(sole[sole$quantity == "catches", ], 5)
-#>    quantity year  dataset  sag    ratio
-#> 40  catches 2021 1914.027 1914 1.000014
-#> 41  catches 2022 2012.486 2012 1.000242
-#> 42  catches 2023 1499.205 1499 1.000137
-#> 43  catches 2024 1574.047 1574 1.000030
-#> 44  catches 2025 1251.492 1251 1.000393
 ```
+
+    #>     quantity year   dataset   sag     ratio
+    #> 172      SSB 2021 11937.797 11938 0.9999830
+    #> 173      SSB 2022  9691.269  9691 1.0000278
+    #> 174      SSB 2023 10193.933 10194 0.9999934
+    #> 175      SSB 2024 10143.750 10144 0.9999753
+    #> 176      SSB 2025  8874.998  8875 0.9999998
+
+Code
+
+``` r
+
+tail(sole[sole$quantity == "catches", ], 5)
+```
+
+    #>    quantity year  dataset  sag    ratio
+    #> 40  catches 2021 1914.027 1914 1.000014
+    #> 41  catches 2022 2012.486 2012 1.000242
+    #> 42  catches 2023 1499.205 1499 1.000137
+    #> 43  catches 2024 1574.047 1574 1.000030
+    #> 44  catches 2025 1251.492 1251 1.000393
+
+Code
 
 ``` r
 
@@ -118,15 +134,18 @@ line.](compare-with-sag_files/figure-html/unnamed-chunk-5-1.png)
 
 The largest difference, in any year, for each quantity:
 
+Code
+
 ``` r
 
 aggregate(ratio ~ quantity, sole, function(ratio) max(abs(ratio - 1)))
-#>      quantity        ratio
-#> 1     catches 3.932854e-04
-#> 2           F 2.117354e-03
-#> 3 recruitment 3.755920e-05
-#> 4         SSB 3.979648e-05
 ```
+
+    #>      quantity        ratio
+    #> 1     catches 3.932854e-04
+    #> 2           F 2.117354e-03
+    #> 3 recruitment 3.755920e-05
+    #> 4         SSB 3.979648e-05
 
 ## All stocks
 
@@ -135,6 +154,8 @@ assessment in the dataset that has model estimates. Stocks with more
 than one season, unit or area are left out, because their summary cannot
 be calculated in the same simple way, and so are stocks that are not
 found in SAG.
+
+Code
 
 ``` r
 
@@ -165,6 +186,8 @@ if they are within 2.5% of each other in every year. SAG holds rounded
 values, so small differences are expected: a fishing mortality of 0.02
 held to three decimal places can be 2.5% out.
 
+Code
+
 ``` r
 
 agreement <- aggregate(
@@ -174,13 +197,16 @@ agreement <- aggregate(
 names(agreement)[4] <- "same"
 
 table(agreement$quantity, ifelse(agreement$same, "same", "different"))
-#>              
-#>               different same
-#>   catches            14   12
-#>   F                   7   29
-#>   recruitment         7   27
-#>   SSB                 5   31
 ```
+
+    #>              
+    #>               different same
+    #>   catches            14   12
+    #>   F                   7   29
+    #>   recruitment         7   27
+    #>   SSB                 5   31
+
+Code
 
 ``` r
 
@@ -195,6 +221,8 @@ that could be compared.
 Choose a stock to see its summary in the dataset and in SAG, as a plot
 and as a table. The points are the SAG values and the lines the dataset
 values.
+
+Code
 
 ``` r
 
@@ -233,12 +261,16 @@ values <- c(rbind(paste0("dataset.", quantities), paste0("sag.", quantities)))
 
 Stock
 
+Code
+
 ``` r
 
 subplot(lapply(quantities, panel), nrows = 2, shareX = TRUE, titleY = TRUE, margin = 0.06) |>
   layout(legend = list(orientation = "h", y = -0.1)) |>
   config(displayModeBar = FALSE)
 ```
+
+Code
 
 ``` r
 
@@ -264,6 +296,8 @@ For each stock and quantity that is not the same, the median over the
 years of the dataset value divided by the SAG value, and the range. A
 blank means the quantity is the same, and `-` that it could not be
 compared.
+
+Code
 
 ``` r
 
@@ -331,6 +365,8 @@ errors:
   stock object may not be the assessment that was published.
 
 The stocks compared, with how SAG describes their quantities:
+
+Code
 
 ``` r
 
