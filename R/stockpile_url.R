@@ -1,6 +1,6 @@
-#' Location of the stockpile
+#' Location of the dataset
 #'
-#' The stockpile is a set of parquet files in one place, which can be a web
+#' The dataset is a set of parquet files in one place, which can be a web
 #' address or a folder. The location is taken from the option
 #' `FLStockpile.url`, or if that is not set, from the environment variable
 #' `FLSTOCKPILE_URL`.
@@ -19,7 +19,7 @@ stockpile_url <- function() {
   url <- getOption("FLStockpile.url", Sys.getenv("FLSTOCKPILE_URL"))
   if (!is.character(url) || length(url) != 1 || !nzchar(url)) {
     stop(
-      "the location of the stockpile is not set, ",
+      "the location of the dataset is not set, ",
       "use options(FLStockpile.url = ) or the environment variable FLSTOCKPILE_URL"
     )
   }
@@ -29,10 +29,10 @@ stockpile_url <- function() {
 # tables read in this session, by location
 cache <- new.env()
 
-# Read one of the stockpile tables.
+# Read one of the dataset tables.
 #
 # name    the table: stocks, sources, values or indices
-# url     the location of the stockpile
+# url     the location of the dataset
 # refresh read the table again, even if it was read earlier in this session
 #
 # Returns a data frame.
@@ -62,7 +62,7 @@ select_versions <- function(stock_code, assessment_year, version, as_of, url, re
   if (!is.null(stock_code)) {
     unknown <- setdiff(stock_code, stocks$stock_code)
     if (length(unknown) > 0) {
-      stop("no such stock code in the stockpile: ", paste(unknown, collapse = ", "))
+      stop("no such stock code in the dataset: ", paste(unknown, collapse = ", "))
     }
     stocks <- stocks[stocks$stock_code %in% stock_code, ]
   }

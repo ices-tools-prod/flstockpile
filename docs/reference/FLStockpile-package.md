@@ -1,6 +1,6 @@
-# Access the ICES stockpile of stock assessment results
+# Access the ICES dataset of stock assessment results
 
-The stockpile holds the stock assessment results submitted to ICES, as
+The dataset holds the stock assessment results submitted to ICES, as
 four parquet tables. Each stock assessment, a stock code and an
 assessment year, has one or more versions: a corrected submission
 becomes a new version, and earlier versions are kept.

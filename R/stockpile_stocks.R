@@ -1,6 +1,6 @@
-#' Stock assessments in the stockpile
+#' Stock assessments in the dataset
 #'
-#' List the stock assessments in the stockpile. With no arguments, the latest
+#' List the stock assessments in the dataset. With no arguments, the latest
 #' version of every stock assessment is returned.
 #'
 #' @param stock_code stock codes, for example `"sol.27.7d"`. The default is
@@ -8,10 +8,10 @@
 #' @param assessment_year assessment years. The default is all years.
 #' @param version `"latest"` for the most recent version of each stock
 #'   assessment, `"all"` for every version, or version numbers.
-#' @param as_of a date or time, to see the stockpile as it stood then: only
+#' @param as_of a date or time, to see the dataset as it stood then: only
 #'   versions submitted up to that time are used. A date means the start of
 #'   that day.
-#' @param url the location of the stockpile, see [stockpile_url()].
+#' @param url the location of the dataset, see [stockpile_url()].
 #' @param refresh read the table again, even if it has already been read in
 #'   this session.
 #'

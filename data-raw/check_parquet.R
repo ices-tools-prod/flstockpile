@@ -6,20 +6,20 @@
 # ranges, name and description. Where the submitted object has iterations, it
 # is the medians over the iterations that are compared.
 #
-# The stockpile can be a folder or a web address, so this also checks a
+# The dataset can be a folder or a web address, so this also checks a
 # published copy of the tables.
 #
-# Usage: Rscript check_parquet.R [stockpile] [extract dir] [package dir]
+# Usage: Rscript check_parquet.R [dataset] [extract dir] [package dir]
 
 library(FLCore)
 
 args <- commandArgs(trailingOnly = TRUE)
-stockpile <- if (length(args) >= 1) args[1] else "parquet"
+dataset <- if (length(args) >= 1) args[1] else "parquet"
 extract_dir <- if (length(args) >= 2) args[2] else "extracted"
 package_dir <- if (length(args) >= 3) args[3] else ".."
 
 devtools::load_all(package_dir, quiet = TRUE)
-options(FLStockpile.url = stockpile)
+options(FLStockpile.url = dataset)
 
 stock_slots <- c(
   "catch", "catch.n", "catch.wt",
@@ -100,7 +100,7 @@ for (i in seq_len(nrow(sources))) {
   }
 }
 
-cat(nrow(sources), "FLStock objects checked against", stockpile, "\n")
+cat(nrow(sources), "FLStock objects checked against", dataset, "\n")
 if (length(problems) > 0) {
   cat(problems, sep = "\n")
   stop(length(problems), " differences from the submitted objects")

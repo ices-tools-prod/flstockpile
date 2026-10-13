@@ -5,7 +5,7 @@ template:
   bootstrap: 5
 
 reference:
-- title: Location of the stockpile
+- title: Location of the dataset
   contents:
   - stockpile_url
 - title: Tables

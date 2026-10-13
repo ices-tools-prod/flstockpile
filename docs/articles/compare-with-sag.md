@@ -1,9 +1,9 @@
-# Comparing the stockpile with SAG
+# Comparing the dataset with SAG
 
 The official results of an ICES stock assessment are the summary tables
 in the ICES Stock Assessment Graphs database, [SAG](https://sg.ices.dk):
 spawning stock biomass, fishing pressure, recruitment and catches by
-year. The stockpile holds the detail behind those tables, the numbers,
+year. The dataset holds the detail behind those tables, the numbers,
 weights, maturity and mortality by age. If a submitted stock object
 really is the assessment that the advice was based on, the summary
 calculated from it should be the same as the summary in SAG.
@@ -27,19 +27,19 @@ options(FLStockpile.url = "https://github.com/neilcampbelll/FLstockpile/releases
 
 ## Summary of a stock
 
-The summary of a stock in the stockpile is calculated from its `FLStock`
+The summary of a stock in the dataset is calculated from its `FLStock`
 object. The spawning stock biomass, mean fishing mortality and
 recruitment come from the model estimates. The catches in SAG are
 usually the observed catches, so the catches come from the observed data
-where the stockpile has them, and from the estimates otherwise.
+where the dataset has them, and from the estimates otherwise.
 
 ``` r
 
-# The summary of a stock assessment in the stockpile.
+# The summary of a stock assessment in the dataset.
 #
 # Returns a data frame with one row per quantity and year.
 
-stockpile_summary <- function(stock_code, assessment_year) {
+dataset_summary <- function(stock_code, assessment_year) {
   estimated <- stockpile_flstock(stock_code, assessment_year, type = "estimated")
   version <- stockpile_stocks(stock_code, assessment_year)
   catches <- if (version$observed) {
@@ -51,7 +51,7 @@ stockpile_summary <- function(stock_code, assessment_year) {
   quantities <- list(SSB = ssb(estimated), F = fbar(estimated), recruitment = rec(estimated), catches = catches)
   rows <- lapply(names(quantities), function(quantity) {
     values <- as.data.frame(quantities[[quantity]])
-    data.frame(quantity = quantity, year = values$year, stockpile = values$data)
+    data.frame(quantity = quantity, year = values$year, dataset = values$data)
   })
   do.call(rbind, rows)
 }
@@ -69,9 +69,9 @@ sag_summary <- function(stock_code, assessment_year) {
 # The two summaries side by side, for the years and quantities in both.
 
 compare_summaries <- function(stock_code, assessment_year) {
-  both <- merge(stockpile_summary(stock_code, assessment_year), sag_summary(stock_code, assessment_year))
-  both <- both[!is.na(both$stockpile) & !is.na(both$sag) & both$sag != 0, ]
-  both$ratio <- both$stockpile / both$sag
+  both <- merge(dataset_summary(stock_code, assessment_year), sag_summary(stock_code, assessment_year))
+  both <- both[!is.na(both$dataset) & !is.na(both$sag) & both$sag != 0, ]
+  both$ratio <- both$dataset / both$sag
   both[order(both$quantity, both$year), ]
 }
 ```
@@ -79,32 +79,32 @@ compare_summaries <- function(stock_code, assessment_year) {
 ## One stock
 
 Sole in the eastern English Channel, `sol.27.7d`, has both observed data
-and model estimates in the stockpile.
+and model estimates in the dataset.
 
 ``` r
 
 sole <- compare_summaries("sol.27.7d", 2026)
 tail(sole[sole$quantity == "SSB", ], 5)
-#>     quantity year stockpile   sag     ratio
+#>     quantity year   dataset   sag     ratio
 #> 172      SSB 2021 11937.797 11938 0.9999830
 #> 173      SSB 2022  9691.269  9691 1.0000278
 #> 174      SSB 2023 10193.933 10194 0.9999934
 #> 175      SSB 2024 10143.750 10144 0.9999753
 #> 176      SSB 2025  8874.998  8875 0.9999998
 tail(sole[sole$quantity == "catches", ], 5)
-#>    quantity year stockpile  sag    ratio
-#> 40  catches 2021  1914.027 1914 1.000014
-#> 41  catches 2022  2012.486 2012 1.000242
-#> 42  catches 2023  1499.205 1499 1.000137
-#> 43  catches 2024  1574.047 1574 1.000030
-#> 44  catches 2025  1251.492 1251 1.000393
+#>    quantity year  dataset  sag    ratio
+#> 40  catches 2021 1914.027 1914 1.000014
+#> 41  catches 2022 2012.486 2012 1.000242
+#> 42  catches 2023 1499.205 1499 1.000137
+#> 43  catches 2024 1574.047 1574 1.000030
+#> 44  catches 2025 1251.492 1251 1.000393
 ```
 
 ``` r
 
 ggplot(sole, aes(year)) +
   geom_point(aes(y = sag, colour = "SAG")) +
-  geom_line(aes(y = stockpile, colour = "stockpile")) +
+  geom_line(aes(y = dataset, colour = "dataset")) +
   facet_wrap(~quantity, scales = "free_y") +
   expand_limits(y = 0) +
   labs(x = NULL, y = NULL, colour = NULL, title = "sol.27.7d, assessment year 2026") +
@@ -113,7 +113,7 @@ ggplot(sole, aes(year)) +
 ```
 
 ![Four panels, one each for catches, F, recruitment and SSB of sol.27.7d
-by year, with the SAG values as points and the stockpile values as a
+by year, with the SAG values as points and the dataset values as a
 line.](compare-with-sag_files/figure-html/unnamed-chunk-5-1.png)
 
 The largest difference, in any year, for each quantity:
@@ -131,7 +131,7 @@ aggregate(ratio ~ quantity, sole, function(ratio) max(abs(ratio - 1)))
 ## All stocks
 
 The same comparison is made for the latest version of every stock
-assessment in the stockpile that has model estimates. Stocks with more
+assessment in the dataset that has model estimates. Stocks with more
 than one season, unit or area are left out, because their summary cannot
 be calculated in the same simple way, and so are stocks that are not
 found in SAG.
@@ -160,7 +160,7 @@ SAG. Not compared because they have seasons, units or areas:
 pra.27.3a4a, san.sa.1r, san.sa.2r, san.sa.3r. Not found in SAG:
 meg.27.7b-k8abd, nep.fu.32, whg.27.6a.
 
-A stock and quantity is taken to be the same in the stockpile and in SAG
+A stock and quantity is taken to be the same in the dataset and in SAG
 if they are within 2.5% of each other in every year. SAG holds rounded
 values, so small differences are expected: a fishing mortality of 0.02
 held to three decimal places can be 2.5% out.
@@ -192,9 +192,9 @@ that could be compared.
 
 ### Explore a stock
 
-Choose a stock to see its summary in the stockpile and in SAG, as a plot
-and as a table. The points are the SAG values and the lines the
-stockpile values.
+Choose a stock to see its summary in the dataset and in SAG, as a plot
+and as a table. The points are the SAG values and the lines the dataset
+values.
 
 ``` r
 
@@ -202,8 +202,8 @@ library(plotly)
 library(crosstalk)
 library(DT)
 
-# one row per stock and year, with the stockpile and SAG value of each quantity
-explore <- comparisons[c("year", "quantity", "stockpile", "sag")]
+# one row per stock and year, with the dataset and SAG value of each quantity
+explore <- comparisons[c("year", "quantity", "dataset", "sag")]
 explore$stock <- paste(comparisons$stock_code, comparisons$assessment_year)
 explore <- reshape(explore, idvar = c("stock", "year"), timevar = "quantity", direction = "wide")
 explore <- explore[order(explore$stock, explore$year), ]
@@ -218,7 +218,7 @@ panel <- function(quantity) {
       showlegend = quantity == "SSB", marker = list(color = "#d95f02")
     ) |>
     add_lines(
-      y = as.formula(paste0("~stockpile.", quantity)), name = "stockpile", legendgroup = "stockpile",
+      y = as.formula(paste0("~dataset.", quantity)), name = "dataset", legendgroup = "dataset",
       showlegend = quantity == "SSB", line = list(color = "#1b9e77")
     ) |>
     layout(
@@ -228,7 +228,7 @@ panel <- function(quantity) {
 }
 
 quantities <- c("SSB", "F", "recruitment", "catches")
-values <- c(rbind(paste0("stockpile.", quantities), paste0("sag.", quantities)))
+values <- c(rbind(paste0("dataset.", quantities), paste0("sag.", quantities)))
 ```
 
 Stock
@@ -261,7 +261,7 @@ datatable(
 ### Where they differ
 
 For each stock and quantity that is not the same, the median over the
-years of the stockpile value divided by the SAG value, and the range. A
+years of the dataset value divided by the SAG value, and the range. A
 blank means the quantity is the same, and `-` that it could not be
 compared.
 
@@ -312,7 +312,7 @@ knitr::kable(ratios[order(ratios$stock_code), ], row.names = FALSE)
 There are several reasons for a difference, and most of them are not
 errors:
 
-- **Catches.** The stockpile catches are the estimates where no observed
+- **Catches.** The dataset catches are the estimates where no observed
   data were submitted, and SAG usually has the observed catches. A
   median close to 1 with a range around it is what that looks like.
 - **Units.** SAG may hold a quantity in different units, for example

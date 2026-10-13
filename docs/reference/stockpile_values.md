@@ -37,7 +37,7 @@ stockpile_values(
 
 - as_of:
 
-  a date or time, to see the stockpile as it stood then: only versions
+  a date or time, to see the dataset as it stood then: only versions
   submitted up to that time are used. A date means the start of that
   day.
 
@@ -52,7 +52,7 @@ stockpile_values(
 
 - url:
 
-  the location of the stockpile, see
+  the location of the dataset, see
   [`stockpile_url()`](https://neilcampbelll.github.io/FLstockpile/reference/stockpile_url.md).
 
 - refresh:

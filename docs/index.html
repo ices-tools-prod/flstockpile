@@ -10,7 +10,8 @@
 <link href="deps/bootstrap-5.3.1/bootstrap.min.css" rel="stylesheet">
 <script src="deps/bootstrap-5.3.1/bootstrap.bundle.min.js"></script><link href="deps/font-awesome-6.5.2/css/all.min.css" rel="stylesheet">
 <link href="deps/font-awesome-6.5.2/css/v4-shims.min.css" rel="stylesheet">
-<script src="deps/headroom-0.11.0/headroom.min.js"></script><script src="deps/headroom-0.11.0/jQuery.headroom.min.js"></script><script src="deps/bootstrap-toc-1.0.1/bootstrap-toc.min.js"></script><script src="deps/clipboard.js-2.0.11/clipboard.min.js"></script><script src="deps/search-1.0.0/autocomplete.jquery.min.js"></script><script src="deps/search-1.0.0/fuse.min.js"></script><script src="deps/search-1.0.0/mark.min.js"></script><!-- pkgdown --><script src="pkgdown.js"></script><meta property="og:title" content="Access the ICES Stockpile of Stock Assessment Results">
+<script src="deps/headroom-0.11.0/headroom.min.js"></script><script src="deps/headroom-0.11.0/jQuery.headroom.min.js"></script><script src="deps/bootstrap-toc-1.0.1/bootstrap-toc.min.js"></script><script src="deps/clipboard.js-2.0.11/clipboard.min.js"></script><script src="deps/search-1.0.0/autocomplete.jquery.min.js"></script><script src="deps/search-1.0.0/fuse.min.js"></script><script src="deps/search-1.0.0/mark.min.js"></script><!-- pkgdown --><script src="pkgdown.js"></script><link href="extra.css" rel="stylesheet">
+<meta property="og:title" content="Access the ICES Stockpile of Stock Assessment Results">
 <meta name="description" content="Read the stock assessment results submitted to ICES, the observed data and the model estimates for each stock, from a set of parquet files. The results can be used as plain data frames, or converted to FLStock objects if the FLCore package is installed.">
 <meta property="og:description" content="Read the stock assessment results submitted to ICES, the observed data and the model estimates for each stock, from a set of parquet files. The results can be used as plain data frames, or converted to FLStock objects if the FLCore package is installed.">
 </head>
@@ -35,8 +36,8 @@
 <li class="nav-item dropdown">
   <button class="nav-link dropdown-toggle" type="button" id="dropdown-articles" data-bs-toggle="dropdown" aria-expanded="false" aria-haspopup="true">Articles</button>
   <ul class="dropdown-menu" aria-labelledby="dropdown-articles">
-<li><a class="dropdown-item" href="articles/stocks-by-expert-group.html">Stocks and years in the stockpile</a></li>
-    <li><a class="dropdown-item" href="articles/compare-with-sag.html">Comparing the stockpile with SAG</a></li>
+<li><a class="dropdown-item" href="articles/stocks-by-expert-group.html">Stocks and years in the dataset</a></li>
+    <li><a class="dropdown-item" href="articles/compare-with-sag.html">Comparing the dataset with SAG</a></li>
   </ul>
 </li>
 <li class="nav-item"><a class="nav-link" href="news/index.html">Changelog</a></li>
@@ -57,7 +58,7 @@
 <div class="page-header"><h1 id="flstockpile">FLStockpile<a class="anchor" aria-label="anchor" href="#flstockpile"></a>
 </h1></div>
 <p>Read the stock assessment results submitted to ICES: the observed data and the model estimates for each stock, by age and year.</p>
-<p>The data are published as a set of <a href="https://parquet.apache.org" class="external-link">parquet</a> files, the <em>stockpile</em>, in the <a href="https://github.com/neilcampbelll/FLstockpile/releases" class="external-link">releases</a> of this repository. This package reads them into plain data frames, and can convert a stock to an <code>FLStock</code> object if the <a href="https://flr-project.org" class="external-link">FLCore</a> package is installed. The parquet files can also be read directly, with any parquet reader, in any language.</p>
+<p>The dataset is published as a set of <a href="https://parquet.apache.org" class="external-link">parquet</a> files in the <a href="https://github.com/neilcampbelll/FLstockpile/releases" class="external-link">releases</a> of this repository. This package reads them into plain data frames, and can convert a stock to an <code>FLStock</code> object if the <a href="https://flr-project.org" class="external-link">FLCore</a> package is installed. The parquet files can also be read directly, with any parquet reader, in any language.</p>
 <p>The current data release is a test release. The content and layout may change.</p>
 <div class="section level2">
 <h2 id="installation">Installation<a class="anchor" aria-label="anchor" href="#installation"></a>
@@ -69,7 +70,7 @@
 <div class="section level2">
 <h2 id="usage">Usage<a class="anchor" aria-label="anchor" href="#usage"></a>
 </h2>
-<p>Say where the stockpile is. This is a data release, so it will not change:</p>
+<p>Say where the dataset is. This is a data release, so it will not change:</p>
 <div class="sourceCode" id="cb2"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="kw"><a href="https://rdrr.io/r/base/library.html" class="external-link">library</a></span><span class="op">(</span><span class="va"><a href="https://neilcampbelll.github.io/FLstockpile/">FLStockpile</a></span><span class="op">)</span></span>
 <span></span>
@@ -140,7 +141,7 @@
 <div class="section level2">
 <h2 id="the-tables">The tables<a class="anchor" aria-label="anchor" href="#the-tables"></a>
 </h2>
-<p>The stockpile is four parquet files. All of them have the columns <code>stock_code</code>, <code>assessment_year</code> and <code>version</code>, which together identify a version of a stock assessment.</p>
+<p>The dataset is four parquet files. All of them have the columns <code>stock_code</code>, <code>assessment_year</code> and <code>version</code>, which together identify a version of a stock assessment.</p>
 <table class="table">
 <colgroup>
 <col width="33%">

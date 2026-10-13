@@ -8,6 +8,6 @@
   [`stockpile_values()`](https://neilcampbelll.github.io/FLstockpile/reference/stockpile_values.md)
   and
   [`stockpile_indices()`](https://neilcampbelll.github.io/FLstockpile/reference/stockpile_indices.md)
-  read the stockpile tables, and
+  read the dataset tables, and
   [`stockpile_flstock()`](https://neilcampbelll.github.io/FLstockpile/reference/stockpile_flstock.md)
   converts the values for one stock to an `FLStock`.

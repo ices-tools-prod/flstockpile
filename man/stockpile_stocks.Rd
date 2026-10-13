@@ -2,7 +2,7 @@
 % Please edit documentation in R/stockpile_stocks.R
 \name{stockpile_stocks}
 \alias{stockpile_stocks}
-\title{Stock assessments in the stockpile}
+\title{Stock assessments in the dataset}
 \usage{
 stockpile_stocks(
   stock_code = NULL,
@@ -22,11 +22,11 @@ all stocks.}
 \item{version}{\code{"latest"} for the most recent version of each stock
 assessment, \code{"all"} for every version, or version numbers.}
 
-\item{as_of}{a date or time, to see the stockpile as it stood then: only
+\item{as_of}{a date or time, to see the dataset as it stood then: only
 versions submitted up to that time are used. A date means the start of
 that day.}
 
-\item{url}{the location of the stockpile, see \code{\link[=stockpile_url]{stockpile_url()}}.}
+\item{url}{the location of the dataset, see \code{\link[=stockpile_url]{stockpile_url()}}.}
 
 \item{refresh}{read the table again, even if it has already been read in
 this session.}
@@ -52,7 +52,7 @@ The ranges are those of the estimated object, or of the observed object
 where there are no estimates.
 }
 \description{
-List the stock assessments in the stockpile. With no arguments, the latest
+List the stock assessments in the dataset. With no arguments, the latest
 version of every stock assessment is returned.
 }
 \examples{

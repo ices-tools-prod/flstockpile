@@ -22,11 +22,11 @@ all stocks.}
 \item{version}{\code{"latest"} for the most recent version of each stock
 assessment, \code{"all"} for every version, or version numbers.}
 
-\item{as_of}{a date or time, to see the stockpile as it stood then: only
+\item{as_of}{a date or time, to see the dataset as it stood then: only
 versions submitted up to that time are used. A date means the start of
 that day.}
 
-\item{url}{the location of the stockpile, see \code{\link[=stockpile_url]{stockpile_url()}}.}
+\item{url}{the location of the dataset, see \code{\link[=stockpile_url]{stockpile_url()}}.}
 
 \item{refresh}{read the table again, even if it has already been read in
 this session.}

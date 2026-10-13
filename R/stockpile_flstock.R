@@ -10,7 +10,7 @@
 #' @inheritParams stockpile_stocks
 #' @param stock_code a stock code, for example `"sol.27.7d"`.
 #' @param assessment_year an assessment year. It can be left out if the stock
-#'   has only one in the stockpile.
+#'   has only one in the dataset.
 #' @param version `"latest"` for the most recent version, or a version number.
 #' @param type `"estimated"` for the model estimates, or `"observed"` for the
 #'   observed data.
@@ -44,7 +44,7 @@ stockpile_flstock <- function(stock_code, assessment_year = NULL, version = "lat
 
   versions <- select_versions(stock_code, assessment_year, version, as_of, url, refresh)
   if (nrow(versions) == 0) {
-    stop("no such version of ", stock_code, " in the stockpile")
+    stop("no such version of ", stock_code, " in the dataset")
   }
   if (nrow(versions) > 1) {
     stop(

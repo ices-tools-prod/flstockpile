@@ -1,0 +1,14 @@
+/* folded code blocks in the articles */
+details.code-fold {
+  margin-bottom: 1rem;
+}
+
+details.code-fold > summary {
+  cursor: pointer;
+  font-size: 0.875rem;
+  color: var(--bs-secondary-color);
+}
+
+details.code-fold[open] > summary {
+  margin-bottom: 0.5rem;
+}

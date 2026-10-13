@@ -6,8 +6,8 @@
 Read the stock assessment results submitted to ICES: the observed data
 and the model estimates for each stock, by age and year.
 
-The data are published as a set of [parquet](https://parquet.apache.org)
-files, the *stockpile*, in the
+The dataset is published as a set of
+[parquet](https://parquet.apache.org) files in the
 [releases](https://github.com/neilcampbelll/FLstockpile/releases) of
 this repository. This package reads them into plain data frames, and can
 convert a stock to an `FLStock` object if the
@@ -27,8 +27,7 @@ remotes::install_github("neilcampbelll/FLstockpile")
 
 ## Usage
 
-Say where the stockpile is. This is a data release, so it will not
-change:
+Say where the dataset is. This is a data release, so it will not change:
 
 ``` r
 library(FLStockpile)
@@ -121,7 +120,7 @@ stockpile_stocks("meg.27.7b-k8abd", as_of = "2026-06-01")[c("stock_code", "versi
 
 ## The tables
 
-The stockpile is four parquet files. All of them have the columns
+The dataset is four parquet files. All of them have the columns
 `stock_code`, `assessment_year` and `version`, which together identify a
 version of a stock assessment.
 

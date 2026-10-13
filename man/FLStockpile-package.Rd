@@ -4,9 +4,9 @@
 \name{FLStockpile-package}
 \alias{FLStockpile}
 \alias{FLStockpile-package}
-\title{Access the ICES stockpile of stock assessment results}
+\title{Access the ICES dataset of stock assessment results}
 \description{
-The stockpile holds the stock assessment results submitted to ICES, as four
+The dataset holds the stock assessment results submitted to ICES, as four
 parquet tables. Each stock assessment, a stock code and an assessment year,
 has one or more versions: a corrected submission becomes a new version, and
 earlier versions are kept.

@@ -1,19 +1,31 @@
 ---
-title: "Stocks and years in the stockpile"
+title: "Stocks and years in the dataset"
 ---
 
 ```{r, include = FALSE}
 knitr::opts_chunk$set(
-  collapse = TRUE,
+  collapse = FALSE,
   comment = "#>",
   message = FALSE,
   warning = FALSE,
   fig.width = 8
 )
 options(width = 100)
+
+# code blocks are folded away, and opened by clicking on "Code"
+local({
+  source_hook <- knitr::knit_hooks$get("source")
+  knitr::knit_hooks$set(source = function(x, options) {
+    paste0(
+      "\n<details class=\"code-fold\">\n<summary>Code</summary>\n\n",
+      source_hook(x, options),
+      "\n\n</details>\n"
+    )
+  })
+})
 ```
 
-This article shows what has been submitted to the stockpile: which stocks,
+This article shows what has been submitted to the dataset: which stocks,
 which years they cover, and whether there are observed data, model estimates
 or both. The stocks are grouped by the ICES expert group that assesses them,
 which is looked up in the ICES Stock Database with the
@@ -33,7 +45,7 @@ options(FLStockpile.url = "https://github.com/neilcampbelll/FLstockpile/releases
 
 The stock database lists the stocks that are active in a year, with the
 expert group and data category of each. The latest version of each stock
-assessment in the stockpile is matched to it by stock code and assessment
+assessment in the dataset is matched to it by stock code and assessment
 year.
 
 ```{r}
@@ -54,7 +66,7 @@ stock_database <- do.call(rbind, stock_database)
 stocks <- merge(stocks, stock_database, all.x = TRUE)
 stocks$expert_group[is.na(stocks$expert_group)] <- "not in the stock database"
 
-# what the stockpile has for each stock assessment
+# what the dataset has for each stock assessment
 stocks$contents <- ifelse(
   stocks$observed & stocks$estimated, "observed and estimated",
   ifelse(stocks$estimated, "estimated only", "observed only")
@@ -67,41 +79,41 @@ stocks$assessment <- paste0(stocks$stock_code, " (", stocks$assessment_year, ")"
 contents_colours <- c("observed and estimated" = "#1b9e77", "estimated only" = "#7570b3", "observed only" = "#d95f02")
 ```
 
-The stockpile has `r nrow(stocks)` stock assessments, of
+The dataset has `r nrow(stocks)` stock assessments, of
 `r length(unique(stocks$stock_code))` stocks, from
 `r length(unique(stocks$expert_group))` expert groups.
 
-```{r, fig.height = 4.5, fig.alt = "Horizontal bar chart of the number of stock assessments in the stockpile for each expert group, with the bars divided into observed and estimated, estimated only and observed only."}
+```{r, fig.height = 4.5, fig.alt = "Horizontal bar chart of the number of stock assessments in the dataset for each expert group, with the bars divided into observed and estimated, estimated only and observed only."}
 ggplot(stocks, aes(y = reorder(expert_group, expert_group, length), fill = contents)) +
   geom_bar() +
   scale_x_continuous(breaks = function(limits) seq(0, limits[2], by = 2)) +
   scale_fill_manual(values = contents_colours) +
-  labs(x = "stock assessments in the stockpile", y = NULL, fill = NULL) +
+  labs(x = "stock assessments in the dataset", y = NULL, fill = NULL) +
   theme_minimal() +
   theme(legend.position = "bottom")
 ```
 
-### How much of each expert group's work is in the stockpile
+### How much of each expert group's work is in the dataset
 
-The stockpile holds age-based assessments, which are mostly the stocks in data
+The dataset holds age-based assessments, which are mostly the stocks in data
 category 1. For the most recent assessment year, the number of stocks each
 expert group has in the stock database, the number of those in category 1, and
-the number that are in the stockpile:
+the number that are in the dataset:
 
 ```{r}
 latest_year <- max(stocks$assessment_year)
 active <- stock_database[stock_database$assessment_year == latest_year, ]
 active$category_1 <- floor(as.numeric(active$data_category)) == 1
-active$in_stockpile <- active$stock_code %in% stocks$stock_code[stocks$assessment_year == latest_year]
+active$in_dataset <- active$stock_code %in% stocks$stock_code[stocks$assessment_year == latest_year]
 
-coverage <- aggregate(cbind(stocks = 1, category_1, in_stockpile) ~ expert_group, active, sum, na.action = na.pass)
-coverage <- coverage[coverage$in_stockpile > 0, ]
-coverage <- coverage[order(-coverage$in_stockpile), ]
+coverage <- aggregate(cbind(stocks = 1, category_1, in_dataset) ~ expert_group, active, sum, na.action = na.pass)
+coverage <- coverage[coverage$in_dataset > 0, ]
+coverage <- coverage[order(-coverage$in_dataset), ]
 
 knitr::kable(
   coverage,
   row.names = FALSE,
-  col.names = c("Expert group", paste("Stocks in", latest_year), "In category 1", "In the stockpile")
+  col.names = c("Expert group", paste("Stocks in", latest_year), "In category 1", "In the dataset")
 )
 ```
 

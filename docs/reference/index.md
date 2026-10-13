@@ -1,14 +1,14 @@
 # Package index
 
-## Location of the stockpile
+## Location of the dataset
 
 - [`stockpile_url()`](https://neilcampbelll.github.io/FLstockpile/reference/stockpile_url.md)
-  : Location of the stockpile
+  : Location of the dataset
 
 ## Tables
 
 - [`stockpile_stocks()`](https://neilcampbelll.github.io/FLstockpile/reference/stockpile_stocks.md)
-  : Stock assessments in the stockpile
+  : Stock assessments in the dataset
 - [`stockpile_sources()`](https://neilcampbelll.github.io/FLstockpile/reference/stockpile_sources.md)
   : Submitted objects behind the stock assessments
 - [`stockpile_values()`](https://neilcampbelll.github.io/FLstockpile/reference/stockpile_values.md)

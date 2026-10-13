@@ -18,18 +18,18 @@ stockpile_flstock(
 \item{stock_code}{a stock code, for example \code{"sol.27.7d"}.}
 
 \item{assessment_year}{an assessment year. It can be left out if the stock
-has only one in the stockpile.}
+has only one in the dataset.}
 
 \item{version}{\code{"latest"} for the most recent version, or a version number.}
 
-\item{as_of}{a date or time, to see the stockpile as it stood then: only
+\item{as_of}{a date or time, to see the dataset as it stood then: only
 versions submitted up to that time are used. A date means the start of
 that day.}
 
 \item{type}{\code{"estimated"} for the model estimates, or \code{"observed"} for the
 observed data.}
 
-\item{url}{the location of the stockpile, see \code{\link[=stockpile_url]{stockpile_url()}}.}
+\item{url}{the location of the dataset, see \code{\link[=stockpile_url]{stockpile_url()}}.}
 
 \item{refresh}{read the table again, even if it has already been read in
 this session.}

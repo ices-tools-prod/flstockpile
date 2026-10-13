@@ -2,7 +2,7 @@
 % Please edit documentation in R/stockpile_url.R
 \name{stockpile_url}
 \alias{stockpile_url}
-\title{Location of the stockpile}
+\title{Location of the dataset}
 \usage{
 stockpile_url()
 }
@@ -10,7 +10,7 @@ stockpile_url()
 The location, as a character string.
 }
 \description{
-The stockpile is a set of parquet files in one place, which can be a web
+The dataset is a set of parquet files in one place, which can be a web
 address or a folder. The location is taken from the option
 \code{FLStockpile.url}, or if that is not set, from the environment variable
 \code{FLSTOCKPILE_URL}.
