@@ -83,13 +83,29 @@ sag_summary <- function(stock_code, assessment_year) {
   do.call(rbind, rows)
 }
 
+# Is a value in the dataset the same as the value in SAG?
+#
+# It is if the two are within 2.5% of each other, or within the rounding of
+# SAG: half a unit in the last decimal place that SAG holds for the quantity.
+
+same_as_sag <- function(dataset, sag) {
+  places <- 0
+  while (places < 6 && any(abs(sag - round(sag, places)) > 1e-9)) places <- places + 1
+  abs(dataset / sag - 1) < 0.025 | abs(dataset - sag) <= 0.5 * 10^-places
+}
+
 # The two summaries side by side, for the years and quantities in both.
 
 compare_summaries <- function(stock_code, assessment_year) {
   both <- merge(dataset_summary(stock_code, assessment_year), sag_summary(stock_code, assessment_year))
   both <- both[!is.na(both$dataset) & !is.na(both$sag) & both$sag != 0, ]
   both$ratio <- both$dataset / both$sag
-  both[order(both$quantity, both$year), ]
+  both <- both[order(both$quantity, both$year), ]
+  # SAG holds each quantity to its own number of decimal places
+  both$same <- as.logical(ave(seq_len(nrow(both)), both$quantity, FUN = function(rows) {
+    same_as_sag(both$dataset[rows], both$sag[rows])
+  }))
+  both
 }
 ```
 
@@ -106,12 +122,12 @@ sole <- compare_summaries("sol.27.7d", 2026)
 tail(sole[sole$quantity == "SSB", ], 5)
 ```
 
-    #>     quantity year   dataset   sag     ratio
-    #> 172      SSB 2021 11937.797 11938 0.9999830
-    #> 173      SSB 2022  9691.269  9691 1.0000278
-    #> 174      SSB 2023 10193.933 10194 0.9999934
-    #> 175      SSB 2024 10143.750 10144 0.9999753
-    #> 176      SSB 2025  8874.998  8875 0.9999998
+    #>     quantity year   dataset   sag     ratio same
+    #> 172      SSB 2021 11937.797 11938 0.9999830 TRUE
+    #> 173      SSB 2022  9691.269  9691 1.0000278 TRUE
+    #> 174      SSB 2023 10193.933 10194 0.9999934 TRUE
+    #> 175      SSB 2024 10143.750 10144 0.9999753 TRUE
+    #> 176      SSB 2025  8874.998  8875 0.9999998 TRUE
 
 Code
 
@@ -120,12 +136,12 @@ Code
 tail(sole[sole$quantity == "catches", ], 5)
 ```
 
-    #>    quantity year  dataset  sag    ratio
-    #> 40  catches 2021 1914.027 1914 1.000014
-    #> 41  catches 2022 2012.486 2012 1.000242
-    #> 42  catches 2023 1499.205 1499 1.000137
-    #> 43  catches 2024 1574.047 1574 1.000030
-    #> 44  catches 2025 1251.492 1251 1.000393
+    #>    quantity year  dataset  sag    ratio same
+    #> 40  catches 2021 1914.027 1914 1.000014 TRUE
+    #> 41  catches 2022 2012.486 2012 1.000242 TRUE
+    #> 42  catches 2023 1499.205 1499 1.000137 TRUE
+    #> 43  catches 2024 1574.047 1574 1.000030 TRUE
+    #> 44  catches 2025 1251.492 1251 1.000393 TRUE
 
 Code
 
@@ -195,19 +211,16 @@ pra.27.3a4a, san.sa.1r, san.sa.2r, san.sa.3r. Not found in SAG:
 meg.27.7b-k8abd, nep.fu.32, whg.27.6a.
 
 A stock and quantity is taken to be the same in the dataset and in SAG
-if they are within 2.5% of each other in every year. SAG holds rounded
-values, so small differences are expected: a fishing mortality of 0.02
-held to three decimal places can be 2.5% out.
+if they are the same in every year. A year is the same if the two values
+are within 2.5% of each other, or within the rounding of SAG: a fishing
+mortality of 0.011 that SAG holds to three decimal places could be
+anything from 0.0105 to 0.0115, which is more than 2.5% either way.
 
 Code
 
 ``` r
 
-agreement <- aggregate(
-  ratio ~ stock_code + assessment_year + quantity, comparisons,
-  function(ratio) max(abs(ratio - 1)) < 0.025
-)
-names(agreement)[4] <- "same"
+agreement <- aggregate(same ~ stock_code + assessment_year + quantity, comparisons, all)
 
 table(agreement$quantity, ifelse(agreement$same, "same", "different"))
 ```
@@ -215,7 +228,7 @@ table(agreement$quantity, ifelse(agreement$same, "same", "different"))
     #>              
     #>               different same
     #>   catches            21   14
-    #>   F                   7   29
+    #>   F                   6   30
     #>   recruitment         5   29
     #>   SSB                 5   31
 
@@ -305,25 +318,32 @@ datatable(
 
 ### Where they differ
 
-For each stock and quantity that is not the same, the median over the
-years of the dataset value divided by the SAG value, and the range. A
-blank means the quantity is the same, and `-` that it could not be
-compared.
+For each stock and quantity that is not the same, the number of years
+that differ, and the median over all the years of the dataset value
+divided by the SAG value, with its range. A median of 1 with only a few
+years that differ points to particular years; a median away from 1 to
+the whole series. A blank means the quantity is the same, and `-` that
+it could not be compared.
 
 Code
 
 ``` r
 
-ratios <- aggregate(
-  ratio ~ stock_code + assessment_year + quantity, comparisons,
-  function(ratio) {
-    if (max(abs(ratio - 1)) < 0.025) {
+groups <- split(comparisons, comparisons[c("stock_code", "assessment_year", "quantity")], drop = TRUE)
+ratios <- lapply(groups, function(rows) {
+  data.frame(
+    rows[1, c("stock_code", "assessment_year", "quantity")],
+    ratio = if (all(rows$same)) {
       ""
     } else {
-      sprintf("%s (%s to %s)", signif(median(ratio), 3), signif(min(ratio), 3), signif(max(ratio), 3))
+      sprintf(
+        "%d of %d years, %s (%s to %s)", sum(!rows$same), nrow(rows),
+        signif(median(rows$ratio), 3), signif(min(rows$ratio), 3), signif(max(rows$ratio), 3)
+      )
     }
-  }
-)
+  )
+})
+ratios <- do.call(rbind, ratios)
 ratios <- reshape(ratios, idvar = c("stock_code", "assessment_year"), timevar = "quantity", direction = "wide")
 names(ratios) <- sub("ratio.", "", names(ratios), fixed = TRUE)
 ratios[is.na(ratios)] <- "-"
@@ -334,30 +354,30 @@ knitr::kable(ratios[order(ratios$stock_code), ], row.names = FALSE)
 
 | stock_code | assessment_year | catches | F | recruitment | SSB |
 |:---|---:|:---|:---|:---|:---|
-| ank.27.78abd | 2026 | 1.19 (0.926 to 1.73) |  | 1 (1 to 2.22) |  |
-| ank.27.8c9a | 2026 | 1.01 (0.957 to 1.05) |  |  | 1.61 (1.43 to 1.76) |
-| bll.27.3a47de | 2026 | 0.994 (0.833 to 1.1) | 0.336 (0.335 to 0.336) | \- | 6160 (5110 to 10100) |
-| cod.27.1-2.coastN | 2026 | 1 (0.991 to 1.13) |  | 1.83 (1.3 to 2.84) |  |
-| had.27.46a20 | 2026 | 0.991 (0.759 to 1.28) |  | 1 (0.518 to 1) |  |
-| had.27.5a | 2026 |  | 1.34 (0.995 to 1.98) |  |  |
-| had.27.6b | 2026 | 0.975 (0.608 to 1.29) |  |  |  |
-| had.27.7b-k | 2026 | 0.997 (0.917 to 1) |  |  |  |
-| her.27.20-24 | 2026 | 0.983 (0.853 to 1.07) | 1 (0.996 to 1.03) |  |  |
-| her.27.5a | 2026 | 1 (0.965 to 1.74) | 1.2 (0.847 to 2.45) |  |  |
-| hke.27.3a46-8abd | 2026 | 1.01 (0.96 to 1.09) |  |  |  |
-| hke.27.8c9a | 2026 | 0.999 (0.909 to 1.01) |  |  |  |
-| lez.27.4a6a | 2026 | 1 (0.961 to 1.07) | 0.169 (0.148 to 0.194) | \- | 36400 (36100 to 37000) |
-| mon.27.8c9a | 2026 | 1.01 (0.985 to 1.06) |  |  |  |
-| ple.27.21-32 | 2026 | 1.31 (1.13 to 1.58) | 0.995 (0.962 to 2.12) | 0.995 (0.937 to 1.7) | 0.996 (0.917 to 1.02) |
-| pok.27.5a | 2026 |  | 1.14 (0.95 to 1.45) |  |  |
-| sol.27.20-24 | 2026 | 1 (0.891 to 1.07) |  |  | 1 (0.892 to 1.11) |
-| sol.27.7e | 2026 | 1 (0.935 to 1) |  |  |  |
-| sol.27.7fg | 2026 | 0.967 (0.677 to 1) |  |  |  |
-| sol.27.8ab | 2026 | 1 (0.896 to 1.13) |  |  |  |
-| spr.27.22-32 | 2024 | 0.992 (0.937 to 1.02) |  |  |  |
-| spr.27.22-32 | 2026 | 0.991 (0.937 to 1.02) |  |  |  |
-| whg.27.47d | 2026 |  |  | 1 (0.861 to 1) |  |
-| wit.27.3a47d | 2026 | 0.985 (0.89 to 0.991) |  |  |  |
+| ank.27.78abd | 2026 | 40 of 40 years, 1.19 (0.926 to 1.73) |  | 1 of 40 years, 1 (1 to 2.22) |  |
+| ank.27.8c9a | 2026 | 12 of 46 years, 1.01 (0.957 to 1.05) |  |  | 47 of 47 years, 1.61 (1.43 to 1.76) |
+| bll.27.3a47de | 2026 | 31 of 76 years, 0.994 (0.833 to 1.1) | 76 of 76 years, 0.336 (0.335 to 0.336) | \- | 77 of 77 years, 6160 (5110 to 10100) |
+| cod.27.1-2.coastN | 2026 | 1 of 32 years, 1 (0.991 to 1.13) |  | 32 of 32 years, 1.83 (1.3 to 2.84) |  |
+| had.27.46a20 | 2026 | 40 of 54 years, 0.991 (0.759 to 1.28) |  | 1 of 55 years, 1 (0.518 to 1) |  |
+| had.27.5a | 2026 |  | 45 of 47 years, 1.34 (0.995 to 1.98) |  |  |
+| had.27.6b | 2026 | 31 of 35 years, 0.975 (0.608 to 1.29) |  |  |  |
+| had.27.7b-k | 2026 | 3 of 33 years, 0.997 (0.917 to 1) |  |  |  |
+| her.27.20-24 | 2026 | 17 of 35 years, 0.983 (0.853 to 1.07) |  |  |  |
+| her.27.5a | 2026 | 4 of 46 years, 1 (0.965 to 1.74) | 45 of 46 years, 1.2 (0.847 to 2.45) |  |  |
+| hke.27.3a46-8abd | 2026 | 16 of 48 years, 1.01 (0.96 to 1.09) |  |  |  |
+| hke.27.8c9a | 2026 | 15 of 66 years, 0.999 (0.909 to 1.01) |  |  |  |
+| lez.27.4a6a | 2026 | 12 of 54 years, 1 (0.961 to 1.07) | 54 of 54 years, 0.169 (0.148 to 0.194) | \- | 55 of 55 years, 36400 (36100 to 37000) |
+| mon.27.8c9a | 2026 | 12 of 46 years, 1.01 (0.985 to 1.06) |  |  |  |
+| ple.27.21-32 | 2026 | 23 of 23 years, 1.31 (1.13 to 1.58) | 8 of 24 years, 0.995 (0.962 to 2.12) | 9 of 24 years, 0.995 (0.937 to 1.7) | 5 of 24 years, 0.996 (0.917 to 1.02) |
+| pok.27.5a | 2026 |  | 44 of 46 years, 1.14 (0.95 to 1.45) |  |  |
+| sol.27.20-24 | 2026 | 15 of 42 years, 1 (0.891 to 1.07) |  |  | 18 of 42 years, 1 (0.892 to 1.11) |
+| sol.27.7e | 2026 | 3 of 57 years, 1 (0.935 to 1) |  |  |  |
+| sol.27.7fg | 2026 | 30 of 55 years, 0.967 (0.677 to 1) |  |  |  |
+| sol.27.8ab | 2026 | 8 of 42 years, 1 (0.896 to 1.13) |  |  |  |
+| spr.27.22-32 | 2024 | 7 of 50 years, 0.992 (0.937 to 1.02) |  |  |  |
+| spr.27.22-32 | 2026 | 7 of 52 years, 0.991 (0.937 to 1.02) |  |  |  |
+| whg.27.47d | 2026 |  |  | 1 of 49 years, 1 (0.861 to 1) |  |
+| wit.27.3a47d | 2026 | 5 of 17 years, 0.985 (0.89 to 0.991) |  |  |  |
 
 There are several reasons for a difference, and most of them are not
 errors:

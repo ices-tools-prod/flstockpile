@@ -79,10 +79,12 @@ this site is built.</p>
 assessment in SAG, where it has one;</li>
 <li>
 <strong>labels</strong> for the four summary quantities: green where
-the dataset and SAG are within 2.5% of each other in every year, red
-where they are not, with the median over the years of the dataset value
-divided by the SAG value, and grey where the quantity could not be
-compared;</li>
+the dataset and SAG are the same in every year, red where they are not,
+with the number of years that differ and, if the whole series is out,
+the median over the years of the dataset value divided by the SAG value,
+and grey where the quantity could not be compared. A year is the same if
+the two values are within 2.5% of each other, or within the rounding of
+the value in SAG;</li>
 <li>
 <strong>dots</strong> showing which data are present, for the
 observed data and for the model estimates: a filled dot where the
@@ -116,8 +118,7 @@ Code
 <span>  <span class="st">"discards"</span>, <span class="st">"discards.n"</span>, <span class="st">"discards.wt"</span>, <span class="st">"stock"</span>, <span class="st">"stock.n"</span>, <span class="st">"stock.wt"</span>,</span>
 <span>  <span class="st">"m"</span>, <span class="st">"mat"</span>, <span class="st">"harvest"</span>, <span class="st">"harvest.spwn"</span>, <span class="st">"m.spwn"</span></span>
 <span><span class="op">)</span></span>
-<span><span class="va">colours</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span>observed <span class="op">=</span> <span class="st">"#d95f02"</span>, estimated <span class="op">=</span> <span class="st">"#1b9e77"</span><span class="op">)</span></span>
-<span><span class="va">tolerance</span> <span class="op">&lt;-</span> <span class="fl">0.025</span></span></code></pre></div>
+<span><span class="va">colours</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span>observed <span class="op">=</span> <span class="st">"#d95f02"</span>, estimated <span class="op">=</span> <span class="st">"#1b9e77"</span><span class="op">)</span></span></code></pre></div>
 </details><details class="code-fold"><summary>
 Code
 </summary><div class="sourceCode" id="cb2"><pre class="downlit sourceCode r">
@@ -209,27 +210,35 @@ Code
 <span>  <span class="va">both</span></span>
 <span><span class="op">}</span><span class="op">)</span></span>
 <span></span>
+<span><span class="co"># Is a value in the dataset the same as the value in SAG?</span></span>
+<span><span class="co">#</span></span>
+<span><span class="co"># It is if the two are within 2.5% of each other, or within the rounding of</span></span>
+<span><span class="co"># SAG: half a unit in the last decimal place that SAG holds for the quantity.</span></span>
+<span></span>
+<span><span class="va">same_as_sag</span> <span class="op">&lt;-</span> <span class="kw">function</span><span class="op">(</span><span class="va">dataset</span>, <span class="va">sag</span><span class="op">)</span> <span class="op">{</span></span>
+<span>  <span class="va">places</span> <span class="op">&lt;-</span> <span class="fl">0</span></span>
+<span>  <span class="kw">while</span> <span class="op">(</span><span class="va">places</span> <span class="op">&lt;</span> <span class="fl">6</span> <span class="op">&amp;&amp;</span> <span class="fu"><a href="https://rdrr.io/r/base/any.html" class="external-link">any</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/MathFun.html" class="external-link">abs</a></span><span class="op">(</span><span class="va">sag</span> <span class="op">-</span> <span class="fu"><a href="https://rdrr.io/r/base/Round.html" class="external-link">round</a></span><span class="op">(</span><span class="va">sag</span>, <span class="va">places</span><span class="op">)</span><span class="op">)</span> <span class="op">&gt;</span> <span class="fl">1e-9</span><span class="op">)</span><span class="op">)</span> <span class="va">places</span> <span class="op">&lt;-</span> <span class="va">places</span> <span class="op">+</span> <span class="fl">1</span></span>
+<span>  <span class="fu"><a href="https://rdrr.io/r/base/MathFun.html" class="external-link">abs</a></span><span class="op">(</span><span class="va">dataset</span> <span class="op">/</span> <span class="va">sag</span> <span class="op">-</span> <span class="fl">1</span><span class="op">)</span> <span class="op">&lt;</span> <span class="fl">0.025</span> <span class="op">|</span> <span class="fu"><a href="https://rdrr.io/r/base/MathFun.html" class="external-link">abs</a></span><span class="op">(</span><span class="va">dataset</span> <span class="op">-</span> <span class="va">sag</span><span class="op">)</span> <span class="op">&lt;=</span> <span class="fl">0.5</span> <span class="op">*</span> <span class="fl">10</span><span class="op">^</span><span class="op">-</span><span class="va">places</span></span>
+<span><span class="op">}</span></span>
+<span></span>
 <span><span class="co"># Is each quantity the same in the dataset and in SAG?</span></span>
 <span><span class="co">#</span></span>
-<span><span class="co"># Returns a data frame with one row per quantity: the status, and the median</span></span>
-<span><span class="co"># of the dataset value divided by the SAG value.</span></span>
+<span><span class="co"># Returns a data frame with one row per quantity: the status, the median of</span></span>
+<span><span class="co"># the dataset value divided by the SAG value, the number of years compared</span></span>
+<span><span class="co"># and the number of them that differ.</span></span>
 <span></span>
 <span><span class="va">agreement</span> <span class="op">&lt;-</span> <span class="kw">function</span><span class="op">(</span><span class="va">check</span><span class="op">)</span> <span class="op">{</span></span>
 <span>  <span class="va">rows</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/lapply.html" class="external-link">lapply</a></span><span class="op">(</span><span class="va">quantities</span>, <span class="kw">function</span><span class="op">(</span><span class="va">quantity</span><span class="op">)</span> <span class="op">{</span></span>
-<span>    <span class="va">ratio</span> <span class="op">&lt;-</span> <span class="kw">if</span> <span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/as.data.frame.html" class="external-link">is.data.frame</a></span><span class="op">(</span><span class="va">check</span><span class="op">)</span><span class="op">)</span> <span class="op">{</span></span>
-<span>      <span class="va">rows</span> <span class="op">&lt;-</span> <span class="va">check</span><span class="op">[</span><span class="va">check</span><span class="op">$</span><span class="va">quantity</span> <span class="op">==</span> <span class="va">quantity</span> <span class="op">&amp;</span> <span class="op">!</span><span class="fu"><a href="https://rdrr.io/r/base/NA.html" class="external-link">is.na</a></span><span class="op">(</span><span class="va">check</span><span class="op">$</span><span class="va">dataset</span><span class="op">)</span> <span class="op">&amp;</span> <span class="op">!</span><span class="fu"><a href="https://rdrr.io/r/base/NA.html" class="external-link">is.na</a></span><span class="op">(</span><span class="va">check</span><span class="op">$</span><span class="va">sag</span><span class="op">)</span> <span class="op">&amp;</span> <span class="va">check</span><span class="op">$</span><span class="va">sag</span> <span class="op">!=</span> <span class="fl">0</span>, <span class="op">]</span></span>
-<span>      <span class="va">rows</span><span class="op">$</span><span class="va">dataset</span> <span class="op">/</span> <span class="va">rows</span><span class="op">$</span><span class="va">sag</span></span>
+<span>    <span class="va">rows</span> <span class="op">&lt;-</span> <span class="kw">if</span> <span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/as.data.frame.html" class="external-link">is.data.frame</a></span><span class="op">(</span><span class="va">check</span><span class="op">)</span><span class="op">)</span> <span class="op">{</span></span>
+<span>      <span class="va">check</span><span class="op">[</span><span class="va">check</span><span class="op">$</span><span class="va">quantity</span> <span class="op">==</span> <span class="va">quantity</span> <span class="op">&amp;</span> <span class="op">!</span><span class="fu"><a href="https://rdrr.io/r/base/NA.html" class="external-link">is.na</a></span><span class="op">(</span><span class="va">check</span><span class="op">$</span><span class="va">dataset</span><span class="op">)</span> <span class="op">&amp;</span> <span class="op">!</span><span class="fu"><a href="https://rdrr.io/r/base/NA.html" class="external-link">is.na</a></span><span class="op">(</span><span class="va">check</span><span class="op">$</span><span class="va">sag</span><span class="op">)</span> <span class="op">&amp;</span> <span class="va">check</span><span class="op">$</span><span class="va">sag</span> <span class="op">!=</span> <span class="fl">0</span>, <span class="op">]</span></span>
 <span>    <span class="op">}</span></span>
-<span>    <span class="va">status</span> <span class="op">&lt;-</span> <span class="kw">if</span> <span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/length.html" class="external-link">length</a></span><span class="op">(</span><span class="va">ratio</span><span class="op">)</span> <span class="op">==</span> <span class="fl">0</span><span class="op">)</span> <span class="op">{</span></span>
-<span>      <span class="st">"not compared"</span></span>
-<span>    <span class="op">}</span> <span class="kw">else</span> <span class="kw">if</span> <span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/Extremes.html" class="external-link">max</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/MathFun.html" class="external-link">abs</a></span><span class="op">(</span><span class="va">ratio</span> <span class="op">-</span> <span class="fl">1</span><span class="op">)</span><span class="op">)</span> <span class="op">&lt;</span> <span class="va">tolerance</span><span class="op">)</span> <span class="op">{</span></span>
-<span>      <span class="st">"same"</span></span>
-<span>    <span class="op">}</span> <span class="kw">else</span> <span class="op">{</span></span>
-<span>      <span class="st">"different"</span></span>
-<span>    <span class="op">}</span></span>
+<span>    <span class="va">same</span> <span class="op">&lt;-</span> <span class="kw">if</span> <span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/nrow.html" class="external-link">NROW</a></span><span class="op">(</span><span class="va">rows</span><span class="op">)</span> <span class="op">&gt;</span> <span class="fl">0</span><span class="op">)</span> <span class="fu">same_as_sag</span><span class="op">(</span><span class="va">rows</span><span class="op">$</span><span class="va">dataset</span>, <span class="va">rows</span><span class="op">$</span><span class="va">sag</span><span class="op">)</span> <span class="kw">else</span> <span class="fu"><a href="https://rdrr.io/r/base/logical.html" class="external-link">logical</a></span><span class="op">(</span><span class="op">)</span></span>
 <span>    <span class="fu"><a href="https://rdrr.io/r/base/data.frame.html" class="external-link">data.frame</a></span><span class="op">(</span></span>
-<span>      quantity <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/factor.html" class="external-link">factor</a></span><span class="op">(</span><span class="va">quantity</span>, <span class="va">quantities</span><span class="op">)</span>, status <span class="op">=</span> <span class="va">status</span>,</span>
-<span>      ratio <span class="op">=</span> <span class="kw">if</span> <span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/length.html" class="external-link">length</a></span><span class="op">(</span><span class="va">ratio</span><span class="op">)</span> <span class="op">&gt;</span> <span class="fl">0</span><span class="op">)</span> <span class="fu"><a href="https://rdrr.io/r/stats/median.html" class="external-link">median</a></span><span class="op">(</span><span class="va">ratio</span><span class="op">)</span> <span class="kw">else</span> <span class="cn">NA</span></span>
+<span>      quantity <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/factor.html" class="external-link">factor</a></span><span class="op">(</span><span class="va">quantity</span>, <span class="va">quantities</span><span class="op">)</span>,</span>
+<span>      status <span class="op">=</span> <span class="kw">if</span> <span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/length.html" class="external-link">length</a></span><span class="op">(</span><span class="va">same</span><span class="op">)</span> <span class="op">==</span> <span class="fl">0</span><span class="op">)</span> <span class="st">"not compared"</span> <span class="kw">else</span> <span class="kw">if</span> <span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/all.html" class="external-link">all</a></span><span class="op">(</span><span class="va">same</span><span class="op">)</span><span class="op">)</span> <span class="st">"same"</span> <span class="kw">else</span> <span class="st">"different"</span>,</span>
+<span>      ratio <span class="op">=</span> <span class="kw">if</span> <span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/length.html" class="external-link">length</a></span><span class="op">(</span><span class="va">same</span><span class="op">)</span> <span class="op">&gt;</span> <span class="fl">0</span><span class="op">)</span> <span class="fu"><a href="https://rdrr.io/r/stats/median.html" class="external-link">median</a></span><span class="op">(</span><span class="va">rows</span><span class="op">$</span><span class="va">dataset</span> <span class="op">/</span> <span class="va">rows</span><span class="op">$</span><span class="va">sag</span><span class="op">)</span> <span class="kw">else</span> <span class="cn">NA</span>,</span>
+<span>      years <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/length.html" class="external-link">length</a></span><span class="op">(</span><span class="va">same</span><span class="op">)</span>,</span>
+<span>      different <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/sum.html" class="external-link">sum</a></span><span class="op">(</span><span class="op">!</span><span class="va">same</span><span class="op">)</span></span>
 <span>    <span class="op">)</span></span>
 <span>  <span class="op">}</span><span class="op">)</span></span>
 <span>  <span class="fu"><a href="https://rdrr.io/r/base/do.call.html" class="external-link">do.call</a></span><span class="op">(</span><span class="va">rbind</span>, <span class="va">rows</span><span class="op">)</span></span>
@@ -269,9 +278,13 @@ Code
 <code class="sourceCode R"><span><span class="co"># The labels for a stock, as HTML.</span></span>
 <span></span>
 <span><span class="va">labels_html</span> <span class="op">&lt;-</span> <span class="kw">function</span><span class="op">(</span><span class="va">agreed</span><span class="op">)</span> <span class="op">{</span></span>
+<span>  <span class="co"># how many years differ, and by how much if the whole series is out</span></span>
 <span>  <span class="va">text</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/ifelse.html" class="external-link">ifelse</a></span><span class="op">(</span></span>
 <span>    <span class="va">agreed</span><span class="op">$</span><span class="va">status</span> <span class="op">==</span> <span class="st">"different"</span>,</span>
-<span>    <span class="fu"><a href="https://rdrr.io/r/base/paste.html" class="external-link">paste0</a></span><span class="op">(</span><span class="va">agreed</span><span class="op">$</span><span class="va">quantity</span>, <span class="st">" &amp;times;"</span>, <span class="fu"><a href="https://rdrr.io/r/base/Round.html" class="external-link">signif</a></span><span class="op">(</span><span class="va">agreed</span><span class="op">$</span><span class="va">ratio</span>, <span class="fl">3</span><span class="op">)</span><span class="op">)</span>,</span>
+<span>    <span class="fu"><a href="https://rdrr.io/r/base/paste.html" class="external-link">paste0</a></span><span class="op">(</span></span>
+<span>      <span class="va">agreed</span><span class="op">$</span><span class="va">quantity</span>, <span class="st">": "</span>, <span class="va">agreed</span><span class="op">$</span><span class="va">different</span>, <span class="st">" of "</span>, <span class="va">agreed</span><span class="op">$</span><span class="va">years</span>, <span class="st">" years"</span>,</span>
+<span>      <span class="fu"><a href="https://rdrr.io/r/base/ifelse.html" class="external-link">ifelse</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/MathFun.html" class="external-link">abs</a></span><span class="op">(</span><span class="va">agreed</span><span class="op">$</span><span class="va">ratio</span> <span class="op">-</span> <span class="fl">1</span><span class="op">)</span> <span class="op">&lt;</span> <span class="fl">0.025</span>, <span class="st">""</span>, <span class="fu"><a href="https://rdrr.io/r/base/paste.html" class="external-link">paste0</a></span><span class="op">(</span><span class="st">", &amp;times;"</span>, <span class="fu"><a href="https://rdrr.io/r/base/Round.html" class="external-link">signif</a></span><span class="op">(</span><span class="va">agreed</span><span class="op">$</span><span class="va">ratio</span>, <span class="fl">3</span><span class="op">)</span><span class="op">)</span><span class="op">)</span></span>
+<span>    <span class="op">)</span>,</span>
 <span>    <span class="fu"><a href="https://rdrr.io/r/base/character.html" class="external-link">as.character</a></span><span class="op">(</span><span class="va">agreed</span><span class="op">$</span><span class="va">quantity</span><span class="op">)</span></span>
 <span>  <span class="op">)</span></span>
 <span>  <span class="va">class</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span>same <span class="op">=</span> <span class="st">"qc-same"</span>, different <span class="op">=</span> <span class="st">"qc-different"</span>, <span class="st">"not compared"</span> <span class="op">=</span> <span class="st">"qc-none"</span><span class="op">)</span><span class="op">[</span><span class="va">agreed</span><span class="op">$</span><span class="va">status</span><span class="op">]</span></span>
@@ -352,7 +365,7 @@ Code
 Cod
 </p>
 <p class="qc-labels">
-<span class="qc-same">SSB</span> <span class="qc-same">F</span> <span class="qc-different">recruitment ×1.83</span> <span class="qc-different">catches ×1</span>
+<span class="qc-same">SSB</span> <span class="qc-same">F</span> <span class="qc-different">recruitment: 32 of 32 years, ×1.83</span> <span class="qc-different">catches: 1 of 32 years</span>
 </p>
 <p><img src="visual-check_files/figure-html/dots-1-1.png" class="r-plt" alt="Dots showing which data are present for cod.27.1-2.coastN (2026)." width="990"></p>
 <p><img src="visual-check_files/figure-html/plots-1-1.png" class="r-plt" alt="SSB, F, recruitment and catches of cod.27.1-2.coastN (2026) by year, in the dataset and in SAG." width="990"></p>
@@ -370,8 +383,8 @@ Cod
 Herring
 </p>
 <p class="qc-labels">
-<span class="qc-same">SSB</span> <span class="qc-different">F ×1</span>
-<span class="qc-same">recruitment</span> <span class="qc-different">catches ×0.983</span>
+<span class="qc-same">SSB</span> <span class="qc-same">F</span> <span class="qc-same">recruitment</span> <span class="qc-different">catches:
+17 of 35 years</span>
 </p>
 <p><img src="visual-check_files/figure-html/dots-2-1.png" class="r-plt" alt="Dots showing which data are present for her.27.20-24 (2026)." width="990"></p>
 <p><img src="visual-check_files/figure-html/plots-2-1.png" class="r-plt" alt="SSB, F, recruitment and catches of her.27.20-24 (2026) by year, in the dataset and in SAG." width="990"></p>
@@ -385,8 +398,8 @@ Herring
 Herring
 </p>
 <p class="qc-labels">
-<span class="qc-none">SSB</span> <span class="qc-none">F</span> <span class="qc-none">recruitment</span> <span class="qc-different">catches
-×1</span>
+<span class="qc-none">SSB</span> <span class="qc-none">F</span> <span class="qc-none">recruitment</span> <span class="qc-different">catches:
+14 of 69 years</span>
 </p>
 <p><img src="visual-check_files/figure-html/dots-3-1.png" class="r-plt" alt="Dots showing which data are present for her.27.6aS7bc (2026)." width="990"></p>
 <p><img src="visual-check_files/figure-html/plots-3-1.png" class="r-plt" alt="SSB, F, recruitment and catches of her.27.6aS7bc (2026) by year, in the dataset and in SAG." width="990"></p>
@@ -506,8 +519,8 @@ Cod
 Haddock
 </p>
 <p class="qc-labels">
-<span class="qc-same">SSB</span> <span class="qc-different">F
-×1.34</span> <span class="qc-same">recruitment</span> <span class="qc-same">catches</span>
+<span class="qc-same">SSB</span> <span class="qc-different">F: 45 of 47
+years, ×1.34</span> <span class="qc-same">recruitment</span> <span class="qc-same">catches</span>
 </p>
 <p><img src="visual-check_files/figure-html/dots-11-1.png" class="r-plt" alt="Dots showing which data are present for had.27.5a (2026)." width="990"></p>
 <p><img src="visual-check_files/figure-html/plots-11-1.png" class="r-plt" alt="SSB, F, recruitment and catches of had.27.5a (2026) by year, in the dataset and in SAG." width="990"></p>
@@ -521,8 +534,8 @@ Haddock
 Herring
 </p>
 <p class="qc-labels">
-<span class="qc-same">SSB</span> <span class="qc-different">F
-×1.2</span> <span class="qc-same">recruitment</span> <span class="qc-different">catches ×1</span>
+<span class="qc-same">SSB</span> <span class="qc-different">F: 45 of 46
+years, ×1.2</span> <span class="qc-same">recruitment</span> <span class="qc-different">catches: 4 of 46 years</span>
 </p>
 <p><img src="visual-check_files/figure-html/dots-12-1.png" class="r-plt" alt="Dots showing which data are present for her.27.5a (2026)." width="990"></p>
 <p><img src="visual-check_files/figure-html/plots-12-1.png" class="r-plt" alt="SSB, F, recruitment and catches of her.27.5a (2026) by year, in the dataset and in SAG." width="990"></p>
@@ -564,8 +577,8 @@ Plaice
 Saithe
 </p>
 <p class="qc-labels">
-<span class="qc-same">SSB</span> <span class="qc-different">F
-×1.14</span> <span class="qc-same">recruitment</span> <span class="qc-same">catches</span>
+<span class="qc-same">SSB</span> <span class="qc-different">F: 44 of 46
+years, ×1.14</span> <span class="qc-same">recruitment</span> <span class="qc-same">catches</span>
 </p>
 <p><img src="visual-check_files/figure-html/dots-15-1.png" class="r-plt" alt="Dots showing which data are present for pok.27.5a (2026)." width="990"></p>
 <p><img src="visual-check_files/figure-html/plots-15-1.png" class="r-plt" alt="SSB, F, recruitment and catches of pok.27.5a (2026) by year, in the dataset and in SAG." width="990"></p>
@@ -625,7 +638,7 @@ Herring
 Plaice
 </p>
 <p class="qc-labels">
-<span class="qc-different">SSB ×0.996</span> <span class="qc-different">F ×0.995</span> <span class="qc-different">recruitment ×0.995</span> <span class="qc-different">catches ×1.31</span>
+<span class="qc-different">SSB: 5 of 24 years</span> <span class="qc-different">F: 8 of 24 years</span> <span class="qc-different">recruitment: 9 of 24 years</span> <span class="qc-different">catches: 23 of 23 years, ×1.31</span>
 </p>
 <p><img src="visual-check_files/figure-html/dots-19-1.png" class="r-plt" alt="Dots showing which data are present for ple.27.21-32 (2026)." width="990"></p>
 <p><img src="visual-check_files/figure-html/plots-19-1.png" class="r-plt" alt="SSB, F, recruitment and catches of ple.27.21-32 (2026) by year, in the dataset and in SAG." width="990"></p>
@@ -639,8 +652,7 @@ Plaice
 Sole
 </p>
 <p class="qc-labels">
-<span class="qc-different">SSB ×1</span> <span class="qc-same">F</span>
-<span class="qc-same">recruitment</span> <span class="qc-different">catches ×1</span>
+<span class="qc-different">SSB: 18 of 42 years</span> <span class="qc-same">F</span> <span class="qc-same">recruitment</span> <span class="qc-different">catches: 15 of 42 years</span>
 </p>
 <p><img src="visual-check_files/figure-html/dots-20-1.png" class="r-plt" alt="Dots showing which data are present for sol.27.20-24 (2026)." width="990"></p>
 <p><img src="visual-check_files/figure-html/plots-20-1.png" class="r-plt" alt="SSB, F, recruitment and catches of sol.27.20-24 (2026) by year, in the dataset and in SAG." width="990"></p>
@@ -654,8 +666,8 @@ Sole
 Sprat
 </p>
 <p class="qc-labels">
-<span class="qc-same">SSB</span> <span class="qc-same">F</span> <span class="qc-same">recruitment</span> <span class="qc-different">catches
-×0.992</span>
+<span class="qc-same">SSB</span> <span class="qc-same">F</span> <span class="qc-same">recruitment</span> <span class="qc-different">catches: 7
+of 50 years</span>
 </p>
 <p><img src="visual-check_files/figure-html/dots-21-1.png" class="r-plt" alt="Dots showing which data are present for spr.27.22-32 (2024)." width="990"></p>
 <p><img src="visual-check_files/figure-html/plots-21-1.png" class="r-plt" alt="SSB, F, recruitment and catches of spr.27.22-32 (2024) by year, in the dataset and in SAG." width="990"></p>
@@ -669,8 +681,8 @@ Sprat
 Sprat
 </p>
 <p class="qc-labels">
-<span class="qc-same">SSB</span> <span class="qc-same">F</span> <span class="qc-same">recruitment</span> <span class="qc-different">catches
-×0.991</span>
+<span class="qc-same">SSB</span> <span class="qc-same">F</span> <span class="qc-same">recruitment</span> <span class="qc-different">catches: 7
+of 52 years</span>
 </p>
 <p><img src="visual-check_files/figure-html/dots-22-1.png" class="r-plt" alt="Dots showing which data are present for spr.27.22-32 (2026)." width="990"></p>
 <p><img src="visual-check_files/figure-html/plots-22-1.png" class="r-plt" alt="SSB, F, recruitment and catches of spr.27.22-32 (2026) by year, in the dataset and in SAG." width="990"></p>
@@ -688,7 +700,7 @@ Sprat
 Black-bellied anglerfish
 </p>
 <p class="qc-labels">
-<span class="qc-same">SSB</span> <span class="qc-same">F</span> <span class="qc-different">recruitment ×1</span> <span class="qc-different">catches ×1.19</span>
+<span class="qc-same">SSB</span> <span class="qc-same">F</span> <span class="qc-different">recruitment: 1 of 40 years</span> <span class="qc-different">catches: 40 of 40 years, ×1.19</span>
 </p>
 <p><img src="visual-check_files/figure-html/dots-23-1.png" class="r-plt" alt="Dots showing which data are present for ank.27.78abd (2026)." width="990"></p>
 <p><img src="visual-check_files/figure-html/plots-23-1.png" class="r-plt" alt="SSB, F, recruitment and catches of ank.27.78abd (2026) by year, in the dataset and in SAG." width="990"></p>
@@ -702,7 +714,7 @@ Black-bellied anglerfish
 Black-bellied anglerfish
 </p>
 <p class="qc-labels">
-<span class="qc-different">SSB ×1.61</span> <span class="qc-same">F</span> <span class="qc-same">recruitment</span> <span class="qc-different">catches ×1.01</span>
+<span class="qc-different">SSB: 47 of 47 years, ×1.61</span> <span class="qc-same">F</span> <span class="qc-same">recruitment</span> <span class="qc-different">catches: 12 of 46 years</span>
 </p>
 <p><img src="visual-check_files/figure-html/dots-24-1.png" class="r-plt" alt="Dots showing which data are present for ank.27.8c9a (2026)." width="990"></p>
 <p><img src="visual-check_files/figure-html/plots-24-1.png" class="r-plt" alt="SSB, F, recruitment and catches of ank.27.8c9a (2026) by year, in the dataset and in SAG." width="990"></p>
@@ -716,8 +728,8 @@ Black-bellied anglerfish
 Hake
 </p>
 <p class="qc-labels">
-<span class="qc-same">SSB</span> <span class="qc-same">F</span> <span class="qc-same">recruitment</span> <span class="qc-different">catches
-×1.01</span>
+<span class="qc-same">SSB</span> <span class="qc-same">F</span> <span class="qc-same">recruitment</span> <span class="qc-different">catches:
+16 of 48 years</span>
 </p>
 <p><img src="visual-check_files/figure-html/dots-25-1.png" class="r-plt" alt="Dots showing which data are present for hke.27.3a46-8abd (2026)." width="990"></p>
 <p><img src="visual-check_files/figure-html/plots-25-1.png" class="r-plt" alt="SSB, F, recruitment and catches of hke.27.3a46-8abd (2026) by year, in the dataset and in SAG." width="990"></p>
@@ -731,8 +743,8 @@ Hake
 Hake
 </p>
 <p class="qc-labels">
-<span class="qc-same">SSB</span> <span class="qc-same">F</span> <span class="qc-same">recruitment</span> <span class="qc-different">catches
-×0.999</span>
+<span class="qc-same">SSB</span> <span class="qc-same">F</span> <span class="qc-same">recruitment</span> <span class="qc-different">catches:
+15 of 66 years</span>
 </p>
 <p><img src="visual-check_files/figure-html/dots-26-1.png" class="r-plt" alt="Dots showing which data are present for hke.27.8c9a (2026)." width="990"></p>
 <p><img src="visual-check_files/figure-html/plots-26-1.png" class="r-plt" alt="SSB, F, recruitment and catches of hke.27.8c9a (2026) by year, in the dataset and in SAG." width="990"></p>
@@ -758,8 +770,8 @@ Megrim
 White anglerfish
 </p>
 <p class="qc-labels">
-<span class="qc-same">SSB</span> <span class="qc-same">F</span> <span class="qc-same">recruitment</span> <span class="qc-different">catches
-×1.01</span>
+<span class="qc-same">SSB</span> <span class="qc-same">F</span> <span class="qc-same">recruitment</span> <span class="qc-different">catches:
+12 of 46 years</span>
 </p>
 <p><img src="visual-check_files/figure-html/dots-28-1.png" class="r-plt" alt="Dots showing which data are present for mon.27.8c9a (2026)." width="990"></p>
 <p><img src="visual-check_files/figure-html/plots-28-1.png" class="r-plt" alt="SSB, F, recruitment and catches of mon.27.8c9a (2026) by year, in the dataset and in SAG." width="990"></p>
@@ -773,8 +785,8 @@ White anglerfish
 Sole
 </p>
 <p class="qc-labels">
-<span class="qc-same">SSB</span> <span class="qc-same">F</span> <span class="qc-same">recruitment</span> <span class="qc-different">catches
-×1</span>
+<span class="qc-same">SSB</span> <span class="qc-same">F</span> <span class="qc-same">recruitment</span> <span class="qc-different">catches: 8
+of 42 years</span>
 </p>
 <p><img src="visual-check_files/figure-html/dots-29-1.png" class="r-plt" alt="Dots showing which data are present for sol.27.8ab (2026)." width="990"></p>
 <p><img src="visual-check_files/figure-html/plots-29-1.png" class="r-plt" alt="SSB, F, recruitment and catches of sol.27.8ab (2026) by year, in the dataset and in SAG." width="990"></p>
@@ -792,8 +804,8 @@ Sole
 Haddock
 </p>
 <p class="qc-labels">
-<span class="qc-same">SSB</span> <span class="qc-same">F</span> <span class="qc-same">recruitment</span> <span class="qc-different">catches
-×0.975</span>
+<span class="qc-same">SSB</span> <span class="qc-same">F</span> <span class="qc-same">recruitment</span> <span class="qc-different">catches:
+31 of 35 years, ×0.975</span>
 </p>
 <p><img src="visual-check_files/figure-html/dots-30-1.png" class="r-plt" alt="Dots showing which data are present for had.27.6b (2026)." width="990"></p>
 <p><img src="visual-check_files/figure-html/plots-30-1.png" class="r-plt" alt="SSB, F, recruitment and catches of had.27.6b (2026) by year, in the dataset and in SAG." width="990"></p>
@@ -807,8 +819,8 @@ Haddock
 Haddock
 </p>
 <p class="qc-labels">
-<span class="qc-same">SSB</span> <span class="qc-same">F</span> <span class="qc-same">recruitment</span> <span class="qc-different">catches
-×0.997</span>
+<span class="qc-same">SSB</span> <span class="qc-same">F</span> <span class="qc-same">recruitment</span> <span class="qc-different">catches: 3
+of 33 years</span>
 </p>
 <p><img src="visual-check_files/figure-html/dots-31-1.png" class="r-plt" alt="Dots showing which data are present for had.27.7b-k (2026)." width="990"></p>
 <p><img src="visual-check_files/figure-html/plots-31-1.png" class="r-plt" alt="SSB, F, recruitment and catches of had.27.7b-k (2026) by year, in the dataset and in SAG." width="990"></p>
@@ -822,8 +834,8 @@ Haddock
 Megrim
 </p>
 <p class="qc-labels">
-<span class="qc-different">SSB ×36400</span> <span class="qc-different">F ×0.169</span> <span class="qc-none">recruitment</span> <span class="qc-different">catches
-×1</span>
+<span class="qc-different">SSB: 55 of 55 years, ×36400</span> <span class="qc-different">F: 54 of 54 years, ×0.169</span> <span class="qc-none">recruitment</span> <span class="qc-different">catches:
+12 of 54 years</span>
 </p>
 <p><img src="visual-check_files/figure-html/dots-32-1.png" class="r-plt" alt="Dots showing which data are present for lez.27.4a6a (2026)." width="990"></p>
 <p><img src="visual-check_files/figure-html/plots-32-1.png" class="r-plt" alt="SSB, F, recruitment and catches of lez.27.4a6a (2026) by year, in the dataset and in SAG." width="990"></p>
@@ -851,8 +863,8 @@ Sole
 Sole
 </p>
 <p class="qc-labels">
-<span class="qc-same">SSB</span> <span class="qc-same">F</span> <span class="qc-same">recruitment</span> <span class="qc-different">catches
-×1</span>
+<span class="qc-same">SSB</span> <span class="qc-same">F</span> <span class="qc-same">recruitment</span> <span class="qc-different">catches: 3
+of 57 years</span>
 </p>
 <p><img src="visual-check_files/figure-html/dots-34-1.png" class="r-plt" alt="Dots showing which data are present for sol.27.7e (2026)." width="990"></p>
 <p><img src="visual-check_files/figure-html/plots-34-1.png" class="r-plt" alt="SSB, F, recruitment and catches of sol.27.7e (2026) by year, in the dataset and in SAG." width="990"></p>
@@ -866,8 +878,8 @@ Sole
 Sole
 </p>
 <p class="qc-labels">
-<span class="qc-same">SSB</span> <span class="qc-same">F</span> <span class="qc-same">recruitment</span> <span class="qc-different">catches
-×0.967</span>
+<span class="qc-same">SSB</span> <span class="qc-same">F</span> <span class="qc-same">recruitment</span> <span class="qc-different">catches:
+30 of 55 years, ×0.967</span>
 </p>
 <p><img src="visual-check_files/figure-html/dots-35-1.png" class="r-plt" alt="Dots showing which data are present for sol.27.7fg (2026)." width="990"></p>
 <p><img src="visual-check_files/figure-html/plots-35-1.png" class="r-plt" alt="SSB, F, recruitment and catches of sol.27.7fg (2026) by year, in the dataset and in SAG." width="990"></p>
@@ -945,8 +957,8 @@ Norway lobster
 Brill
 </p>
 <p class="qc-labels">
-<span class="qc-different">SSB ×6160</span> <span class="qc-different">F
-×0.336</span> <span class="qc-none">recruitment</span> <span class="qc-different">catches ×0.994</span>
+<span class="qc-different">SSB: 77 of 77 years, ×6160</span> <span class="qc-different">F: 76 of 76 years, ×0.336</span> <span class="qc-none">recruitment</span> <span class="qc-different">catches:
+31 of 76 years</span>
 </p>
 <p><img src="visual-check_files/figure-html/dots-40-1.png" class="r-plt" alt="Dots showing which data are present for bll.27.3a47de (2026)." width="990"></p>
 <p><img src="visual-check_files/figure-html/plots-40-1.png" class="r-plt" alt="SSB, F, recruitment and catches of bll.27.3a47de (2026) by year, in the dataset and in SAG." width="990"></p>
@@ -960,7 +972,7 @@ Brill
 Haddock
 </p>
 <p class="qc-labels">
-<span class="qc-same">SSB</span> <span class="qc-same">F</span> <span class="qc-different">recruitment ×1</span> <span class="qc-different">catches ×0.991</span>
+<span class="qc-same">SSB</span> <span class="qc-same">F</span> <span class="qc-different">recruitment: 1 of 55 years</span> <span class="qc-different">catches: 40 of 54 years</span>
 </p>
 <p><img src="visual-check_files/figure-html/dots-41-1.png" class="r-plt" alt="Dots showing which data are present for had.27.46a20 (2026)." width="990"></p>
 <p><img src="visual-check_files/figure-html/plots-41-1.png" class="r-plt" alt="SSB, F, recruitment and catches of had.27.46a20 (2026) by year, in the dataset and in SAG." width="990"></p>
@@ -1016,7 +1028,7 @@ Turbot
 Whiting
 </p>
 <p class="qc-labels">
-<span class="qc-same">SSB</span> <span class="qc-same">F</span> <span class="qc-different">recruitment ×1</span> <span class="qc-same">catches</span>
+<span class="qc-same">SSB</span> <span class="qc-same">F</span> <span class="qc-different">recruitment: 1 of 49 years</span> <span class="qc-same">catches</span>
 </p>
 <p><img src="visual-check_files/figure-html/dots-45-1.png" class="r-plt" alt="Dots showing which data are present for whg.27.47d (2026)." width="990"></p>
 <p><img src="visual-check_files/figure-html/plots-45-1.png" class="r-plt" alt="SSB, F, recruitment and catches of whg.27.47d (2026) by year, in the dataset and in SAG." width="990"></p>
@@ -1030,8 +1042,8 @@ Whiting
 Witch
 </p>
 <p class="qc-labels">
-<span class="qc-same">SSB</span> <span class="qc-same">F</span> <span class="qc-same">recruitment</span> <span class="qc-different">catches
-×0.985</span>
+<span class="qc-same">SSB</span> <span class="qc-same">F</span> <span class="qc-same">recruitment</span> <span class="qc-different">catches: 5
+of 17 years</span>
 </p>
 <p><img src="visual-check_files/figure-html/dots-46-1.png" class="r-plt" alt="Dots showing which data are present for wit.27.3a47d (2026)." width="990"></p>
 <p><img src="visual-check_files/figure-html/plots-46-1.png" class="r-plt" alt="SSB, F, recruitment and catches of wit.27.3a47d (2026) by year, in the dataset and in SAG." width="990"></p>

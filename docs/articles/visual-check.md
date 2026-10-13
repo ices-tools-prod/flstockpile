@@ -11,9 +11,12 @@ For each stock there are
 - a **heading** that is a link to the record of the stock assessment in
   SAG, where it has one;
 - **labels** for the four summary quantities: green where the dataset
-  and SAG are within 2.5% of each other in every year, red where they
-  are not, with the median over the years of the dataset value divided
-  by the SAG value, and grey where the quantity could not be compared;
+  and SAG are the same in every year, red where they are not, with the
+  number of years that differ and, if the whole series is out, the
+  median over the years of the dataset value divided by the SAG value,
+  and grey where the quantity could not be compared. A year is the same
+  if the two values are within 2.5% of each other, or within the
+  rounding of the value in SAG;
 - **dots** showing which data are present, for the observed data and for
   the model estimates: a filled dot where the dataset has values, a ring
   where it has none;
@@ -47,7 +50,6 @@ slots <- c(
   "m", "mat", "harvest", "harvest.spwn", "m.spwn"
 )
 colours <- c(observed = "#d95f02", estimated = "#1b9e77")
-tolerance <- 0.025
 ```
 
 Code
@@ -142,27 +144,35 @@ checks <- lapply(seq_len(nrow(stocks)), function(i) {
   both
 })
 
+# Is a value in the dataset the same as the value in SAG?
+#
+# It is if the two are within 2.5% of each other, or within the rounding of
+# SAG: half a unit in the last decimal place that SAG holds for the quantity.
+
+same_as_sag <- function(dataset, sag) {
+  places <- 0
+  while (places < 6 && any(abs(sag - round(sag, places)) > 1e-9)) places <- places + 1
+  abs(dataset / sag - 1) < 0.025 | abs(dataset - sag) <= 0.5 * 10^-places
+}
+
 # Is each quantity the same in the dataset and in SAG?
 #
-# Returns a data frame with one row per quantity: the status, and the median
-# of the dataset value divided by the SAG value.
+# Returns a data frame with one row per quantity: the status, the median of
+# the dataset value divided by the SAG value, the number of years compared
+# and the number of them that differ.
 
 agreement <- function(check) {
   rows <- lapply(quantities, function(quantity) {
-    ratio <- if (is.data.frame(check)) {
-      rows <- check[check$quantity == quantity & !is.na(check$dataset) & !is.na(check$sag) & check$sag != 0, ]
-      rows$dataset / rows$sag
+    rows <- if (is.data.frame(check)) {
+      check[check$quantity == quantity & !is.na(check$dataset) & !is.na(check$sag) & check$sag != 0, ]
     }
-    status <- if (length(ratio) == 0) {
-      "not compared"
-    } else if (max(abs(ratio - 1)) < tolerance) {
-      "same"
-    } else {
-      "different"
-    }
+    same <- if (NROW(rows) > 0) same_as_sag(rows$dataset, rows$sag) else logical()
     data.frame(
-      quantity = factor(quantity, quantities), status = status,
-      ratio = if (length(ratio) > 0) median(ratio) else NA
+      quantity = factor(quantity, quantities),
+      status = if (length(same) == 0) "not compared" else if (all(same)) "same" else "different",
+      ratio = if (length(same) > 0) median(rows$dataset / rows$sag) else NA,
+      years = length(same),
+      different = sum(!same)
     )
   })
   do.call(rbind, rows)
@@ -212,9 +222,13 @@ Code
 # The labels for a stock, as HTML.
 
 labels_html <- function(agreed) {
+  # how many years differ, and by how much if the whole series is out
   text <- ifelse(
     agreed$status == "different",
-    paste0(agreed$quantity, " &times;", signif(agreed$ratio, 3)),
+    paste0(
+      agreed$quantity, ": ", agreed$different, " of ", agreed$years, " years",
+      ifelse(abs(agreed$ratio - 1) < 0.025, "", paste0(", &times;", signif(agreed$ratio, 3)))
+    ),
     as.character(agreed$quantity)
   )
   class <- c(same = "qc-same", different = "qc-different", "not compared" = "qc-none")[agreed$status]
@@ -289,7 +303,7 @@ check_plot <- function(check, agreed) {
 
 Cod
 
-SSB F recruitment ×1.83 catches ×1
+SSB F recruitment: 32 of 32 years, ×1.83 catches: 1 of 32 years
 
 ![Dots showing which data are present for cod.27.1-2.coastN
 (2026).](visual-check_files/figure-html/dots-1-1.png)
@@ -304,7 +318,7 @@ SAG.](visual-check_files/figure-html/plots-1-1.png)
 
 Herring
 
-SSB F ×1 recruitment catches ×0.983
+SSB F recruitment catches: 17 of 35 years
 
 ![Dots showing which data are present for her.27.20-24
 (2026).](visual-check_files/figure-html/dots-2-1.png)
@@ -316,7 +330,7 @@ dataset and in SAG.](visual-check_files/figure-html/plots-2-1.png)
 
 Herring
 
-SSB F recruitment catches ×1
+SSB F recruitment catches: 14 of 69 years
 
 ![Dots showing which data are present for her.27.6aS7bc
 (2026).](visual-check_files/figure-html/dots-3-1.png)
@@ -412,7 +426,7 @@ dataset and in SAG.](visual-check_files/figure-html/plots-10-1.png)
 
 Haddock
 
-SSB F ×1.34 recruitment catches
+SSB F: 45 of 47 years, ×1.34 recruitment catches
 
 ![Dots showing which data are present for had.27.5a
 (2026).](visual-check_files/figure-html/dots-11-1.png)
@@ -424,7 +438,7 @@ dataset and in SAG.](visual-check_files/figure-html/plots-11-1.png)
 
 Herring
 
-SSB F ×1.2 recruitment catches ×1
+SSB F: 45 of 46 years, ×1.2 recruitment catches: 4 of 46 years
 
 ![Dots showing which data are present for her.27.5a
 (2026).](visual-check_files/figure-html/dots-12-1.png)
@@ -460,7 +474,7 @@ dataset and in SAG.](visual-check_files/figure-html/plots-14-1.png)
 
 Saithe
 
-SSB F ×1.14 recruitment catches
+SSB F: 44 of 46 years, ×1.14 recruitment catches
 
 ![Dots showing which data are present for pok.27.5a
 (2026).](visual-check_files/figure-html/dots-15-1.png)
@@ -510,7 +524,8 @@ dataset and in SAG.](visual-check_files/figure-html/plots-18-1.png)
 
 Plaice
 
-SSB ×0.996 F ×0.995 recruitment ×0.995 catches ×1.31
+SSB: 5 of 24 years F: 8 of 24 years recruitment: 9 of 24 years catches:
+23 of 23 years, ×1.31
 
 ![Dots showing which data are present for ple.27.21-32
 (2026).](visual-check_files/figure-html/dots-19-1.png)
@@ -522,7 +537,7 @@ dataset and in SAG.](visual-check_files/figure-html/plots-19-1.png)
 
 Sole
 
-SSB ×1 F recruitment catches ×1
+SSB: 18 of 42 years F recruitment catches: 15 of 42 years
 
 ![Dots showing which data are present for sol.27.20-24
 (2026).](visual-check_files/figure-html/dots-20-1.png)
@@ -534,7 +549,7 @@ dataset and in SAG.](visual-check_files/figure-html/plots-20-1.png)
 
 Sprat
 
-SSB F recruitment catches ×0.992
+SSB F recruitment catches: 7 of 50 years
 
 ![Dots showing which data are present for spr.27.22-32
 (2024).](visual-check_files/figure-html/dots-21-1.png)
@@ -546,7 +561,7 @@ dataset and in SAG.](visual-check_files/figure-html/plots-21-1.png)
 
 Sprat
 
-SSB F recruitment catches ×0.991
+SSB F recruitment catches: 7 of 52 years
 
 ![Dots showing which data are present for spr.27.22-32
 (2026).](visual-check_files/figure-html/dots-22-1.png)
@@ -560,7 +575,7 @@ dataset and in SAG.](visual-check_files/figure-html/plots-22-1.png)
 
 Black-bellied anglerfish
 
-SSB F recruitment ×1 catches ×1.19
+SSB F recruitment: 1 of 40 years catches: 40 of 40 years, ×1.19
 
 ![Dots showing which data are present for ank.27.78abd
 (2026).](visual-check_files/figure-html/dots-23-1.png)
@@ -572,7 +587,7 @@ dataset and in SAG.](visual-check_files/figure-html/plots-23-1.png)
 
 Black-bellied anglerfish
 
-SSB ×1.61 F recruitment catches ×1.01
+SSB: 47 of 47 years, ×1.61 F recruitment catches: 12 of 46 years
 
 ![Dots showing which data are present for ank.27.8c9a
 (2026).](visual-check_files/figure-html/dots-24-1.png)
@@ -584,7 +599,7 @@ dataset and in SAG.](visual-check_files/figure-html/plots-24-1.png)
 
 Hake
 
-SSB F recruitment catches ×1.01
+SSB F recruitment catches: 16 of 48 years
 
 ![Dots showing which data are present for hke.27.3a46-8abd
 (2026).](visual-check_files/figure-html/dots-25-1.png)
@@ -596,7 +611,7 @@ the dataset and in SAG.](visual-check_files/figure-html/plots-25-1.png)
 
 Hake
 
-SSB F recruitment catches ×0.999
+SSB F recruitment catches: 15 of 66 years
 
 ![Dots showing which data are present for hke.27.8c9a
 (2026).](visual-check_files/figure-html/dots-26-1.png)
@@ -619,7 +634,7 @@ Not compared: the stock assessment was not found in SAG.
 
 White anglerfish
 
-SSB F recruitment catches ×1.01
+SSB F recruitment catches: 12 of 46 years
 
 ![Dots showing which data are present for mon.27.8c9a
 (2026).](visual-check_files/figure-html/dots-28-1.png)
@@ -631,7 +646,7 @@ dataset and in SAG.](visual-check_files/figure-html/plots-28-1.png)
 
 Sole
 
-SSB F recruitment catches ×1
+SSB F recruitment catches: 8 of 42 years
 
 ![Dots showing which data are present for sol.27.8ab
 (2026).](visual-check_files/figure-html/dots-29-1.png)
@@ -645,7 +660,7 @@ dataset and in SAG.](visual-check_files/figure-html/plots-29-1.png)
 
 Haddock
 
-SSB F recruitment catches ×0.975
+SSB F recruitment catches: 31 of 35 years, ×0.975
 
 ![Dots showing which data are present for had.27.6b
 (2026).](visual-check_files/figure-html/dots-30-1.png)
@@ -657,7 +672,7 @@ dataset and in SAG.](visual-check_files/figure-html/plots-30-1.png)
 
 Haddock
 
-SSB F recruitment catches ×0.997
+SSB F recruitment catches: 3 of 33 years
 
 ![Dots showing which data are present for had.27.7b-k
 (2026).](visual-check_files/figure-html/dots-31-1.png)
@@ -669,7 +684,8 @@ dataset and in SAG.](visual-check_files/figure-html/plots-31-1.png)
 
 Megrim
 
-SSB ×36400 F ×0.169 recruitment catches ×1
+SSB: 55 of 55 years, ×36400 F: 54 of 54 years, ×0.169 recruitment
+catches: 12 of 54 years
 
 ![Dots showing which data are present for lez.27.4a6a
 (2026).](visual-check_files/figure-html/dots-32-1.png)
@@ -693,7 +709,7 @@ dataset and in SAG.](visual-check_files/figure-html/plots-33-1.png)
 
 Sole
 
-SSB F recruitment catches ×1
+SSB F recruitment catches: 3 of 57 years
 
 ![Dots showing which data are present for sol.27.7e
 (2026).](visual-check_files/figure-html/dots-34-1.png)
@@ -705,7 +721,7 @@ dataset and in SAG.](visual-check_files/figure-html/plots-34-1.png)
 
 Sole
 
-SSB F recruitment catches ×0.967
+SSB F recruitment catches: 30 of 55 years, ×0.967
 
 ![Dots showing which data are present for sol.27.7fg
 (2026).](visual-check_files/figure-html/dots-35-1.png)
@@ -769,7 +785,8 @@ Not compared: the stock assessment was not found in SAG.
 
 Brill
 
-SSB ×6160 F ×0.336 recruitment catches ×0.994
+SSB: 77 of 77 years, ×6160 F: 76 of 76 years, ×0.336 recruitment
+catches: 31 of 76 years
 
 ![Dots showing which data are present for bll.27.3a47de
 (2026).](visual-check_files/figure-html/dots-40-1.png)
@@ -781,7 +798,7 @@ the dataset and in SAG.](visual-check_files/figure-html/plots-40-1.png)
 
 Haddock
 
-SSB F recruitment ×1 catches ×0.991
+SSB F recruitment: 1 of 55 years catches: 40 of 54 years
 
 ![Dots showing which data are present for had.27.46a20
 (2026).](visual-check_files/figure-html/dots-41-1.png)
@@ -829,7 +846,7 @@ dataset and in SAG.](visual-check_files/figure-html/plots-44-1.png)
 
 Whiting
 
-SSB F recruitment ×1 catches
+SSB F recruitment: 1 of 49 years catches
 
 ![Dots showing which data are present for whg.27.47d
 (2026).](visual-check_files/figure-html/dots-45-1.png)
@@ -841,7 +858,7 @@ dataset and in SAG.](visual-check_files/figure-html/plots-45-1.png)
 
 Witch
 
-SSB F recruitment catches ×0.985
+SSB F recruitment catches: 5 of 17 years
 
 ![Dots showing which data are present for wit.27.3a47d
 (2026).](visual-check_files/figure-html/dots-46-1.png)

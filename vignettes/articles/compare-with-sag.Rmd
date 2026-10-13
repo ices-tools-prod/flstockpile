@@ -101,13 +101,29 @@ sag_summary <- function(stock_code, assessment_year) {
   do.call(rbind, rows)
 }
 
+# Is a value in the dataset the same as the value in SAG?
+#
+# It is if the two are within 2.5% of each other, or within the rounding of
+# SAG: half a unit in the last decimal place that SAG holds for the quantity.
+
+same_as_sag <- function(dataset, sag) {
+  places <- 0
+  while (places < 6 && any(abs(sag - round(sag, places)) > 1e-9)) places <- places + 1
+  abs(dataset / sag - 1) < 0.025 | abs(dataset - sag) <= 0.5 * 10^-places
+}
+
 # The two summaries side by side, for the years and quantities in both.
 
 compare_summaries <- function(stock_code, assessment_year) {
   both <- merge(dataset_summary(stock_code, assessment_year), sag_summary(stock_code, assessment_year))
   both <- both[!is.na(both$dataset) & !is.na(both$sag) & both$sag != 0, ]
   both$ratio <- both$dataset / both$sag
-  both[order(both$quantity, both$year), ]
+  both <- both[order(both$quantity, both$year), ]
+  # SAG holds each quantity to its own number of decimal places
+  both$same <- as.logical(ave(seq_len(nrow(both)), both$quantity, FUN = function(rows) {
+    same_as_sag(both$dataset[rows], both$sag[rows])
+  }))
+  both
 }
 ```
 
@@ -170,16 +186,13 @@ areas: `r paste(unique(stocks$stock_code[!stocks$simple]), collapse = ", ")`.
 Not found in SAG: `r paste(unique(stocks$stock_code[stocks$simple & !stocks$compared]), collapse = ", ")`.
 
 A stock and quantity is taken to be the same in the dataset and in SAG if
-they are within 2.5% of each other in every year. SAG holds rounded values, so
-small differences are expected: a fishing mortality of 0.02 held to three
-decimal places can be 2.5% out.
+they are the same in every year. A year is the same if the two values are
+within 2.5% of each other, or within the rounding of SAG: a fishing mortality
+of 0.011 that SAG holds to three decimal places could be anything from 0.0105
+to 0.0115, which is more than 2.5% either way.
 
 ```{r}
-agreement <- aggregate(
-  ratio ~ stock_code + assessment_year + quantity, comparisons,
-  function(ratio) max(abs(ratio - 1)) < 0.025
-)
-names(agreement)[4] <- "same"
+agreement <- aggregate(same ~ stock_code + assessment_year + quantity, comparisons, all)
 
 table(agreement$quantity, ifelse(agreement$same, "same", "different"))
 ```
@@ -276,21 +289,28 @@ datatable(
 
 ### Where they differ
 
-For each stock and quantity that is not the same, the median over the years of
-the dataset value divided by the SAG value, and the range. A blank means the
-quantity is the same, and `-` that it could not be compared.
+For each stock and quantity that is not the same, the number of years that
+differ, and the median over all the years of the dataset value divided by the
+SAG value, with its range. A median of 1 with only a few years that differ
+points to particular years; a median away from 1 to the whole series. A blank
+means the quantity is the same, and `-` that it could not be compared.
 
 ```{r}
-ratios <- aggregate(
-  ratio ~ stock_code + assessment_year + quantity, comparisons,
-  function(ratio) {
-    if (max(abs(ratio - 1)) < 0.025) {
+groups <- split(comparisons, comparisons[c("stock_code", "assessment_year", "quantity")], drop = TRUE)
+ratios <- lapply(groups, function(rows) {
+  data.frame(
+    rows[1, c("stock_code", "assessment_year", "quantity")],
+    ratio = if (all(rows$same)) {
       ""
     } else {
-      sprintf("%s (%s to %s)", signif(median(ratio), 3), signif(min(ratio), 3), signif(max(ratio), 3))
+      sprintf(
+        "%d of %d years, %s (%s to %s)", sum(!rows$same), nrow(rows),
+        signif(median(rows$ratio), 3), signif(min(rows$ratio), 3), signif(max(rows$ratio), 3)
+      )
     }
-  }
-)
+  )
+})
+ratios <- do.call(rbind, ratios)
 ratios <- reshape(ratios, idvar = c("stock_code", "assessment_year"), timevar = "quantity", direction = "wide")
 names(ratios) <- sub("ratio.", "", names(ratios), fixed = TRUE)
 ratios[is.na(ratios)] <- "-"
