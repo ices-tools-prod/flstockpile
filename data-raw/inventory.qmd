@@ -1,0 +1,287 @@
+---
+title: "Stock assessment results submissions"
+subtitle: "Contents of the submitted files"
+date: today
+format:
+  html:
+    embed-resources: true
+    page-layout: full
+    toc: true
+    toc-depth: 2
+    toc-location: left
+execute:
+  echo: false
+  warning: false
+  message: false
+---
+
+```{r}
+library(DT)
+library(rvest)
+library(FLCore)
+
+extract_dir <- "extracted"
+
+# the objects found in the submitted files, from make_inventory.R
+inventory <- read.csv("inventory.csv")
+
+# the submissions table, from the saved copy of
+# https://data.ices.dk/submissions/ViewSubmissions/StockAssessmentResultsSubmissions
+submissions <- html_table(html_element(read_html("ids.html"), "table"))
+names(submissions) <- trimws(names(submissions))
+submissions <- submissions[!duplicated(submissions$ID), ]
+
+# what the page says about each submission, leaving out the email address
+info <- data.frame(
+  id = submissions$ID,
+  Submitted = submissions$`Submission datetime`,
+  Year = submissions$Year,
+  `Stock code` = submissions$StockCode,
+  Purpose = submissions$Purpose,
+  `Case number` = submissions$`Case Number`,
+  Notes = submissions$Notes,
+  check.names = FALSE
+)
+
+submissions <- data.frame(
+  id = submissions$ID,
+  submitted = as.Date(submissions$`Submission datetime`, format = "%d-%m-%Y"),
+  stock = submissions$StockCode,
+  year = submissions$Year,
+  purpose = submissions$Purpose,
+  notes = submissions$Notes
+)
+
+# counts of what each submission contains
+count_by_id <- function(rows) {
+  as.vector(table(factor(inventory$id[rows], levels = submissions$id)))
+}
+submissions$files <- count_by_id(!duplicated(inventory[c("id", "file")]))
+submissions$objects <- count_by_id(TRUE)
+submissions$flstocks <- count_by_id(inventory$class == "FLStock")
+submissions <- submissions[order(submissions$submitted, decreasing = TRUE), ]
+
+# one row per object, with the submission it came from
+objects <- merge(
+  submissions[c("id", "submitted", "stock", "year", "purpose")],
+  inventory,
+  by = "id"
+)
+objects <- objects[order(objects$submitted, objects$id, objects$file, decreasing = TRUE), ]
+objects$md5 <- substr(objects$md5, 1, 8)
+
+# a table that can be sorted, searched and filtered by column
+show_table <- function(data, long = character(), escape = TRUE) {
+  # short text columns get a dropdown filter
+  for (col in setdiff(names(data), c("id", "md5", long))) {
+    if (is.character(data[[col]]) && length(unique(data[[col]])) <= 60) {
+      data[[col]] <- factor(data[[col]])
+    }
+  }
+  datatable(
+    data,
+    rownames = FALSE,
+    escape = escape,
+    filter = "top",
+    class = "compact stripe hover nowrap",
+    extensions = "Buttons",
+    options = list(
+      pageLength = 25,
+      lengthMenu = c(10, 25, 50, 100),
+      scrollX = TRUE,
+      dom = "Bfrtip",
+      buttons = c("pageLength", "colvis", "csv")
+    )
+  )
+}
+```
+
+# Overview
+
+`r nrow(submissions)` submissions, containing `r nrow(inventory)` objects in
+`r sum(submissions$files)` data files. `r sum(submissions$flstocks)` of the
+objects are `FLStock` objects, from `r sum(submissions$flstocks > 0)`
+submissions.
+
+Each table can be sorted by clicking a column heading, searched with the box
+at the top right, and filtered with the boxes under the column headings.
+
+::: {.panel-tabset}
+
+## Submissions
+
+One row per submission. `files`, `objects` and `flstocks` count what was found
+in the submitted zip file; a submission with no files contained no data. The
+`id` links to the section for that submission, further down the page.
+
+```{r}
+linked <- submissions
+linked$id <- sprintf('<a href="#sub-%s">%s</a>', linked$id, linked$id)
+show_table(linked, long = "notes", escape = FALSE)
+```
+
+## FLStock objects
+
+One row per `FLStock` object. `dim` is ages x years x units x seasons x areas
+x iterations.
+
+```{r}
+flstocks <- objects[objects$class == "FLStock", ]
+flstocks <- flstocks[setdiff(names(flstocks), c("format", "size", "class"))]
+show_table(flstocks, long = c("file", "object", "name", "desc"))
+```
+
+## All objects
+
+One row per object, of any class. Objects inside a list are named with the
+list they are in, for example `res$stk`. Files with the same `md5` are
+identical.
+
+```{r}
+show_table(objects, long = c("file", "object", "name", "desc"))
+```
+
+:::
+
+# Submissions
+
+One section per submission, newest first: what the submissions page says
+about it, then a summary of each object in the submitted files. Warnings given
+by R when reading or summarising the files are listed as notes.
+
+```{r}
+# Run some code, keeping the warnings it gives.
+#
+# Returns a list with the value (a "try-error" if the code failed) and the
+# warnings as notes, a character vector.
+
+with_notes <- function(expr) {
+  notes <- character()
+  value <- withCallingHandlers(
+    try(expr, silent = TRUE),
+    warning = function(warning) {
+      notes <<- c(notes, trimws(conditionMessage(warning)))
+      invokeRestart("muffleWarning")
+    },
+    message = function(message) invokeRestart("muffleMessage")
+  )
+  list(value = value, notes = unique(notes))
+}
+
+# The files in a submission, with the files inside any zip files.
+#
+# Returns a data frame of paths and the labels to show for them.
+
+submission_files <- function(dir, label = "") {
+  paths <- list.files(dir, recursive = TRUE, full.names = TRUE)
+  files <- data.frame(path = paths, label = paste0(label, substring(paths, nchar(dir) + 2)))
+  is_zip <- vapply(paths, function(path) identical(readBin(path, "raw", 2), charToRaw("PK")), TRUE)
+  inside <- lapply(which(is_zip), function(i) {
+    zip_dir <- tempfile("zip")
+    unzip(files$path[i], exdir = zip_dir)
+    submission_files(zip_dir, paste0(files$label[i], "/"))
+  })
+  do.call(rbind, c(list(files[!is_zip, ]), inside))
+}
+
+# Read the objects in a file, in the same way as make_inventory.R.
+#
+# Returns a list with the objects (NULL if the file is not data) and the
+# notes from reading the file.
+
+read_objects <- function(file) {
+  read <- with_notes({
+    env <- new.env()
+    load(file, envir = env)
+    as.list(env)
+  })
+  if (inherits(read$value, "try-error")) {
+    read <- with_notes(list(readRDS(file)))
+  }
+  if (inherits(read$value, "try-error") && grepl("\\.(csv|txt)$", file, ignore.case = TRUE)) {
+    read <- with_notes(list(read.csv(file, check.names = FALSE)))
+  }
+  if (inherits(read$value, "try-error")) {
+    return(list(objects = NULL, notes = character()))
+  }
+  list(objects = read$value, notes = read$notes)
+}
+
+# Show an object, and the objects inside it if it is a list.
+#
+# Returns the notes from summarising the object.
+
+show_object <- function(object, name) {
+  cat("**", if (!is.null(name) && name != "") paste0("`", name, "`: "), class(object)[1], "**\n\n", sep = "")
+
+  if (identical(class(object), "list") && length(object) > 0) {
+    names <- names(object)
+    if (is.null(names)) names <- rep("", length(object))
+    names <- ifelse(is.na(names) | names == "", paste0("[[", seq_along(object), "]]"), names)
+    if (!is.null(name) && name != "") names <- paste(name, names, sep = "$")
+    notes <- lapply(seq_along(object), function(i) show_object(object[[i]], names[i]))
+    return(unlist(notes))
+  }
+
+  # FLR objects have a summary, anything else is shown by its structure
+  shown <- with_notes(capture.output(
+    if (isS4(object)) summary(object) else str(object, max.level = 1, list.len = 20, vec.len = 2)
+  ))
+  if (inherits(shown$value, "try-error")) {
+    shown$notes <- c(shown$notes, paste("no summary:", trimws(conditionMessage(attr(shown$value, "condition")))))
+    shown$value <- character()
+  }
+  text <- shown$value
+  if (length(text) > 60) text <- c(text[1:60], "...")
+  if (length(text) > 0) cat("````text", text, "````", "", sep = "\n")
+
+  if (length(shown$notes) > 0) paste0(name, ": ", shown$notes) else character()
+}
+```
+
+```{r}
+#| results: asis
+for (id in submissions$id) {
+  cat("\n\n## ", submissions$stock[submissions$id == id], ", ", format(submissions$submitted[submissions$id == id]),
+    " {#sub-", id, "}\n\n",
+    sep = ""
+  )
+
+  about <- info[info$id == id, ]
+  about$Download <- paste0("https://data.ices.dk/filearchive/GetFileByFileID/", id)
+  about <- data.frame(field = c("ID", names(about)[-1]), value = unlist(about))
+  cat(knitr::kable(about, format = "html", row.names = FALSE, col.names = NULL, table.attr = 'class="table table-sm w-auto"'), "\n\n")
+
+  notes <- character()
+  files <- submission_files(file.path(extract_dir, id))
+  for (i in seq_len(nrow(files))) {
+    read <- read_objects(files$path[i])
+    if (is.null(read$objects)) {
+      notes <- c(notes, paste0("`", files$label[i], "` was skipped, it is not a data file"))
+      next
+    }
+    cat("### ", files$label[i], " {.unlisted}\n\n", sep = "")
+    for (j in seq_along(read$objects)) {
+      read$notes <- c(read$notes, show_object(read$objects[[j]], names(read$objects)[j]))
+    }
+    if (length(read$notes) > 0) {
+      notes <- c(notes, paste0("`", files$label[i], "`: ", unique(read$notes)))
+    }
+
+    # the same file in another submission
+    md5 <- inventory$md5[inventory$id == id & inventory$file == files$label[i]][1]
+    same <- setdiff(unique(inventory$id[inventory$md5 %in% md5]), id)
+    if (length(same) > 0) {
+      notes <- c(notes, paste0(
+        "`", files$label[i], "` is identical to the file in ",
+        paste0("[", same, "](#sub-", same, ")", collapse = ", ")
+      ))
+    }
+  }
+  if (nrow(files) == 0) notes <- c(notes, "the zip file was empty")
+
+  if (length(notes) > 0) {
+    cat("### Notes {.unlisted}\n\n", paste0("- ", gsub("\\s+", " ", notes), "\n"), "\n", sep = "")
+  }
+}
+```

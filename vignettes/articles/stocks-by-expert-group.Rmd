@@ -1,0 +1,202 @@
+---
+title: "Stocks and years in the dataset"
+---
+
+```{r, include = FALSE}
+knitr::opts_chunk$set(
+  collapse = FALSE,
+  comment = "#>",
+  message = FALSE,
+  warning = FALSE,
+  fig.width = 8
+)
+options(width = 100)
+
+# code blocks are folded away, and opened by clicking on "Code"
+local({
+  source_hook <- knitr::knit_hooks$get("source")
+  knitr::knit_hooks$set(source = function(x, options) {
+    paste0(
+      "\n<details class=\"code-fold\">\n<summary>Code</summary>\n\n",
+      source_hook(x, options),
+      "\n\n</details>\n"
+    )
+  })
+})
+```
+
+This article shows what has been submitted to the dataset: which stocks,
+which years they cover, and whether there are observed data, model estimates
+or both. The stocks are grouped by the ICES expert group that assesses them.
+The data category and species of each stock, and the other stocks of each
+expert group, are looked up in the ICES Stock Database with the
+[icesSD](https://github.com/ices-tools-prod/icesSD) package.
+
+It is run against the live stock database each time this site is built.
+
+```{r}
+library(FLStockpile)
+library(icesSD)
+library(ggplot2)
+
+options(FLStockpile.url = "https://github.com/neilcampbelll/FLstockpile/releases/latest/download")
+```
+
+## Expert groups
+
+The dataset has the expert group of each stock assessment. The stock database
+lists the stocks that are active in a year, with the data category and species
+of each, and is matched to the latest version of each stock assessment in the
+dataset by stock code and assessment year.
+
+```{r}
+stocks <- stockpile_stocks()
+
+stock_database <- lapply(unique(stocks$assessment_year), function(year) {
+  sd <- getSD(year = year)
+  data.frame(
+    stock_code = sd$StockKeyLabel,
+    assessment_year = year,
+    expert_group = sd$ExpertGroup,
+    data_category = sd$DataCategory,
+    species = sd$SpeciesCommonName
+  )
+})
+stock_database <- do.call(rbind, stock_database)
+
+# the expert group of each stock assessment is in the dataset
+stocks <- merge(stocks, stock_database[c("stock_code", "assessment_year", "data_category", "species")], all.x = TRUE)
+
+# what the dataset has for each stock assessment
+stocks$contents <- ifelse(
+  stocks$observed & stocks$estimated, "observed and estimated",
+  ifelse(stocks$estimated, "estimated only", "observed only")
+)
+stocks$contents <- factor(stocks$contents, c("observed and estimated", "estimated only", "observed only"))
+
+# a label for each stock assessment
+stocks$assessment <- paste0(stocks$stock_code, " (", stocks$assessment_year, ")")
+
+contents_colours <- c("observed and estimated" = "#1b9e77", "estimated only" = "#7570b3", "observed only" = "#d95f02")
+```
+
+The dataset has `r nrow(stocks)` stock assessments, of
+`r length(unique(stocks$stock_code))` stocks, from
+`r length(unique(stocks$expert_group))` expert groups.
+
+```{r, fig.height = 4.5, fig.alt = "Horizontal bar chart of the number of stock assessments in the dataset for each expert group, with the bars divided into observed and estimated, estimated only and observed only."}
+ggplot(stocks, aes(y = reorder(expert_group, expert_group, length), fill = contents)) +
+  geom_bar() +
+  scale_x_continuous(breaks = function(limits) seq(0, limits[2], by = 2)) +
+  scale_fill_manual(values = contents_colours) +
+  labs(x = "stock assessments in the dataset", y = NULL, fill = NULL) +
+  theme_minimal() +
+  theme(legend.position = "bottom")
+```
+
+### How much of each expert group's work is in the dataset
+
+The dataset holds age-based assessments, which are mostly the stocks in data
+category 1. For the most recent assessment year, the number of stocks each
+expert group has in the stock database, the number of those in category 1, and
+the number that are in the dataset:
+
+```{r}
+latest_year <- max(stocks$assessment_year)
+active <- stock_database[stock_database$assessment_year == latest_year, ]
+active$category_1 <- floor(as.numeric(active$data_category)) == 1
+active$in_dataset <- active$stock_code %in% stocks$stock_code[stocks$assessment_year == latest_year]
+
+coverage <- aggregate(cbind(stocks = 1, category_1, in_dataset) ~ expert_group, active, sum, na.action = na.pass)
+coverage <- coverage[coverage$in_dataset > 0, ]
+coverage <- coverage[order(-coverage$in_dataset), ]
+
+knitr::kable(
+  coverage,
+  row.names = FALSE,
+  col.names = c("Expert group", paste("Stocks in", latest_year), "In category 1", "In the dataset")
+)
+```
+
+## Years
+
+The years covered by the observed data and by the model estimates of each
+stock, from the ranges of the submitted objects. Where the estimates run past
+the assessment year, they include a forecast.
+
+```{r, fig.height = 11, fig.alt = "For each stock assessment, grouped by expert group, horizontal lines showing the range of years covered by the observed data and by the model estimates."}
+sources <- stockpile_sources()
+sources <- sources[sources$class == "FLStock", ]
+sources <- merge(sources, stocks[c("stock_code", "assessment_year", "version", "expert_group", "assessment")])
+
+# a guide line from each stock code to the start of its years
+guides <- aggregate(min_year ~ assessment + expert_group, sources, min)
+
+ggplot(sources, aes(y = assessment, colour = type)) +
+  geom_segment(
+    aes(x = -Inf, xend = min_year, yend = assessment),
+    data = guides, colour = "grey80", linewidth = 0.25
+  ) +
+  geom_linerange(aes(xmin = min_year, xmax = max_year), linewidth = 1.2, position = position_dodge(width = 0.6)) +
+  facet_grid(expert_group ~ ., scales = "free_y", space = "free_y") +
+  scale_y_discrete(limits = rev) +
+  scale_colour_manual(values = c(observed = "#d95f02", estimated = "#1b9e77")) +
+  labs(x = NULL, y = NULL, colour = NULL) +
+  theme_minimal() +
+  theme(
+    legend.position = "bottom",
+    strip.text.y = element_text(angle = 0, hjust = 0),
+    panel.grid.major.y = element_blank(),
+    panel.grid.minor.x = element_blank(),
+    panel.spacing = unit(0.6, "lines")
+  )
+```
+
+The same as a table, with the ages and what else is known about each stock:
+
+```{r}
+ranges <- stocks[order(stocks$expert_group, stocks$stock_code, stocks$assessment_year), ]
+ranges$years <- paste(ranges$min_year, ranges$max_year, sep = "–")
+ranges$ages <- paste(ranges$min_age, ranges$max_age, sep = "–")
+
+knitr::kable(
+  ranges[c("expert_group", "stock_code", "species", "assessment_year", "data_category", "years", "ages", "contents", "indices")],
+  row.names = FALSE,
+  col.names = c(
+    "Expert group", "Stock", "Species", "Assessment year", "Category", "Years", "Ages", "Contents", "Survey indices"
+  )
+)
+```
+
+## Submissions
+
+When each version of a stock assessment was submitted. A stock with more than
+one version has been corrected since it was first submitted.
+
+```{r, fig.height = 4.5, fig.alt = "Dates on which versions of stock assessments were submitted, by expert group, with first versions and corrections marked differently."}
+versions <- stockpile_stocks(version = "all")
+versions <- merge(versions, unique(stocks[c("stock_code", "assessment_year", "expert_group")]))
+versions$submission <- ifelse(versions$version == 1, "first version", "correction")
+
+ggplot(versions, aes(as.Date(submitted), reorder(expert_group, as.numeric(submitted), min), colour = submission)) +
+  geom_point(size = 2.5, alpha = 0.7, position = position_jitter(width = 0, height = 0.15, seed = 1)) +
+  scale_y_discrete(limits = rev) +
+  scale_colour_manual(values = c("first version" = "#1b9e77", "correction" = "#d95f02")) +
+  labs(x = "submitted", y = NULL, colour = NULL) +
+  theme_minimal() +
+  theme(legend.position = "bottom")
+```
+
+The stock assessments with more than one version:
+
+```{r}
+corrected <- versions[ave(versions$version, versions$stock_code, versions$assessment_year, FUN = max) > 1, ]
+corrected <- corrected[order(corrected$stock_code, corrected$version), ]
+corrected$submitted <- format(corrected$submitted, "%Y-%m-%d")
+
+knitr::kable(
+  corrected[c("expert_group", "stock_code", "assessment_year", "version", "submitted", "latest")],
+  row.names = FALSE,
+  col.names = c("Expert group", "Stock", "Assessment year", "Version", "Submitted", "Latest")
+)
+```

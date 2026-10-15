@@ -1,0 +1,15 @@
+### {{heading}}
+
+<p class="qc-species">{{species}}</p>
+
+`r labels_html(agreements[[{{i}}]])`
+
+```{r dots-{{i}}, echo = FALSE, fig.height = 0.9, fig.alt = "Dots showing which data are present for {{assessment}}."}
+dots_plot(stocks[{{i}}, ])
+```
+
+```{r plots-{{i}}, echo = FALSE, eval = is.data.frame(checks[[{{i}}]]), fig.height = 2, fig.alt = "SSB, F, recruitment and catches of {{assessment}} by year, in the dataset and in SAG."}
+check_plot(checks[[{{i}}]], agreements[[{{i}}]])
+```
+
+`r if (!is.data.frame(checks[[{{i}}]])) checks[[{{i}}]]`
