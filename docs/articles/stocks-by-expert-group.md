@@ -20,6 +20,7 @@ library(flstockpile)
 library(icesSD)
 library(icesSAG)
 library(ggplot2)
+library(plotly)
 
 options(flstockpile.url = "https://github.com/ices-tools-prod/flstockpile/releases/latest/download")
 ```
@@ -79,7 +80,7 @@ are in the dataset are coloured by what the dataset has for them, or
 that they were taken from SAG. Of the stocks that are not in the
 dataset, those with an assessment published in SAG are grey, and those
 with none are left empty: a stock can be listed in the stock database
-without an assessment in SAG.
+without an assessment in SAG. Hover over a box to see the stock code.
 
 Code
 
@@ -118,14 +119,14 @@ Code
 
 ``` r
 
-ggplot(active, aes(y = factor(data_category), fill = status, group = stock_code)) +
+coverage_plot <- ggplot(active, aes(y = factor(data_category), fill = status, group = stock_code, text = stock_code)) +
   geom_bar(position = position_stack(reverse = TRUE), colour = "grey40", linewidth = 0.2) +
   facet_grid(expert_group ~ ., scales = "free_y", space = "free_y", switch = "y") +
   scale_x_continuous(breaks = function(limits) seq(0, limits[2], by = 2)) +
-  scale_y_discrete(limits = rev) +
+  scale_y_discrete(limits = rev, labels = function(category) paste("cat", category)) +
   scale_fill_manual(values = c(contents_colours, "not submitted, in SAG" = "grey85", "not submitted, not in SAG" = NA)) +
   guides(fill = guide_legend(nrow = 2, byrow = TRUE)) +
-  labs(title = "Submission status: stock coverage", x = paste("stocks in", latest_year), y = "data category", fill = NULL) +
+  labs(title = "Submission status: stock coverage", x = paste("stocks in", latest_year), y = NULL, fill = NULL) +
   theme_minimal() +
   theme(
     legend.position = "bottom",
@@ -136,15 +137,35 @@ ggplot(active, aes(y = factor(data_category), fill = status, group = stock_code)
     panel.grid.minor.x = element_blank(),
     panel.spacing = unit(0.6, "lines")
   )
-```
 
-![Horizontal bar charts, one panel per expert group, with one bar per
-data category showing the number of stocks in the stock database,
-divided into the stocks in the dataset, by whether they have observed
-and estimated, estimated only or observed only, or were taken from SAG,
-and the stocks not submitted, which are grey if they have an assessment
-in SAG and empty if not. Each stock is
-outlined.](stocks-by-expert-group_files/figure-html/unnamed-chunk-5-1.png)
+widget <- plotly_build(ggplotly(coverage_plot, tooltip = "text"))
+
+# ggplotly makes the panels the same height and puts the expert groups on the
+# right, so each panel is made as high as its number of categories, with the
+# expert group to the left of it
+categories <- tapply(active$data_category, active$expert_group, function(x) length(unique(x)))
+axes <- paste0("yaxis", c("", seq_along(categories)[-1]))
+names(axes) <- names(categories)
+gap <- 0.6
+unit_height <- 1 / (sum(categories) + gap * (length(categories) - 1))
+top <- 1
+for (group in names(categories)) {
+  widget$x$layout[[axes[group]]]$domain <- c(top - categories[[group]] * unit_height, top)
+  top <- top - (categories[[group]] + gap) * unit_height
+}
+widget$x$layout$annotations <- lapply(widget$x$layout$annotations, function(annotation) {
+  if (annotation$text %in% names(categories)) {
+    domain <- widget$x$layout[[axes[annotation$text]]]$domain
+    annotation[c("x", "y", "xanchor", "xshift", "textangle")] <- list(0, mean(domain), "right", -45, 0)
+  }
+  annotation
+})
+widget$x$layout$shapes <- NULL
+
+widget |>
+  layout(margin = list(l = 120, b = 110), legend = list(orientation = "h", y = -0.08)) |>
+  config(displayModeBar = FALSE)
+```
 
 ### How much of each expert group’s work is in the dataset
 
