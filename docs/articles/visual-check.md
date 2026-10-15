@@ -83,7 +83,11 @@ dataset_summary <- function(stock) {
   types <- names(colours)[c(stock$observed, stock$estimated)]
   rows <- lapply(types, function(type) {
     object <- stockpile_flstock(stock$stock_code, stock$assessment_year, type = type)
-    found <- list(SSB = ssb(object), F = fbar(object), recruitment = rec(object), catches = catch(object))
+    found <- list(catches = catch(object))
+    # a stock from SAG has only the catches, landings and discards, with no ages
+    if (stock$origin != "SAG") {
+      found <- c(list(SSB = ssb(object), F = fbar(object), recruitment = rec(object)), found)
+    }
     rows <- lapply(names(found), function(quantity) {
       values <- as.data.frame(found[[quantity]])
       data.frame(type = type, quantity = quantity, year = values$year, dataset = values$data)
@@ -642,6 +646,18 @@ SSB F recruitment catches: 12 of 46 years
 ![SSB, F, recruitment and catches of mon.27.8c9a (2026) by year, in the
 dataset and in SAG.](visual-check_files/figure-html/plots-28-1.png)
 
+### [oal.27.8c9a (2026)](https://standardgraphs.ices.dk/ViewCharts.aspx?key=22600)
+
+Sole
+
+SSB F recruitment catches
+
+![Dots showing which data are present for oal.27.8c9a
+(2026).](visual-check_files/figure-html/dots-29-1.png)
+
+![SSB, F, recruitment and catches of oal.27.8c9a (2026) by year, in the
+dataset and in SAG.](visual-check_files/figure-html/plots-29-1.png)
+
 ### [sol.27.8ab (2026)](https://standardgraphs.ices.dk/ViewCharts.aspx?key=22607)
 
 Sole
@@ -649,10 +665,10 @@ Sole
 SSB F recruitment catches: 8 of 42 years
 
 ![Dots showing which data are present for sol.27.8ab
-(2026).](visual-check_files/figure-html/dots-29-1.png)
+(2026).](visual-check_files/figure-html/dots-30-1.png)
 
 ![SSB, F, recruitment and catches of sol.27.8ab (2026) by year, in the
-dataset and in SAG.](visual-check_files/figure-html/plots-29-1.png)
+dataset and in SAG.](visual-check_files/figure-html/plots-30-1.png)
 
 ## WGCSE
 
@@ -663,10 +679,22 @@ Haddock
 SSB F recruitment catches: 31 of 35 years, ×0.975
 
 ![Dots showing which data are present for had.27.6b
-(2026).](visual-check_files/figure-html/dots-30-1.png)
+(2026).](visual-check_files/figure-html/dots-31-1.png)
 
 ![SSB, F, recruitment and catches of had.27.6b (2026) by year, in the
-dataset and in SAG.](visual-check_files/figure-html/plots-30-1.png)
+dataset and in SAG.](visual-check_files/figure-html/plots-31-1.png)
+
+### [had.27.7a (2026)](https://standardgraphs.ices.dk/ViewCharts.aspx?key=22672)
+
+Haddock
+
+SSB F recruitment catches
+
+![Dots showing which data are present for had.27.7a
+(2026).](visual-check_files/figure-html/dots-32-1.png)
+
+![SSB, F, recruitment and catches of had.27.7a (2026) by year, in the
+dataset and in SAG.](visual-check_files/figure-html/plots-32-1.png)
 
 ### [had.27.7b-k (2026)](https://standardgraphs.ices.dk/ViewCharts.aspx?key=22561)
 
@@ -675,10 +703,10 @@ Haddock
 SSB F recruitment catches: 3 of 33 years
 
 ![Dots showing which data are present for had.27.7b-k
-(2026).](visual-check_files/figure-html/dots-31-1.png)
+(2026).](visual-check_files/figure-html/dots-33-1.png)
 
 ![SSB, F, recruitment and catches of had.27.7b-k (2026) by year, in the
-dataset and in SAG.](visual-check_files/figure-html/plots-31-1.png)
+dataset and in SAG.](visual-check_files/figure-html/plots-33-1.png)
 
 ### [lez.27.4a6a (2026)](https://standardgraphs.ices.dk/ViewCharts.aspx?key=23776)
 
@@ -688,10 +716,10 @@ SSB: 55 of 55 years, ×36400 F: 54 of 54 years, ×0.169 recruitment
 catches: 12 of 54 years
 
 ![Dots showing which data are present for lez.27.4a6a
-(2026).](visual-check_files/figure-html/dots-32-1.png)
+(2026).](visual-check_files/figure-html/dots-34-1.png)
 
 ![SSB, F, recruitment and catches of lez.27.4a6a (2026) by year, in the
-dataset and in SAG.](visual-check_files/figure-html/plots-32-1.png)
+dataset and in SAG.](visual-check_files/figure-html/plots-34-1.png)
 
 ### [sol.27.7a (2026)](https://standardgraphs.ices.dk/ViewCharts.aspx?key=22641)
 
@@ -700,10 +728,10 @@ Sole
 SSB F recruitment catches
 
 ![Dots showing which data are present for sol.27.7a
-(2026).](visual-check_files/figure-html/dots-33-1.png)
+(2026).](visual-check_files/figure-html/dots-35-1.png)
 
 ![SSB, F, recruitment and catches of sol.27.7a (2026) by year, in the
-dataset and in SAG.](visual-check_files/figure-html/plots-33-1.png)
+dataset and in SAG.](visual-check_files/figure-html/plots-35-1.png)
 
 ### [sol.27.7e (2026)](https://standardgraphs.ices.dk/ViewCharts.aspx?key=22656)
 
@@ -712,10 +740,10 @@ Sole
 SSB F recruitment catches: 3 of 57 years
 
 ![Dots showing which data are present for sol.27.7e
-(2026).](visual-check_files/figure-html/dots-34-1.png)
+(2026).](visual-check_files/figure-html/dots-36-1.png)
 
 ![SSB, F, recruitment and catches of sol.27.7e (2026) by year, in the
-dataset and in SAG.](visual-check_files/figure-html/plots-34-1.png)
+dataset and in SAG.](visual-check_files/figure-html/plots-36-1.png)
 
 ### [sol.27.7fg (2026)](https://standardgraphs.ices.dk/ViewCharts.aspx?key=22663)
 
@@ -724,10 +752,22 @@ Sole
 SSB F recruitment catches: 30 of 55 years, ×0.967
 
 ![Dots showing which data are present for sol.27.7fg
-(2026).](visual-check_files/figure-html/dots-35-1.png)
+(2026).](visual-check_files/figure-html/dots-37-1.png)
 
 ![SSB, F, recruitment and catches of sol.27.7fg (2026) by year, in the
-dataset and in SAG.](visual-check_files/figure-html/plots-35-1.png)
+dataset and in SAG.](visual-check_files/figure-html/plots-37-1.png)
+
+### [sol.27.7h-k (2026)](https://standardgraphs.ices.dk/ViewCharts.aspx?key=23719)
+
+Sole
+
+SSB F recruitment catches
+
+![Dots showing which data are present for sol.27.7h-k
+(2026).](visual-check_files/figure-html/dots-38-1.png)
+
+![SSB, F, recruitment and catches of sol.27.7h-k (2026) by year, in the
+dataset and in SAG.](visual-check_files/figure-html/plots-38-1.png)
 
 ### whg.27.6a (2026)
 
@@ -736,7 +776,7 @@ Whiting
 SSB F recruitment catches
 
 ![Dots showing which data are present for whg.27.6a
-(2026).](visual-check_files/figure-html/dots-36-1.png)
+(2026).](visual-check_files/figure-html/dots-39-1.png)
 
 Not compared: the stock assessment was not found in SAG.
 
@@ -747,10 +787,24 @@ Whiting
 SSB F recruitment catches
 
 ![Dots showing which data are present for whg.27.7b-ce-k
-(2026).](visual-check_files/figure-html/dots-37-1.png)
+(2026).](visual-check_files/figure-html/dots-40-1.png)
 
 ![SSB, F, recruitment and catches of whg.27.7b-ce-k (2026) by year, in
-the dataset and in SAG.](visual-check_files/figure-html/plots-37-1.png)
+the dataset and in SAG.](visual-check_files/figure-html/plots-40-1.png)
+
+## WGEF
+
+### [por.27.nea (2026)](https://standardgraphs.ices.dk/ViewCharts.aspx?key=26019)
+
+Porbeagle
+
+SSB F recruitment catches
+
+![Dots showing which data are present for por.27.nea
+(2026).](visual-check_files/figure-html/dots-41-1.png)
+
+![SSB, F, recruitment and catches of por.27.nea (2026) by year, in the
+dataset and in SAG.](visual-check_files/figure-html/plots-41-1.png)
 
 ## WGHANSA
 
@@ -761,10 +815,10 @@ Horse mackerel
 SSB F recruitment catches
 
 ![Dots showing which data are present for hom.27.9a
-(2026).](visual-check_files/figure-html/dots-38-1.png)
+(2026).](visual-check_files/figure-html/dots-42-1.png)
 
 ![SSB, F, recruitment and catches of hom.27.9a (2026) by year, in the
-dataset and in SAG.](visual-check_files/figure-html/plots-38-1.png)
+dataset and in SAG.](visual-check_files/figure-html/plots-42-1.png)
 
 ## WGNEPH
 
@@ -775,7 +829,7 @@ Norway lobster
 SSB F recruitment catches
 
 ![Dots showing which data are present for nep.fu.32
-(2026).](visual-check_files/figure-html/dots-39-1.png)
+(2026).](visual-check_files/figure-html/dots-43-1.png)
 
 Not compared: the stock assessment was not found in SAG.
 
@@ -789,10 +843,10 @@ SSB: 77 of 77 years, ×6160 F: 76 of 76 years, ×0.336 recruitment
 catches: 31 of 76 years
 
 ![Dots showing which data are present for bll.27.3a47de
-(2026).](visual-check_files/figure-html/dots-40-1.png)
+(2026).](visual-check_files/figure-html/dots-44-1.png)
 
 ![SSB, F, recruitment and catches of bll.27.3a47de (2026) by year, in
-the dataset and in SAG.](visual-check_files/figure-html/plots-40-1.png)
+the dataset and in SAG.](visual-check_files/figure-html/plots-44-1.png)
 
 ### [had.27.46a20 (2026)](https://standardgraphs.ices.dk/ViewCharts.aspx?key=22417)
 
@@ -801,10 +855,10 @@ Haddock
 SSB F recruitment: 1 of 55 years catches: 40 of 54 years
 
 ![Dots showing which data are present for had.27.46a20
-(2026).](visual-check_files/figure-html/dots-41-1.png)
+(2026).](visual-check_files/figure-html/dots-45-1.png)
 
 ![SSB, F, recruitment and catches of had.27.46a20 (2026) by year, in the
-dataset and in SAG.](visual-check_files/figure-html/plots-41-1.png)
+dataset and in SAG.](visual-check_files/figure-html/plots-45-1.png)
 
 ### [ple.27.420 (2026)](https://standardgraphs.ices.dk/ViewCharts.aspx?key=22489)
 
@@ -813,10 +867,10 @@ Plaice
 SSB F recruitment catches
 
 ![Dots showing which data are present for ple.27.420
-(2026).](visual-check_files/figure-html/dots-42-1.png)
+(2026).](visual-check_files/figure-html/dots-46-1.png)
 
 ![SSB, F, recruitment and catches of ple.27.420 (2026) by year, in the
-dataset and in SAG.](visual-check_files/figure-html/plots-42-1.png)
+dataset and in SAG.](visual-check_files/figure-html/plots-46-1.png)
 
 ### [sol.27.7d (2026)](https://standardgraphs.ices.dk/ViewCharts.aspx?key=22546)
 
@@ -825,10 +879,10 @@ Sole
 SSB F recruitment catches
 
 ![Dots showing which data are present for sol.27.7d
-(2026).](visual-check_files/figure-html/dots-43-1.png)
+(2026).](visual-check_files/figure-html/dots-47-1.png)
 
 ![SSB, F, recruitment and catches of sol.27.7d (2026) by year, in the
-dataset and in SAG.](visual-check_files/figure-html/plots-43-1.png)
+dataset and in SAG.](visual-check_files/figure-html/plots-47-1.png)
 
 ### [tur.27.4 (2026)](https://standardgraphs.ices.dk/ViewCharts.aspx?key=22472)
 
@@ -837,10 +891,10 @@ Turbot
 SSB F recruitment catches
 
 ![Dots showing which data are present for tur.27.4
-(2026).](visual-check_files/figure-html/dots-44-1.png)
+(2026).](visual-check_files/figure-html/dots-48-1.png)
 
 ![SSB, F, recruitment and catches of tur.27.4 (2026) by year, in the
-dataset and in SAG.](visual-check_files/figure-html/plots-44-1.png)
+dataset and in SAG.](visual-check_files/figure-html/plots-48-1.png)
 
 ### [whg.27.47d (2026)](https://standardgraphs.ices.dk/ViewCharts.aspx?key=22488)
 
@@ -849,10 +903,10 @@ Whiting
 SSB F recruitment: 1 of 49 years catches
 
 ![Dots showing which data are present for whg.27.47d
-(2026).](visual-check_files/figure-html/dots-45-1.png)
+(2026).](visual-check_files/figure-html/dots-49-1.png)
 
 ![SSB, F, recruitment and catches of whg.27.47d (2026) by year, in the
-dataset and in SAG.](visual-check_files/figure-html/plots-45-1.png)
+dataset and in SAG.](visual-check_files/figure-html/plots-49-1.png)
 
 ### [wit.27.3a47d (2026)](https://standardgraphs.ices.dk/ViewCharts.aspx?key=22534)
 
@@ -861,10 +915,10 @@ Witch
 SSB F recruitment catches: 5 of 17 years
 
 ![Dots showing which data are present for wit.27.3a47d
-(2026).](visual-check_files/figure-html/dots-46-1.png)
+(2026).](visual-check_files/figure-html/dots-50-1.png)
 
 ![SSB, F, recruitment and catches of wit.27.3a47d (2026) by year, in the
-dataset and in SAG.](visual-check_files/figure-html/plots-46-1.png)
+dataset and in SAG.](visual-check_files/figure-html/plots-50-1.png)
 
 ## WGWIDE
 
@@ -875,7 +929,7 @@ Blue whiting
 SSB F recruitment catches
 
 ![Dots showing which data are present for whb.27.1-91214
-(2026).](visual-check_files/figure-html/dots-47-1.png)
+(2026).](visual-check_files/figure-html/dots-51-1.png)
 
 ![SSB, F, recruitment and catches of whb.27.1-91214 (2026) by year, in
-the dataset and in SAG.](visual-check_files/figure-html/plots-47-1.png)
+the dataset and in SAG.](visual-check_files/figure-html/plots-51-1.png)

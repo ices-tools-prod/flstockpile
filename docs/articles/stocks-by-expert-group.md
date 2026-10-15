@@ -2,11 +2,13 @@
 
 This article shows what has been submitted to the dataset: which stocks,
 which years they cover, and whether there are observed data, model
-estimates or both. The stocks are grouped by the ICES expert group that
-assesses them. The data category and species of each stock, and the
-other stocks of each expert group, are looked up in the ICES Stock
-Database with the [icesSD](https://github.com/ices-tools-prod/icesSD)
-package.
+estimates or both. Stocks with nothing submitted, such as those in data
+category 5, can instead have their catches, landings and discards taken
+from the ICES Stock Assessment Graphs database, SAG. The stocks are
+grouped by the ICES expert group that assesses them. The data category
+and species of each stock, and the other stocks of each expert group,
+are looked up in the ICES Stock Database with the
+[icesSD](https://github.com/ices-tools-prod/icesSD) package.
 
 It is run against the live stock database each time this site is built.
 
@@ -49,46 +51,31 @@ stock_database <- do.call(rbind, stock_database)
 # the expert group of each stock assessment is in the dataset
 stocks <- merge(stocks, stock_database[c("stock_code", "assessment_year", "data_category", "species")], all.x = TRUE)
 
-# what the dataset has for each stock assessment
+# what the dataset has for each stock assessment, or that it is from SAG
 stocks$contents <- ifelse(
-  stocks$observed & stocks$estimated, "observed and estimated",
-  ifelse(stocks$estimated, "estimated only", "observed only")
+  stocks$origin == "SAG", "from SAG",
+  ifelse(
+    stocks$observed & stocks$estimated, "observed and estimated",
+    ifelse(stocks$estimated, "estimated only", "observed only")
+  )
 )
-stocks$contents <- factor(stocks$contents, c("observed and estimated", "estimated only", "observed only"))
+stocks$contents <- factor(stocks$contents, c("observed and estimated", "estimated only", "observed only", "from SAG"))
 
 # a label for each stock assessment
 stocks$assessment <- paste0(stocks$stock_code, " (", stocks$assessment_year, ")")
 
-contents_colours <- c("observed and estimated" = "#1b9e77", "estimated only" = "#7570b3", "observed only" = "#d95f02")
+contents_colours <- c(
+  "observed and estimated" = "#1b9e77", "estimated only" = "#7570b3", "observed only" = "#d95f02", "from SAG" = "#e6ab02"
+)
 ```
 
-The dataset has 47 stock assessments, of 45 stocks, from 11 expert
+The dataset has 51 stock assessments, of 49 stocks, from 12 expert
 groups.
 
-Code
-
-``` r
-
-ggplot(stocks, aes(y = reorder(expert_group, expert_group, length), fill = contents)) +
-  geom_bar() +
-  scale_x_continuous(breaks = function(limits) seq(0, limits[2], by = 2)) +
-  scale_fill_manual(values = contents_colours) +
-  labs(x = "stock assessments in the dataset", y = NULL, fill = NULL) +
-  theme_minimal() +
-  theme(legend.position = "bottom")
-```
-
-![Horizontal bar chart of the number of stock assessments in the dataset
-for each expert group, with the bars divided into observed and
-estimated, estimated only and observed
-only.](stocks-by-expert-group_files/figure-html/unnamed-chunk-4-1.png)
-
-### How much of each expert group’s work is in the dataset
-
-The dataset holds age-based assessments, which are mostly the stocks in
-data category 1. For the most recent assessment year, the number of
-stocks each expert group has in the stock database, the number of those
-in category 1, and the number that are in the dataset:
+For the most recent assessment year, each expert group’s stocks in the
+stock database, by data category, with the stocks that are in the
+dataset coloured by what the dataset has for them, or that they were
+taken from SAG:
 
 Code
 
@@ -96,8 +83,64 @@ Code
 
 latest_year <- max(stocks$assessment_year)
 active <- stock_database[stock_database$assessment_year == latest_year, ]
-active$category_1 <- floor(as.numeric(active$data_category)) == 1
-active$in_dataset <- active$stock_code %in% stocks$stock_code[stocks$assessment_year == latest_year]
+active$data_category <- floor(as.numeric(active$data_category))
+
+# what the dataset has for each stock in the latest year, if anything
+active <- merge(active, stocks[stocks$assessment_year == latest_year, c("stock_code", "contents")], all.x = TRUE)
+active$in_dataset <- !is.na(active$contents)
+active$status <- factor(
+  ifelse(active$in_dataset, as.character(active$contents), "not submitted"),
+  c(levels(stocks$contents), "not submitted")
+)
+
+# only the expert groups with stocks in the dataset, most first
+submitted <- tapply(active$in_dataset, active$expert_group, sum)
+active <- active[active$expert_group %in% names(submitted)[submitted > 0], ]
+active$expert_group <- factor(active$expert_group, names(sort(submitted[submitted > 0], decreasing = TRUE)))
+```
+
+Code
+
+``` r
+
+ggplot(active, aes(y = factor(data_category), fill = status)) +
+  geom_bar(position = position_stack(reverse = TRUE)) +
+  facet_grid(expert_group ~ ., scales = "free_y", space = "free_y", switch = "y") +
+  scale_x_continuous(breaks = function(limits) seq(0, limits[2], by = 2)) +
+  scale_y_discrete(limits = rev) +
+  scale_fill_manual(values = c(contents_colours, "not submitted" = "grey85")) +
+  labs(title = "Submission status: stock coverage", x = paste("stocks in", latest_year), y = "data category", fill = NULL) +
+  theme_minimal() +
+  theme(
+    legend.position = "bottom",
+    plot.title.position = "plot",
+    strip.placement = "outside",
+    strip.text.y.left = element_text(angle = 0, hjust = 1),
+    panel.grid.major.y = element_blank(),
+    panel.grid.minor.x = element_blank(),
+    panel.spacing = unit(0.6, "lines")
+  )
+```
+
+![Horizontal bar charts, one panel per expert group, with one bar per
+data category showing the number of stocks in the stock database,
+divided into the stocks in the dataset, by whether they have observed
+and estimated, estimated only or observed only, or were taken from SAG,
+and the stocks not
+submitted.](stocks-by-expert-group_files/figure-html/unnamed-chunk-5-1.png)
+
+### How much of each expert group’s work is in the dataset
+
+The dataset holds age-based assessments, which are mostly the stocks in
+data category 1. As a table, the number of stocks each expert group has
+in the stock database in the most recent assessment year, the number of
+those in category 1, and the number that are in the dataset:
+
+Code
+
+``` r
+
+active$category_1 <- active$data_category == 1
 
 coverage <- aggregate(cbind(stocks = 1, category_1, in_dataset) ~ expert_group, active, sum, na.action = na.pass)
 coverage <- coverage[coverage$in_dataset > 0, ]
@@ -112,14 +155,15 @@ knitr::kable(
 
 | Expert group | Stocks in 2026 | In category 1 | In the dataset |
 |:-------------|---------------:|--------------:|---------------:|
+| WGCSE        |             27 |            15 |             10 |
 | NWWG         |             24 |            18 |              9 |
-| WGCSE        |             27 |            15 |              8 |
-| WGBIE        |             19 |            11 |              7 |
+| WGBIE        |             19 |            11 |              8 |
 | WGNSSK       |             21 |            11 |              7 |
 | HAWG         |             18 |             8 |              5 |
 | WGBFAS       |             16 |             6 |              4 |
 | AFWG         |             10 |             7 |              1 |
 | NIPAG        |              3 |             2 |              1 |
+| WGEF         |             56 |             1 |              1 |
 | WGHANSA      |              8 |             4 |              1 |
 | WGNEPH       |             29 |            16 |              1 |
 | WGWIDE       |              8 |             5 |              1 |
@@ -163,7 +207,7 @@ ggplot(sources, aes(y = assessment, colour = type)) +
 
 ![For each stock assessment, grouped by expert group, horizontal lines
 showing the range of years covered by the observed data and by the model
-estimates.](stocks-by-expert-group_files/figure-html/unnamed-chunk-6-1.png)
+estimates.](stocks-by-expert-group_files/figure-html/unnamed-chunk-7-1.png)
 
 The same as a table, with the ages and what else is known about each
 stock:
@@ -215,15 +259,19 @@ knitr::kable(
 | WGBIE | hke.27.8c9a | Hake | 2026 | 1 | 1960–2025 | 0–15 | estimated only | 0 |
 | WGBIE | meg.27.7b-k8abd | Megrim | 2026 | 1 | 1984–2028 | 1–7 | estimated only | 0 |
 | WGBIE | mon.27.8c9a | White anglerfish | 2026 | 1 | 1980–2025 | 0–30 | estimated only | 0 |
+| WGBIE | oal.27.8c9a | Sole | 2026 | 5 | 2011–2025 | NA–NA | from SAG | 0 |
 | WGBIE | sol.27.8ab | Sole | 2026 | 1 | 1984–2025 | 2–8 | observed and estimated | 0 |
 | WGCSE | had.27.6b | Haddock | 2026 | 1 | 1991–2025 | 1–8 | estimated only | 0 |
+| WGCSE | had.27.7a | Haddock | 2026 | 5 | 1993–2025 | NA–NA | from SAG | 0 |
 | WGCSE | had.27.7b-k | Haddock | 2026 | 1 | 1993–2025 | 0–8 | observed and estimated | 0 |
 | WGCSE | lez.27.4a6a | Megrim | 2026 | 1 | 1972–2027 | 1–1 | estimated only | 0 |
 | WGCSE | sol.27.7a | Sole | 2026 | 1 | 1970–2025 | 1–10 | observed and estimated | 0 |
 | WGCSE | sol.27.7e | Sole | 2026 | 1 | 1969–2025 | 2–12 | estimated only | 0 |
 | WGCSE | sol.27.7fg | Sole | 2026 | 1 | 1971–2025 | 1–10 | observed and estimated | 0 |
+| WGCSE | sol.27.7h-k | Sole | 2026 | 5 | 1951–2025 | NA–NA | from SAG | 0 |
 | WGCSE | whg.27.6a | Whiting | 2026 | 1 | 1981–2026 | 0–7 | estimated only | 0 |
 | WGCSE | whg.27.7b-ce-k | Whiting | 2026 | 1 | 1999–2025 | 0–7 | observed and estimated | 1 |
+| WGEF | por.27.nea | Porbeagle | 2026 | 5 | 1926–2025 | NA–NA | from SAG | 0 |
 | WGHANSA | hom.27.9a | Horse mackerel | 2026 | 1 | 1992–2025 | 0–11 | estimated only | 0 |
 | WGNEPH | nep.fu.32 | Norway lobster | 2026 | 2 | 1993–2028 | 1–1 | estimated only | 0 |
 | WGNSSK | bll.27.3a47de | Brill | 2026 | 2 | 1950–2028 | 1–1 | estimated only | 0 |
@@ -259,7 +307,7 @@ ggplot(versions, aes(as.Date(submitted), reorder(expert_group, as.numeric(submit
 
 ![Dates on which versions of stock assessments were submitted, by expert
 group, with first versions and corrections marked
-differently.](stocks-by-expert-group_files/figure-html/unnamed-chunk-8-1.png)
+differently.](stocks-by-expert-group_files/figure-html/unnamed-chunk-9-1.png)
 
 The stock assessments with more than one version:
 

@@ -100,7 +100,11 @@ dataset_summary <- function(stock) {
   types <- names(colours)[c(stock$observed, stock$estimated)]
   rows <- lapply(types, function(type) {
     object <- stockpile_flstock(stock$stock_code, stock$assessment_year, type = type)
-    found <- list(SSB = ssb(object), F = fbar(object), recruitment = rec(object), catches = catch(object))
+    found <- list(catches = catch(object))
+    # a stock from SAG has only the catches, landings and discards, with no ages
+    if (stock$origin != "SAG") {
+      found <- c(list(SSB = ssb(object), F = fbar(object), recruitment = rec(object)), found)
+    }
     rows <- lapply(names(found), function(quantity) {
       values <- as.data.frame(found[[quantity]])
       data.frame(type = type, quantity = quantity, year = values$year, dataset = values$data)

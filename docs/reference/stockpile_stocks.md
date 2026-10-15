@@ -59,9 +59,16 @@ A data frame with one row per version:
 
   is this the most recent version of the stock assessment?
 
+- origin:
+
+  `"submission"` for a version made from submitted objects, or `"SAG"`
+  for one made from the catches, landings and discards published in SAG,
+  for a stock with nothing submitted, such as one in data category 5
+
 - case_id:
 
-  the ICES case number the submissions were made under
+  the ICES case number the submissions were made under. Missing for a
+  version from SAG
 
 - stock_key:
 
@@ -80,7 +87,8 @@ A data frame with one row per version:
 
 - submitted:
 
-  when the most recent submission in the version was made
+  when the most recent submission in the version was made, or for a
+  version from SAG, when the data were got from SAG
 
 - observed, estimated:
 

@@ -61,6 +61,10 @@ as the one submitted, except that numbers are in thousands and weights
 in kg, whatever units they were submitted in. A slot that was all
 missing values comes back empty, with the default units of FLCore.
 
+A stock from SAG (see the `origin` column of
+[`stockpile_stocks()`](https://ices-tools-prod.github.io/flstockpile/reference/stockpile_stocks.md))
+has only the catch, landings and discards, in tonnes, with no ages.
+
 ## Details
 
 The `FLStock` has one iteration. Where the submitted object had more,

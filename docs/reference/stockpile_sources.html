@@ -99,6 +99,10 @@ this session.</p></dd>
     <p>A data frame with one row per object:</p><dl><dt>stock_code, assessment_year, version</dt>
 <dd><p>identify the version</p></dd>
 
+<dt>origin</dt>
+<dd><p><code>"submission"</code>, or <code>"SAG"</code> for an object made from the
+data in SAG, see <code><a href="stockpile_stocks.html">stockpile_stocks()</a></code></p></dd>
+
 <dt>type</dt>
 <dd><p><code>"observed"</code> or <code>"estimated"</code></p></dd>
 
@@ -108,10 +112,12 @@ this session.</p></dd>
 
 <dt>submission_id, submitted</dt>
 <dd><p>the submission the object came from, and
-when it was made</p></dd>
+when it was made. For an object from SAG, the submission ID is missing,
+and submitted is when the data were got from SAG</p></dd>
 
 <dt>file, object</dt>
-<dd><p>the submitted file, and the name of the object in it</p></dd>
+<dd><p>the submitted file, and the name of the object in it.
+For an object from SAG, the file the SAG summary table was saved to</p></dd>
 
 <dt>notes</dt>
 <dd><p>the notes given by the submitter</p></dd>

@@ -42,6 +42,7 @@
 <h2 class="pkg-version" data-toc-text="0.1.0" id="flstockpile-010">flstockpile 0.1.0<a class="anchor" aria-label="anchor" href="#flstockpile-010"></a></h2>
 <ul><li><p>First version: <code><a href="../reference/stockpile_stocks.html">stockpile_stocks()</a></code>, <code><a href="../reference/stockpile_sources.html">stockpile_sources()</a></code>, <code><a href="../reference/stockpile_values.html">stockpile_values()</a></code> and <code><a href="../reference/stockpile_indices.html">stockpile_indices()</a></code> read the dataset tables, and <code><a href="../reference/stockpile_flstock.html">stockpile_flstock()</a></code> converts the values for one stock to an <code>FLStock</code>.</p></li>
 <li><p>The package is renamed from FLStockpile to flstockpile, to match its repository, which has moved to ices-tools-prod/flstockpile. The option that sets the dataset location is now <code>flstockpile.url</code>.</p></li>
+<li><p>Stocks with no FLStock submitted, such as those in data category 5, can be taken from the catches, landings and discards published in SAG. The new <code>origin</code> column of <code><a href="../reference/stockpile_stocks.html">stockpile_stocks()</a></code> and <code><a href="../reference/stockpile_sources.html">stockpile_sources()</a></code> is <code>"SAG"</code> for these, and <code><a href="../reference/stockpile_flstock.html">stockpile_flstock()</a></code> returns them as an <code>FLStock</code> with no ages.</p></li>
 </ul></div>
   </main></div>
 

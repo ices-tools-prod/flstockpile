@@ -56,6 +56,12 @@ A data frame with one row per object:
 
   identify the version
 
+- origin:
+
+  `"submission"`, or `"SAG"` for an object made from the data in SAG,
+  see
+  [`stockpile_stocks()`](https://ices-tools-prod.github.io/flstockpile/reference/stockpile_stocks.md)
+
 - type:
 
   `"observed"` or `"estimated"`
@@ -66,11 +72,14 @@ A data frame with one row per object:
 
 - submission_id, submitted:
 
-  the submission the object came from, and when it was made
+  the submission the object came from, and when it was made. For an
+  object from SAG, the submission ID is missing, and submitted is when
+  the data were got from SAG
 
 - file, object:
 
-  the submitted file, and the name of the object in it
+  the submitted file, and the name of the object in it. For an object
+  from SAG, the file the SAG summary table was saved to
 
 - notes:
 

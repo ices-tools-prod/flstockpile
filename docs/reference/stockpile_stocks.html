@@ -99,8 +99,15 @@ this session.</p></dd>
 <dt>latest</dt>
 <dd><p>is this the most recent version of the stock assessment?</p></dd>
 
+<dt>origin</dt>
+<dd><p><code>"submission"</code> for a version made from submitted objects,
+or <code>"SAG"</code> for one made from the catches, landings and discards
+published in SAG, for a stock with nothing submitted, such as one in
+data category 5</p></dd>
+
 <dt>case_id</dt>
-<dd><p>the ICES case number the submissions were made under</p></dd>
+<dd><p>the ICES case number the submissions were made under.
+Missing for a version from SAG</p></dd>
 
 <dt>stock_key</dt>
 <dd><p>the key of the stock in the ICES Stock Database, as used
@@ -115,7 +122,8 @@ Stock Assessment Graphs database, as used by the icesSAG package. Missing
 if the assessment is not published there</p></dd>
 
 <dt>submitted</dt>
-<dd><p>when the most recent submission in the version was made</p></dd>
+<dd><p>when the most recent submission in the version was made,
+or for a version from SAG, when the data were got from SAG</p></dd>
 
 <dt>observed, estimated</dt>
 <dd><p>does the version have observed data, and model
