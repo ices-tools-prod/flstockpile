@@ -84,28 +84,58 @@ The dataset has `r nrow(stocks)` stock assessments, of
 `r length(unique(stocks$stock_code))` stocks, from
 `r length(unique(stocks$expert_group))` expert groups.
 
-```{r, fig.height = 4.5, fig.alt = "Horizontal bar chart of the number of stock assessments in the dataset for each expert group, with the bars divided into observed and estimated, estimated only and observed only."}
-ggplot(stocks, aes(y = reorder(expert_group, expert_group, length), fill = contents)) +
-  geom_bar() +
+For the most recent assessment year, each expert group's stocks in the stock
+database, by data category, with the stocks that are in the dataset coloured by
+what the dataset has for them:
+
+```{r}
+latest_year <- max(stocks$assessment_year)
+active <- stock_database[stock_database$assessment_year == latest_year, ]
+active$data_category <- floor(as.numeric(active$data_category))
+
+# what the dataset has for each stock in the latest year, if anything
+active <- merge(active, stocks[stocks$assessment_year == latest_year, c("stock_code", "contents")], all.x = TRUE)
+active$in_dataset <- !is.na(active$contents)
+active$status <- factor(
+  ifelse(active$in_dataset, as.character(active$contents), "not submitted"),
+  c(levels(stocks$contents), "not submitted")
+)
+
+# only the expert groups with stocks in the dataset, most first
+submitted <- tapply(active$in_dataset, active$expert_group, sum)
+active <- active[active$expert_group %in% names(submitted)[submitted > 0], ]
+active$expert_group <- factor(active$expert_group, names(sort(submitted[submitted > 0], decreasing = TRUE)))
+```
+
+```{r, fig.height = 9, fig.alt = "Horizontal bar charts, one panel per expert group, with one bar per data category showing the number of stocks in the stock database, divided into the stocks in the dataset, by whether they have observed and estimated, estimated only or observed only, and the stocks not submitted."}
+ggplot(active, aes(y = factor(data_category), fill = status)) +
+  geom_bar(position = position_stack(reverse = TRUE)) +
+  facet_grid(expert_group ~ ., scales = "free_y", space = "free_y", switch = "y") +
   scale_x_continuous(breaks = function(limits) seq(0, limits[2], by = 2)) +
-  scale_fill_manual(values = contents_colours) +
-  labs(x = "stock assessments in the dataset", y = NULL, fill = NULL) +
+  scale_y_discrete(limits = rev) +
+  scale_fill_manual(values = c(contents_colours, "not submitted" = "grey85")) +
+  labs(title = "Submission status: stock coverage", x = paste("stocks in", latest_year), y = "data category", fill = NULL) +
   theme_minimal() +
-  theme(legend.position = "bottom")
+  theme(
+    legend.position = "bottom",
+    plot.title.position = "plot",
+    strip.placement = "outside",
+    strip.text.y.left = element_text(angle = 0, hjust = 1),
+    panel.grid.major.y = element_blank(),
+    panel.grid.minor.x = element_blank(),
+    panel.spacing = unit(0.6, "lines")
+  )
 ```
 
 ### How much of each expert group's work is in the dataset
 
 The dataset holds age-based assessments, which are mostly the stocks in data
-category 1. For the most recent assessment year, the number of stocks each
-expert group has in the stock database, the number of those in category 1, and
-the number that are in the dataset:
+category 1. As a table, the number of stocks each expert group has in the stock
+database in the most recent assessment year, the number of those in category 1,
+and the number that are in the dataset:
 
 ```{r}
-latest_year <- max(stocks$assessment_year)
-active <- stock_database[stock_database$assessment_year == latest_year, ]
-active$category_1 <- floor(as.numeric(active$data_category)) == 1
-active$in_dataset <- active$stock_code %in% stocks$stock_code[stocks$assessment_year == latest_year]
+active$category_1 <- active$data_category == 1
 
 coverage <- aggregate(cbind(stocks = 1, category_1, in_dataset) ~ expert_group, active, sum, na.action = na.pass)
 coverage <- coverage[coverage$in_dataset > 0, ]
