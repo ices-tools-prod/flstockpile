@@ -131,7 +131,7 @@ Code
 <span><span class="va">contents_colours</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span></span>
 <span>  <span class="st">"observed and estimated"</span> <span class="op">=</span> <span class="st">"#1b9e77"</span>, <span class="st">"estimated only"</span> <span class="op">=</span> <span class="st">"#7570b3"</span>, <span class="st">"observed only"</span> <span class="op">=</span> <span class="st">"#d95f02"</span>, <span class="st">"from SAG"</span> <span class="op">=</span> <span class="st">"#e6ab02"</span></span>
 <span><span class="op">)</span></span></code></pre></div>
-</details><p>The dataset has 51 stock assessments, of 49 stocks, from 12 expert
+</details><p>The dataset has 63 stock assessments, of 61 stocks, from 13 expert
 groups.</p>
 <p>For the most recent assessment year, each expert group’s stocks in
 the stock database, by data category. Each stock is one box. The stocks
@@ -225,19 +225,19 @@ Code
 <td align="left">WGCSE</td>
 <td align="right">27</td>
 <td align="right">15</td>
-<td align="right">10</td>
+<td align="right">14</td>
 </tr>
 <tr class="even">
 <td align="left">NWWG</td>
 <td align="right">24</td>
 <td align="right">18</td>
-<td align="right">9</td>
+<td align="right">10</td>
 </tr>
 <tr class="odd">
 <td align="left">WGBIE</td>
 <td align="right">19</td>
 <td align="right">11</td>
-<td align="right">8</td>
+<td align="right">9</td>
 </tr>
 <tr class="even">
 <td align="left">WGNSSK</td>
@@ -249,13 +249,25 @@ Code
 <td align="left">HAWG</td>
 <td align="right">18</td>
 <td align="right">8</td>
-<td align="right">5</td>
+<td align="right">6</td>
 </tr>
 <tr class="even">
 <td align="left">WGBFAS</td>
 <td align="right">16</td>
 <td align="right">6</td>
 <td align="right">4</td>
+</tr>
+<tr class="odd">
+<td align="left">WGDEEP</td>
+<td align="right">25</td>
+<td align="right">2</td>
+<td align="right">4</td>
+</tr>
+<tr class="even">
+<td align="left">WGWIDE</td>
+<td align="right">8</td>
+<td align="right">5</td>
+<td align="right">2</td>
 </tr>
 <tr class="odd">
 <td align="left">AFWG</td>
@@ -285,12 +297,6 @@ Code
 <td align="left">WGNEPH</td>
 <td align="right">29</td>
 <td align="right">16</td>
-<td align="right">1</td>
-</tr>
-<tr class="even">
-<td align="left">WGWIDE</td>
-<td align="right">8</td>
-<td align="right">5</td>
 <td align="right">1</td>
 </tr>
 </tbody>
@@ -357,7 +363,7 @@ Code
 <col width="6%">
 <col width="7%">
 <col width="4%">
-<col width="17%">
+<col width="16%">
 <col width="11%">
 </colgroup>
 <thead><tr class="header">
@@ -439,6 +445,17 @@ Code
 <td align="right">0</td>
 </tr>
 <tr class="odd">
+<td align="left">HAWG</td>
+<td align="left">san.sa.4</td>
+<td align="left">Sandeel</td>
+<td align="right">2026</td>
+<td align="left">5</td>
+<td align="left">1993–2025</td>
+<td align="left">NA–NA</td>
+<td align="left">from SAG</td>
+<td align="right">0</td>
+</tr>
+<tr class="even">
 <td align="left">NIPAG</td>
 <td align="left">pra.27.3a4a</td>
 <td align="left">Northern shrimp</td>
@@ -449,7 +466,7 @@ Code
 <td align="left">estimated only</td>
 <td align="right">0</td>
 </tr>
-<tr class="even">
+<tr class="odd">
 <td align="left">NWWG</td>
 <td align="left">caa.27.5a</td>
 <td align="left">Wolffish</td>
@@ -460,7 +477,7 @@ Code
 <td align="left">estimated only</td>
 <td align="right">0</td>
 </tr>
-<tr class="odd">
+<tr class="even">
 <td align="left">NWWG</td>
 <td align="left">cod.21.1.isc</td>
 <td align="left">Cod</td>
@@ -471,7 +488,7 @@ Code
 <td align="left">observed only</td>
 <td align="right">0</td>
 </tr>
-<tr class="even">
+<tr class="odd">
 <td align="left">NWWG</td>
 <td align="left">cod.21.1.osc</td>
 <td align="left">Cod</td>
@@ -480,6 +497,17 @@ Code
 <td align="left">2000–2025</td>
 <td align="left">2–10</td>
 <td align="left">observed only</td>
+<td align="right">0</td>
+</tr>
+<tr class="even">
+<td align="left">NWWG</td>
+<td align="left">cod.21.27.1.14</td>
+<td align="left">Cod</td>
+<td align="right">2026</td>
+<td align="left">5</td>
+<td align="left">2000–2026</td>
+<td align="left">NA–NA</td>
+<td align="left">from SAG</td>
 <td align="right">0</td>
 </tr>
 <tr class="odd">
@@ -703,6 +731,39 @@ Code
 <td align="right">0</td>
 </tr>
 <tr class="odd">
+<td align="left">WGBIE</td>
+<td align="left">sos.27.8c9a</td>
+<td align="left">Sole</td>
+<td align="right">2026</td>
+<td align="left">5</td>
+<td align="left">2011–2025</td>
+<td align="left">NA–NA</td>
+<td align="left">from SAG</td>
+<td align="right">0</td>
+</tr>
+<tr class="even">
+<td align="left">WGCSE</td>
+<td align="left">bss.27.6a7bj</td>
+<td align="left">Seabass</td>
+<td align="right">2026</td>
+<td align="left">6.2</td>
+<td align="left">2000–2025</td>
+<td align="left">NA–NA</td>
+<td align="left">from SAG</td>
+<td align="right">0</td>
+</tr>
+<tr class="odd">
+<td align="left">WGCSE</td>
+<td align="left">cod.27.6b</td>
+<td align="left">Cod</td>
+<td align="right">2026</td>
+<td align="left">6.2</td>
+<td align="left">1984–2025</td>
+<td align="left">NA–NA</td>
+<td align="left">from SAG</td>
+<td align="right">0</td>
+</tr>
+<tr class="even">
 <td align="left">WGCSE</td>
 <td align="left">had.27.6b</td>
 <td align="left">Haddock</td>
@@ -713,7 +774,7 @@ Code
 <td align="left">estimated only</td>
 <td align="right">0</td>
 </tr>
-<tr class="even">
+<tr class="odd">
 <td align="left">WGCSE</td>
 <td align="left">had.27.7a</td>
 <td align="left">Haddock</td>
@@ -724,7 +785,7 @@ Code
 <td align="left">from SAG</td>
 <td align="right">0</td>
 </tr>
-<tr class="odd">
+<tr class="even">
 <td align="left">WGCSE</td>
 <td align="left">had.27.7b-k</td>
 <td align="left">Haddock</td>
@@ -735,7 +796,7 @@ Code
 <td align="left">observed and estimated</td>
 <td align="right">0</td>
 </tr>
-<tr class="even">
+<tr class="odd">
 <td align="left">WGCSE</td>
 <td align="left">lez.27.4a6a</td>
 <td align="left">Megrim</td>
@@ -744,6 +805,17 @@ Code
 <td align="left">1972–2027</td>
 <td align="left">1–1</td>
 <td align="left">estimated only</td>
+<td align="right">0</td>
+</tr>
+<tr class="even">
+<td align="left">WGCSE</td>
+<td align="left">ple.27.7bc</td>
+<td align="left">Plaice</td>
+<td align="right">2026</td>
+<td align="left">6.2</td>
+<td align="left">1908–2025</td>
+<td align="left">NA–NA</td>
+<td align="left">from SAG</td>
 <td align="right">0</td>
 </tr>
 <tr class="odd">
@@ -759,6 +831,17 @@ Code
 </tr>
 <tr class="even">
 <td align="left">WGCSE</td>
+<td align="left">sol.27.7bc</td>
+<td align="left">Sole</td>
+<td align="right">2026</td>
+<td align="left">6.2</td>
+<td align="left">1908–2025</td>
+<td align="left">NA–NA</td>
+<td align="left">from SAG</td>
+<td align="right">0</td>
+</tr>
+<tr class="odd">
+<td align="left">WGCSE</td>
 <td align="left">sol.27.7e</td>
 <td align="left">Sole</td>
 <td align="right">2026</td>
@@ -768,7 +851,7 @@ Code
 <td align="left">estimated only</td>
 <td align="right">0</td>
 </tr>
-<tr class="odd">
+<tr class="even">
 <td align="left">WGCSE</td>
 <td align="left">sol.27.7fg</td>
 <td align="left">Sole</td>
@@ -779,7 +862,7 @@ Code
 <td align="left">observed and estimated</td>
 <td align="right">0</td>
 </tr>
-<tr class="even">
+<tr class="odd">
 <td align="left">WGCSE</td>
 <td align="left">sol.27.7h-k</td>
 <td align="left">Sole</td>
@@ -790,7 +873,7 @@ Code
 <td align="left">from SAG</td>
 <td align="right">0</td>
 </tr>
-<tr class="odd">
+<tr class="even">
 <td align="left">WGCSE</td>
 <td align="left">whg.27.6a</td>
 <td align="left">Whiting</td>
@@ -801,7 +884,7 @@ Code
 <td align="left">estimated only</td>
 <td align="right">0</td>
 </tr>
-<tr class="even">
+<tr class="odd">
 <td align="left">WGCSE</td>
 <td align="left">whg.27.7b-ce-k</td>
 <td align="left">Whiting</td>
@@ -812,7 +895,51 @@ Code
 <td align="left">observed and estimated</td>
 <td align="right">1</td>
 </tr>
+<tr class="even">
+<td align="left">WGDEEP</td>
+<td align="left">rng.27.5b6712b</td>
+<td align="left">Roundnose grenadier</td>
+<td align="right">2026</td>
+<td align="left">5.2</td>
+<td align="left">1988–2025</td>
+<td align="left">NA–NA</td>
+<td align="left">from SAG</td>
+<td align="right">0</td>
+</tr>
 <tr class="odd">
+<td align="left">WGDEEP</td>
+<td align="left">sbr.27.6-8</td>
+<td align="left">Blackspot seabream</td>
+<td align="right">2026</td>
+<td align="left">6.3</td>
+<td align="left">1948–2025</td>
+<td align="left">NA–NA</td>
+<td align="left">from SAG</td>
+<td align="right">0</td>
+</tr>
+<tr class="even">
+<td align="left">WGDEEP</td>
+<td align="left">sbr.27.9</td>
+<td align="left">Blackspot seabream</td>
+<td align="right">2026</td>
+<td align="left">5</td>
+<td align="left">2003–2025</td>
+<td align="left">NA–NA</td>
+<td align="left">from SAG</td>
+<td align="right">0</td>
+</tr>
+<tr class="odd">
+<td align="left">WGDEEP</td>
+<td align="left">usk.27.6b</td>
+<td align="left">Tusk</td>
+<td align="right">2026</td>
+<td align="left">6</td>
+<td align="left">1988–2025</td>
+<td align="left">NA–NA</td>
+<td align="left">from SAG</td>
+<td align="right">0</td>
+</tr>
+<tr class="even">
 <td align="left">WGEF</td>
 <td align="left">por.27.nea</td>
 <td align="left">Porbeagle</td>
@@ -823,7 +950,7 @@ Code
 <td align="left">from SAG</td>
 <td align="right">0</td>
 </tr>
-<tr class="even">
+<tr class="odd">
 <td align="left">WGHANSA</td>
 <td align="left">hom.27.9a</td>
 <td align="left">Horse mackerel</td>
@@ -834,7 +961,7 @@ Code
 <td align="left">estimated only</td>
 <td align="right">0</td>
 </tr>
-<tr class="odd">
+<tr class="even">
 <td align="left">WGNEPH</td>
 <td align="left">nep.fu.32</td>
 <td align="left">Norway lobster</td>
@@ -845,7 +972,7 @@ Code
 <td align="left">estimated only</td>
 <td align="right">0</td>
 </tr>
-<tr class="even">
+<tr class="odd">
 <td align="left">WGNSSK</td>
 <td align="left">bll.27.3a47de</td>
 <td align="left">Brill</td>
@@ -856,7 +983,7 @@ Code
 <td align="left">estimated only</td>
 <td align="right">0</td>
 </tr>
-<tr class="odd">
+<tr class="even">
 <td align="left">WGNSSK</td>
 <td align="left">had.27.46a20</td>
 <td align="left">Haddock</td>
@@ -867,7 +994,7 @@ Code
 <td align="left">estimated only</td>
 <td align="right">0</td>
 </tr>
-<tr class="even">
+<tr class="odd">
 <td align="left">WGNSSK</td>
 <td align="left">ple.27.420</td>
 <td align="left">Plaice</td>
@@ -878,7 +1005,7 @@ Code
 <td align="left">observed only</td>
 <td align="right">0</td>
 </tr>
-<tr class="odd">
+<tr class="even">
 <td align="left">WGNSSK</td>
 <td align="left">sol.27.7d</td>
 <td align="left">Sole</td>
@@ -889,7 +1016,7 @@ Code
 <td align="left">observed and estimated</td>
 <td align="right">0</td>
 </tr>
-<tr class="even">
+<tr class="odd">
 <td align="left">WGNSSK</td>
 <td align="left">tur.27.4</td>
 <td align="left">Turbot</td>
@@ -900,7 +1027,7 @@ Code
 <td align="left">observed and estimated</td>
 <td align="right">0</td>
 </tr>
-<tr class="odd">
+<tr class="even">
 <td align="left">WGNSSK</td>
 <td align="left">whg.27.47d</td>
 <td align="left">Whiting</td>
@@ -911,7 +1038,7 @@ Code
 <td align="left">observed and estimated</td>
 <td align="right">0</td>
 </tr>
-<tr class="even">
+<tr class="odd">
 <td align="left">WGNSSK</td>
 <td align="left">wit.27.3a47d</td>
 <td align="left">Witch</td>
@@ -920,6 +1047,17 @@ Code
 <td align="left">1940–2025</td>
 <td align="left">1–10</td>
 <td align="left">observed and estimated</td>
+<td align="right">0</td>
+</tr>
+<tr class="even">
+<td align="left">WGWIDE</td>
+<td align="left">mur.27.67a-ce-k89a</td>
+<td align="left">Striped red mullet</td>
+<td align="right">2026</td>
+<td align="left">5.2</td>
+<td align="left">1975–2025</td>
+<td align="left">NA–NA</td>
+<td align="left">from SAG</td>
 <td align="right">0</td>
 </tr>
 <tr class="odd">

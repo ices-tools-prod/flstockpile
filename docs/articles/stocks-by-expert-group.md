@@ -18,6 +18,7 @@ Code
 
 library(flstockpile)
 library(icesSD)
+library(icesSAG)
 library(ggplot2)
 
 options(flstockpile.url = "https://github.com/ices-tools-prod/flstockpile/releases/latest/download")
@@ -69,13 +70,16 @@ contents_colours <- c(
 )
 ```
 
-The dataset has 51 stock assessments, of 49 stocks, from 12 expert
+The dataset has 63 stock assessments, of 61 stocks, from 13 expert
 groups.
 
 For the most recent assessment year, each expert group’s stocks in the
-stock database, by data category, with the stocks that are in the
-dataset coloured by what the dataset has for them, or that they were
-taken from SAG:
+stock database, by data category. Each stock is one box. The stocks that
+are in the dataset are coloured by what the dataset has for them, or
+that they were taken from SAG. Of the stocks that are not in the
+dataset, those with an assessment published in SAG are grey, and those
+with none are left empty: a stock can be listed in the stock database
+without an assessment in SAG.
 
 Code
 
@@ -88,27 +92,39 @@ active$data_category <- floor(as.numeric(active$data_category))
 # what the dataset has for each stock in the latest year, if anything
 active <- merge(active, stocks[stocks$assessment_year == latest_year, c("stock_code", "contents")], all.x = TRUE)
 active$in_dataset <- !is.na(active$contents)
+
+# is there an assessment of the stock published in SAG?
+active$in_sag <- active$stock_code %in% getListStocks(latest_year)$StockKeyLabel
+
 active$status <- factor(
-  ifelse(active$in_dataset, as.character(active$contents), "not submitted"),
-  c(levels(stocks$contents), "not submitted")
+  ifelse(
+    active$in_dataset, as.character(active$contents),
+    ifelse(active$in_sag, "not submitted, in SAG", "not submitted, not in SAG")
+  ),
+  c(levels(stocks$contents), "not submitted, in SAG", "not submitted, not in SAG")
 )
 
 # only the expert groups with stocks in the dataset, most first
 submitted <- tapply(active$in_dataset, active$expert_group, sum)
 active <- active[active$expert_group %in% names(submitted)[submitted > 0], ]
 active$expert_group <- factor(active$expert_group, names(sort(submitted[submitted > 0], decreasing = TRUE)))
+
+# one box per stock, stacked in the order of the status
+active <- active[order(active$status, active$stock_code), ]
+active$stock_code <- factor(active$stock_code, unique(active$stock_code))
 ```
 
 Code
 
 ``` r
 
-ggplot(active, aes(y = factor(data_category), fill = status)) +
-  geom_bar(position = position_stack(reverse = TRUE)) +
+ggplot(active, aes(y = factor(data_category), fill = status, group = stock_code)) +
+  geom_bar(position = position_stack(reverse = TRUE), colour = "grey40", linewidth = 0.2) +
   facet_grid(expert_group ~ ., scales = "free_y", space = "free_y", switch = "y") +
   scale_x_continuous(breaks = function(limits) seq(0, limits[2], by = 2)) +
   scale_y_discrete(limits = rev) +
-  scale_fill_manual(values = c(contents_colours, "not submitted" = "grey85")) +
+  scale_fill_manual(values = c(contents_colours, "not submitted, in SAG" = "grey85", "not submitted, not in SAG" = NA)) +
+  guides(fill = guide_legend(nrow = 2, byrow = TRUE)) +
   labs(title = "Submission status: stock coverage", x = paste("stocks in", latest_year), y = "data category", fill = NULL) +
   theme_minimal() +
   theme(
@@ -126,8 +142,9 @@ ggplot(active, aes(y = factor(data_category), fill = status)) +
 data category showing the number of stocks in the stock database,
 divided into the stocks in the dataset, by whether they have observed
 and estimated, estimated only or observed only, or were taken from SAG,
-and the stocks not
-submitted.](stocks-by-expert-group_files/figure-html/unnamed-chunk-5-1.png)
+and the stocks not submitted, which are grey if they have an assessment
+in SAG and empty if not. Each stock is
+outlined.](stocks-by-expert-group_files/figure-html/unnamed-chunk-5-1.png)
 
 ### How much of each expert group’s work is in the dataset
 
@@ -155,18 +172,19 @@ knitr::kable(
 
 | Expert group | Stocks in 2026 | In category 1 | In the dataset |
 |:-------------|---------------:|--------------:|---------------:|
-| WGCSE        |             27 |            15 |             10 |
-| NWWG         |             24 |            18 |              9 |
-| WGBIE        |             19 |            11 |              8 |
+| WGCSE        |             27 |            15 |             14 |
+| NWWG         |             24 |            18 |             10 |
+| WGBIE        |             19 |            11 |              9 |
 | WGNSSK       |             21 |            11 |              7 |
-| HAWG         |             18 |             8 |              5 |
+| HAWG         |             18 |             8 |              6 |
 | WGBFAS       |             16 |             6 |              4 |
+| WGDEEP       |             25 |             2 |              4 |
+| WGWIDE       |              8 |             5 |              2 |
 | AFWG         |             10 |             7 |              1 |
 | NIPAG        |              3 |             2 |              1 |
 | WGEF         |             56 |             1 |              1 |
 | WGHANSA      |              8 |             4 |              1 |
 | WGNEPH       |             29 |            16 |              1 |
-| WGWIDE       |              8 |             5 |              1 |
 
 ## Years
 
@@ -237,10 +255,12 @@ knitr::kable(
 | HAWG | san.sa.1r | Sandeel | 2026 | 1 | 1983–2025 | 0–4 | estimated only | 0 |
 | HAWG | san.sa.2r | Sandeel | 2026 | 1.2 | 1983–2025 | 0–4 | estimated only | 0 |
 | HAWG | san.sa.3r | Sandeel | 2026 | 1 | 1987–2025 | 0–4 | estimated only | 0 |
+| HAWG | san.sa.4 | Sandeel | 2026 | 5 | 1993–2025 | NA–NA | from SAG | 0 |
 | NIPAG | pra.27.3a4a | Northern shrimp | 2026 | 1 | 1970–2025 | 0–8 | estimated only | 0 |
 | NWWG | caa.27.5a | Wolffish | 2026 | 1 | 1979–2026 | 4–16 | estimated only | 0 |
 | NWWG | cod.21.1.isc | Cod | 2026 | 5 | 2000–2025 | 2–10 | observed only | 0 |
 | NWWG | cod.21.1.osc | Cod | 2026 | 1 | 2000–2025 | 2–10 | observed only | 0 |
+| NWWG | cod.21.27.1.14 | Cod | 2026 | 5 | 2000–2026 | NA–NA | from SAG | 0 |
 | NWWG | had.27.5a | Haddock | 2026 | 1 | 1979–2026 | 1–12 | estimated only | 0 |
 | NWWG | her.27.5a | Herring | 2026 | 1 | 1980–2026 | 2–15 | estimated only | 0 |
 | NWWG | lin.27.5a | Ling | 2026 | 1 | 1979–2026 | 2–12 | estimated only | 0 |
@@ -261,16 +281,25 @@ knitr::kable(
 | WGBIE | mon.27.8c9a | White anglerfish | 2026 | 1 | 1980–2025 | 0–30 | estimated only | 0 |
 | WGBIE | oal.27.8c9a | Sole | 2026 | 5 | 2011–2025 | NA–NA | from SAG | 0 |
 | WGBIE | sol.27.8ab | Sole | 2026 | 1 | 1984–2025 | 2–8 | observed and estimated | 0 |
+| WGBIE | sos.27.8c9a | Sole | 2026 | 5 | 2011–2025 | NA–NA | from SAG | 0 |
+| WGCSE | bss.27.6a7bj | Seabass | 2026 | 6.2 | 2000–2025 | NA–NA | from SAG | 0 |
+| WGCSE | cod.27.6b | Cod | 2026 | 6.2 | 1984–2025 | NA–NA | from SAG | 0 |
 | WGCSE | had.27.6b | Haddock | 2026 | 1 | 1991–2025 | 1–8 | estimated only | 0 |
 | WGCSE | had.27.7a | Haddock | 2026 | 5 | 1993–2025 | NA–NA | from SAG | 0 |
 | WGCSE | had.27.7b-k | Haddock | 2026 | 1 | 1993–2025 | 0–8 | observed and estimated | 0 |
 | WGCSE | lez.27.4a6a | Megrim | 2026 | 1 | 1972–2027 | 1–1 | estimated only | 0 |
+| WGCSE | ple.27.7bc | Plaice | 2026 | 6.2 | 1908–2025 | NA–NA | from SAG | 0 |
 | WGCSE | sol.27.7a | Sole | 2026 | 1 | 1970–2025 | 1–10 | observed and estimated | 0 |
+| WGCSE | sol.27.7bc | Sole | 2026 | 6.2 | 1908–2025 | NA–NA | from SAG | 0 |
 | WGCSE | sol.27.7e | Sole | 2026 | 1 | 1969–2025 | 2–12 | estimated only | 0 |
 | WGCSE | sol.27.7fg | Sole | 2026 | 1 | 1971–2025 | 1–10 | observed and estimated | 0 |
 | WGCSE | sol.27.7h-k | Sole | 2026 | 5 | 1951–2025 | NA–NA | from SAG | 0 |
 | WGCSE | whg.27.6a | Whiting | 2026 | 1 | 1981–2026 | 0–7 | estimated only | 0 |
 | WGCSE | whg.27.7b-ce-k | Whiting | 2026 | 1 | 1999–2025 | 0–7 | observed and estimated | 1 |
+| WGDEEP | rng.27.5b6712b | Roundnose grenadier | 2026 | 5.2 | 1988–2025 | NA–NA | from SAG | 0 |
+| WGDEEP | sbr.27.6-8 | Blackspot seabream | 2026 | 6.3 | 1948–2025 | NA–NA | from SAG | 0 |
+| WGDEEP | sbr.27.9 | Blackspot seabream | 2026 | 5 | 2003–2025 | NA–NA | from SAG | 0 |
+| WGDEEP | usk.27.6b | Tusk | 2026 | 6 | 1988–2025 | NA–NA | from SAG | 0 |
 | WGEF | por.27.nea | Porbeagle | 2026 | 5 | 1926–2025 | NA–NA | from SAG | 0 |
 | WGHANSA | hom.27.9a | Horse mackerel | 2026 | 1 | 1992–2025 | 0–11 | estimated only | 0 |
 | WGNEPH | nep.fu.32 | Norway lobster | 2026 | 2 | 1993–2028 | 1–1 | estimated only | 0 |
@@ -281,12 +310,15 @@ knitr::kable(
 | WGNSSK | tur.27.4 | Turbot | 2026 | 1 | 1981–2025 | 1–8 | observed and estimated | 0 |
 | WGNSSK | whg.27.47d | Whiting | 2026 | 1 | 1978–2026 | 0–8 | observed and estimated | 0 |
 | WGNSSK | wit.27.3a47d | Witch | 2026 | 1 | 1940–2025 | 1–10 | observed and estimated | 0 |
+| WGWIDE | mur.27.67a-ce-k89a | Striped red mullet | 2026 | 5.2 | 1975–2025 | NA–NA | from SAG | 0 |
 | WGWIDE | whb.27.1-91214 | Blue whiting | 2026 | 1 | 1981–2026 | 1–10 | observed and estimated | 0 |
 
 ## Submissions
 
-When each version of a stock assessment was submitted. A stock with more
-than one version has been corrected since it was first submitted.
+When each version of a stock assessment was submitted, or for a stock
+taken from SAG, when its data were got from SAG (hollow circles). A
+stock with more than one version has been corrected since it was first
+submitted.
 
 Code
 
@@ -295,19 +327,22 @@ Code
 versions <- stockpile_stocks(version = "all")
 versions <- merge(versions, unique(stocks[c("stock_code", "assessment_year", "expert_group")]))
 versions$submission <- ifelse(versions$version == 1, "first version", "correction")
+versions$origin <- factor(versions$origin, c("submission", "SAG"))
 
-ggplot(versions, aes(as.Date(submitted), reorder(expert_group, as.numeric(submitted), min), colour = submission)) +
-  geom_point(size = 2.5, alpha = 0.7, position = position_jitter(width = 0, height = 0.15, seed = 1)) +
+ggplot(versions, aes(as.Date(submitted), reorder(expert_group, as.numeric(submitted), min), colour = submission, shape = origin)) +
+  geom_point(size = 2.5, alpha = 0.7, stroke = 1, position = position_jitter(width = 0, height = 0.15, seed = 1)) +
   scale_y_discrete(limits = rev) +
   scale_colour_manual(values = c("first version" = "#1b9e77", "correction" = "#d95f02")) +
-  labs(x = "submitted", y = NULL, colour = NULL) +
+  scale_shape_manual(values = c(submission = 16, SAG = 1), labels = c(submission = "submitted", SAG = "from SAG"), drop = FALSE) +
+  labs(x = "submitted", y = NULL, colour = NULL, shape = NULL) +
   theme_minimal() +
   theme(legend.position = "bottom")
 ```
 
 ![Dates on which versions of stock assessments were submitted, by expert
-group, with first versions and corrections marked
-differently.](stocks-by-expert-group_files/figure-html/unnamed-chunk-9-1.png)
+group, with first versions and corrections marked differently, and
+versions taken from SAG as hollow
+circles.](stocks-by-expert-group_files/figure-html/unnamed-chunk-9-1.png)
 
 The stock assessments with more than one version:
 
