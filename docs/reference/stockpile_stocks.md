@@ -40,7 +40,7 @@ stockpile_stocks(
 - url:
 
   the location of the dataset, see
-  [`stockpile_url()`](https://neilcampbelll.github.io/FLstockpile/reference/stockpile_url.md).
+  [`stockpile_url()`](https://ices-tools-prod.github.io/flstockpile/reference/stockpile_url.md).
 
 - refresh:
 
@@ -112,9 +112,9 @@ where there are no estimates.
 
 ## See also
 
-[`stockpile_sources()`](https://neilcampbelll.github.io/FLstockpile/reference/stockpile_sources.md)
+[`stockpile_sources()`](https://ices-tools-prod.github.io/flstockpile/reference/stockpile_sources.md)
 for the submitted objects behind each version,
-[`stockpile_values()`](https://neilcampbelll.github.io/FLstockpile/reference/stockpile_values.md)
+[`stockpile_values()`](https://ices-tools-prod.github.io/flstockpile/reference/stockpile_values.md)
 for the data.
 
 ## Examples

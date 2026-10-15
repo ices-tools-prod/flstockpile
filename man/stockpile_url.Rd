@@ -12,12 +12,12 @@ The location, as a character string.
 \description{
 The dataset is a set of parquet files in one place, which can be a web
 address or a folder. The location is taken from the option
-\code{FLStockpile.url}, or if that is not set, from the environment variable
+\code{flstockpile.url}, or if that is not set, from the environment variable
 \code{FLSTOCKPILE_URL}.
 }
 \examples{
 \dontrun{
-options(FLStockpile.url = "path/to/parquet")
+options(flstockpile.url = "path/to/parquet")
 stockpile_url()
 }
 

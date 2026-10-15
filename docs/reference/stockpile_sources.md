@@ -41,7 +41,7 @@ stockpile_sources(
 - url:
 
   the location of the dataset, see
-  [`stockpile_url()`](https://neilcampbelll.github.io/FLstockpile/reference/stockpile_url.md).
+  [`stockpile_url()`](https://ices-tools-prod.github.io/flstockpile/reference/stockpile_url.md).
 
 - refresh:
 
@@ -84,7 +84,7 @@ A data frame with one row per object:
 - name, desc, quant, min_age, ..., n_iters:
 
   the name, description, ranges and dimensions of the object, as in
-  [`stockpile_stocks()`](https://neilcampbelll.github.io/FLstockpile/reference/stockpile_stocks.md)
+  [`stockpile_stocks()`](https://ices-tools-prod.github.io/flstockpile/reference/stockpile_stocks.md)
 
 ## Examples
 

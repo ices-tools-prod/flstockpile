@@ -10,35 +10,35 @@ becomes a new version, and earlier versions are kept.
 - stocks:
 
   one row per version, see
-  [`stockpile_stocks()`](https://neilcampbelll.github.io/FLstockpile/reference/stockpile_stocks.md)
+  [`stockpile_stocks()`](https://ices-tools-prod.github.io/flstockpile/reference/stockpile_stocks.md)
 
 - sources:
 
   the submitted objects each version was made from, see
-  [`stockpile_sources()`](https://neilcampbelll.github.io/FLstockpile/reference/stockpile_sources.md)
+  [`stockpile_sources()`](https://ices-tools-prod.github.io/flstockpile/reference/stockpile_sources.md)
 
 - values:
 
   the observed data and model estimates, see
-  [`stockpile_values()`](https://neilcampbelll.github.io/FLstockpile/reference/stockpile_values.md)
+  [`stockpile_values()`](https://ices-tools-prod.github.io/flstockpile/reference/stockpile_values.md)
 
 - indices:
 
   the survey indices, see
-  [`stockpile_indices()`](https://neilcampbelll.github.io/FLstockpile/reference/stockpile_indices.md)
+  [`stockpile_indices()`](https://ices-tools-prod.github.io/flstockpile/reference/stockpile_indices.md)
 
 The location of the tables is set with
-[`stockpile_url()`](https://neilcampbelll.github.io/FLstockpile/reference/stockpile_url.md).
+[`stockpile_url()`](https://ices-tools-prod.github.io/flstockpile/reference/stockpile_url.md).
 
 ## See also
 
 Useful links:
 
-- <https://neilcampbelll.github.io/FLstockpile/>
+- <https://ices-tools-prod.github.io/flstockpile/>
 
-- <https://github.com/neilcampbelll/FLstockpile>
+- <https://github.com/ices-tools-prod/flstockpile>
 
-- Report bugs at <https://github.com/neilcampbelll/FLstockpile/issues>
+- Report bugs at <https://github.com/ices-tools-prod/flstockpile/issues>
 
 ## Author
 

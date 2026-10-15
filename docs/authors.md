@@ -9,16 +9,16 @@
 ## Citation
 
 Source:
-[`DESCRIPTION`](https://github.com/neilcampbelll/FLstockpile/blob/HEAD/DESCRIPTION)
+[`DESCRIPTION`](https://github.com/ices-tools-prod/flstockpile/blob/HEAD/DESCRIPTION)
 
-Millar C, Campbell N (2026). *FLStockpile: Access the ICES Stockpile of
+Millar C, Campbell N (2026). *flstockpile: Access the ICES Stockpile of
 Stock Assessment Results*. R package version 0.1.0,
-<https://neilcampbelll.github.io/FLstockpile/>.
+<https://ices-tools-prod.github.io/flstockpile/>.
 
     @Manual{,
-      title = {FLStockpile: Access the ICES Stockpile of Stock Assessment Results},
+      title = {flstockpile: Access the ICES Stockpile of Stock Assessment Results},
       author = {Colin Millar and Neil Campbell},
       year = {2026},
       note = {R package version 0.1.0},
-      url = {https://neilcampbelll.github.io/FLstockpile/},
+      url = {https://ices-tools-prod.github.io/flstockpile/},
     }

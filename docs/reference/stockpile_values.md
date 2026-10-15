@@ -53,7 +53,7 @@ stockpile_values(
 - url:
 
   the location of the dataset, see
-  [`stockpile_url()`](https://neilcampbelll.github.io/FLstockpile/reference/stockpile_url.md).
+  [`stockpile_url()`](https://ices-tools-prod.github.io/flstockpile/reference/stockpile_url.md).
 
 - refresh:
 
@@ -110,7 +110,7 @@ over the iterations.
 
 ## See also
 
-[`stockpile_flstock()`](https://neilcampbelll.github.io/FLstockpile/reference/stockpile_flstock.md)
+[`stockpile_flstock()`](https://ices-tools-prod.github.io/flstockpile/reference/stockpile_flstock.md)
 to get the values as an `FLStock`.
 
 ## Examples

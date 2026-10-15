@@ -1,4 +1,4 @@
-Package: FLStockpile
+Package: flstockpile
 Version: 0.1.0
 Title: Access the ICES Stockpile of Stock Assessment Results
 Authors@R: c(person("Colin", "Millar", role = c("aut", "cre"), email = "colin.millar@ices.dk"),
@@ -16,8 +16,8 @@ Description: Read the stock assessment results submitted to ICES, the observed
              files. The results can be used as plain data frames, or converted
              to 'FLStock' objects if the 'FLCore' package is installed.
 License: MIT + file LICENSE
-URL: https://neilcampbelll.github.io/FLstockpile/, https://github.com/neilcampbelll/FLstockpile
-BugReports: https://github.com/neilcampbelll/FLstockpile/issues
+URL: https://ices-tools-prod.github.io/flstockpile/, https://github.com/ices-tools-prod/flstockpile
+BugReports: https://github.com/ices-tools-prod/flstockpile/issues
 Encoding: UTF-8
 Language: en-GB
 Roxygen: list(markdown = TRUE)

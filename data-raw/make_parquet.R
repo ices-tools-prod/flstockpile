@@ -75,7 +75,7 @@
 #
 # The tables are also written back out as a list of FLStock objects, in
 # flstocks.rds in the output dir, made from the parquet tables by the
-# FLStockpile package so that the two always agree. There is one element per
+# flstockpile package so that the two always agree. There is one element per
 # version and type, named "<stock code>_<assessment year>_v<version>_<type>",
 # each a list with
 #
@@ -613,7 +613,7 @@ cat(
 # 6. write the list of FLStock objects, made from the tables
 
 devtools::load_all(package_dir, quiet = TRUE)
-options(FLStockpile.url = output_dir)
+options(flstockpile.url = output_dir)
 
 stock_sources <- stockpile_sources(version = "all", refresh = TRUE)
 stock_sources <- stock_sources[stock_sources$class == "FLStock", ]

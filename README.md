@@ -1,14 +1,14 @@
 
 <!-- README.md is generated from README.Rmd. Please edit that file -->
 
-# FLStockpile
+# flstockpile
 
 Read the stock assessment results submitted to ICES: the observed data
 and the model estimates for each stock, by age and year.
 
 The dataset is published as a set of
 [parquet](https://parquet.apache.org) files in the
-[releases](https://github.com/neilcampbelll/FLstockpile/releases) of
+[releases](https://github.com/ices-tools-prod/flstockpile/releases) of
 this repository. This package reads them into plain data frames, and can
 convert a stock to an `FLStock` object if the
 [FLCore](https://flr-project.org) package is installed. The parquet
@@ -22,7 +22,7 @@ change.
 
 ``` r
 # install.packages("remotes")
-remotes::install_github("neilcampbelll/FLstockpile")
+remotes::install_github("ices-tools-prod/flstockpile")
 ```
 
 ## Usage
@@ -30,9 +30,9 @@ remotes::install_github("neilcampbelll/FLstockpile")
 Say where the dataset is. This is the latest data release:
 
 ``` r
-library(FLStockpile)
+library(flstockpile)
 
-options(FLStockpile.url = "https://github.com/neilcampbelll/FLstockpile/releases/latest/download")
+options(flstockpile.url = "https://github.com/ices-tools-prod/flstockpile/releases/latest/download")
 ```
 
 A release that will not change is at the same address with its tag, for

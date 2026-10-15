@@ -2,25 +2,25 @@
 #'
 #' The dataset is a set of parquet files in one place, which can be a web
 #' address or a folder. The location is taken from the option
-#' `FLStockpile.url`, or if that is not set, from the environment variable
+#' `flstockpile.url`, or if that is not set, from the environment variable
 #' `FLSTOCKPILE_URL`.
 #'
 #' @return The location, as a character string.
 #'
 #' @examples
 #' \dontrun{
-#' options(FLStockpile.url = "path/to/parquet")
+#' options(flstockpile.url = "path/to/parquet")
 #' stockpile_url()
 #' }
 #'
 #' @export
 
 stockpile_url <- function() {
-  url <- getOption("FLStockpile.url", Sys.getenv("FLSTOCKPILE_URL"))
+  url <- getOption("flstockpile.url", Sys.getenv("FLSTOCKPILE_URL"))
   if (!is.character(url) || length(url) != 1 || !nzchar(url)) {
     stop(
       "the location of the dataset is not set, ",
-      "use options(FLStockpile.url = ) or the environment variable FLSTOCKPILE_URL"
+      "use options(flstockpile.url = ) or the environment variable FLSTOCKPILE_URL"
     )
   }
   sub("/+$", "", url)

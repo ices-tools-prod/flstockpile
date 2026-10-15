@@ -29,19 +29,19 @@ For each stock there are
 
 How the summary is calculated, and the usual reasons for a difference,
 are in [Comparing the dataset with
-SAG](https://neilcampbelll.github.io/FLstockpile/articles/compare-with-sag.md).
+SAG](https://ices-tools-prod.github.io/flstockpile/articles/compare-with-sag.md).
 
 Code
 
 ``` r
 
-library(FLStockpile)
+library(flstockpile)
 library(FLCore)
 library(icesSAG)
 library(icesSD)
 library(ggplot2)
 
-options(FLStockpile.url = "https://github.com/neilcampbelll/FLstockpile/releases/latest/download")
+options(flstockpile.url = "https://github.com/ices-tools-prod/flstockpile/releases/latest/download")
 
 quantities <- c("SSB", "F", "recruitment", "catches")
 slots <- c(

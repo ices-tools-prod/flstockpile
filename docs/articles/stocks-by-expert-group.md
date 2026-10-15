@@ -14,11 +14,11 @@ Code
 
 ``` r
 
-library(FLStockpile)
+library(flstockpile)
 library(icesSD)
 library(ggplot2)
 
-options(FLStockpile.url = "https://github.com/neilcampbelll/FLstockpile/releases/latest/download")
+options(flstockpile.url = "https://github.com/ices-tools-prod/flstockpile/releases/latest/download")
 ```
 
 ## Expert groups

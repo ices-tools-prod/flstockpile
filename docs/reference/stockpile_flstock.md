@@ -47,7 +47,7 @@ stockpile_flstock(
 - url:
 
   the location of the dataset, see
-  [`stockpile_url()`](https://neilcampbelll.github.io/FLstockpile/reference/stockpile_url.md).
+  [`stockpile_url()`](https://ices-tools-prod.github.io/flstockpile/reference/stockpile_url.md).
 
 - refresh:
 
@@ -68,7 +68,7 @@ the values are the medians over the iterations.
 
 ## See also
 
-[`stockpile_values()`](https://neilcampbelll.github.io/FLstockpile/reference/stockpile_values.md)
+[`stockpile_values()`](https://ices-tools-prod.github.io/flstockpile/reference/stockpile_values.md)
 for the same values as a data frame.
 
 ## Examples

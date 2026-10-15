@@ -1,11 +1,11 @@
-# FLStockpile
+# flstockpile
 
 Read the stock assessment results submitted to ICES: the observed data
 and the model estimates for each stock, by age and year.
 
 The dataset is published as a set of
 [parquet](https://parquet.apache.org) files in the
-[releases](https://github.com/neilcampbelll/FLstockpile/releases) of
+[releases](https://github.com/ices-tools-prod/flstockpile/releases) of
 this repository. This package reads them into plain data frames, and can
 convert a stock to an `FLStock` object if the
 [FLCore](https://flr-project.org) package is installed. The parquet
@@ -20,7 +20,7 @@ change.
 ``` r
 
 # install.packages("remotes")
-remotes::install_github("neilcampbelll/FLstockpile")
+remotes::install_github("ices-tools-prod/flstockpile")
 ```
 
 ## Usage
@@ -29,9 +29,9 @@ Say where the dataset is. This is the latest data release:
 
 ``` r
 
-library(FLStockpile)
+library(flstockpile)
 
-options(FLStockpile.url = "https://github.com/neilcampbelll/FLstockpile/releases/latest/download")
+options(flstockpile.url = "https://github.com/ices-tools-prod/flstockpile/releases/latest/download")
 ```
 
 A release that will not change is at the same address with its tag, for
@@ -133,10 +133,10 @@ version of a stock assessment.
 
 | File | One row per | Read with |
 |----|----|----|
-| `stocks.parquet` | version | [`stockpile_stocks()`](https://neilcampbelll.github.io/FLstockpile/reference/stockpile_stocks.md) |
-| `sources.parquet` | submitted object a version was made from | [`stockpile_sources()`](https://neilcampbelll.github.io/FLstockpile/reference/stockpile_sources.md) |
-| `values.parquet` | value | [`stockpile_values()`](https://neilcampbelll.github.io/FLstockpile/reference/stockpile_values.md) |
-| `indices.parquet` | survey index value | [`stockpile_indices()`](https://neilcampbelll.github.io/FLstockpile/reference/stockpile_indices.md) |
+| `stocks.parquet` | version | [`stockpile_stocks()`](https://ices-tools-prod.github.io/flstockpile/reference/stockpile_stocks.md) |
+| `sources.parquet` | submitted object a version was made from | [`stockpile_sources()`](https://ices-tools-prod.github.io/flstockpile/reference/stockpile_sources.md) |
+| `values.parquet` | value | [`stockpile_values()`](https://ices-tools-prod.github.io/flstockpile/reference/stockpile_values.md) |
+| `indices.parquet` | survey index value | [`stockpile_indices()`](https://ices-tools-prod.github.io/flstockpile/reference/stockpile_indices.md) |
 
 **stocks** has `latest` (is this the most recent version?), `case_id`,
 the `stock_key` and `expert_group` of the stock in the ICES Stock
@@ -179,7 +179,7 @@ is published with each release.
 ## How the data are made
 
 The scripts that make the tables from the submissions are in
-[data-raw](https://neilcampbelll.github.io/FLstockpile/data-raw):
+[data-raw](https://ices-tools-prod.github.io/flstockpile/data-raw):
 `get_submissions.R` downloads the submitted files, `make_parquet.R`
 makes the tables, and `check_parquet.R` checks them against the
 submitted objects. `object_types.csv` records which submitted objects

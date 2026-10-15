@@ -2,7 +2,7 @@
 
 The dataset is a set of parquet files in one place, which can be a web
 address or a folder. The location is taken from the option
-`FLStockpile.url`, or if that is not set, from the environment variable
+`flstockpile.url`, or if that is not set, from the environment variable
 `FLSTOCKPILE_URL`.
 
 ## Usage
@@ -19,7 +19,7 @@ The location, as a character string.
 
 ``` r
 if (FALSE) { # \dontrun{
-options(FLStockpile.url = "path/to/parquet")
+options(flstockpile.url = "path/to/parquet")
 stockpile_url()
 } # }
 ```

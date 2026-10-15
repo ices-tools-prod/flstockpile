@@ -1,7 +1,7 @@
 # Check the parquet tables against the submitted objects.
 #
 # Every FLStock that a version was made from is read again from the extract
-# dir, and compared with the FLStock that the FLStockpile package makes from
+# dir, and compared with the FLStock that the flstockpile package makes from
 # the parquet tables: the values, dimensions and units of every slot, and the
 # ranges, name and description. Where the submitted object has iterations, it
 # is the medians over the iterations that are compared. The numbers and
@@ -21,7 +21,7 @@ extract_dir <- if (length(args) >= 2) args[2] else "extracted"
 package_dir <- if (length(args) >= 3) args[3] else ".."
 
 devtools::load_all(package_dir, quiet = TRUE)
-options(FLStockpile.url = dataset)
+options(flstockpile.url = dataset)
 
 stock_slots <- c(
   "catch", "catch.n", "catch.wt",

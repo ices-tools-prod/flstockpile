@@ -3,8 +3,8 @@
 ### Articles
 
 - [Stocks and years in the
-  dataset](https://neilcampbelll.github.io/FLstockpile/articles/stocks-by-expert-group.md):
+  dataset](https://ices-tools-prod.github.io/flstockpile/articles/stocks-by-expert-group.md):
 - [Comparing the dataset with
-  SAG](https://neilcampbelll.github.io/FLstockpile/articles/compare-with-sag.md):
+  SAG](https://ices-tools-prod.github.io/flstockpile/articles/compare-with-sag.md):
 - [Visual check against
-  SAG](https://neilcampbelll.github.io/FLstockpile/articles/visual-check.md):
+  SAG](https://ices-tools-prod.github.io/flstockpile/articles/visual-check.md):
