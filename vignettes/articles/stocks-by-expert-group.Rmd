@@ -39,6 +39,7 @@ It is run against the live stock database each time this site is built.
 ```{r}
 library(flstockpile)
 library(icesSD)
+library(icesSAG)
 library(ggplot2)
 
 options(flstockpile.url = "https://github.com/ices-tools-prod/flstockpile/releases/latest/download")
@@ -92,8 +93,11 @@ The dataset has `r nrow(stocks)` stock assessments, of
 `r length(unique(stocks$expert_group))` expert groups.
 
 For the most recent assessment year, each expert group's stocks in the stock
-database, by data category, with the stocks that are in the dataset coloured by
-what the dataset has for them, or that they were taken from SAG:
+database, by data category. Each stock is one box. The stocks that are in the
+dataset are coloured by what the dataset has for them, or that they were taken
+from SAG. Of the stocks that are not in the dataset, those with an assessment
+published in SAG are grey, and those with none are left empty: a stock can be
+listed in the stock database without an assessment in SAG.
 
 ```{r}
 latest_year <- max(stocks$assessment_year)
@@ -103,24 +107,36 @@ active$data_category <- floor(as.numeric(active$data_category))
 # what the dataset has for each stock in the latest year, if anything
 active <- merge(active, stocks[stocks$assessment_year == latest_year, c("stock_code", "contents")], all.x = TRUE)
 active$in_dataset <- !is.na(active$contents)
+
+# is there an assessment of the stock published in SAG?
+active$in_sag <- active$stock_code %in% getListStocks(latest_year)$StockKeyLabel
+
 active$status <- factor(
-  ifelse(active$in_dataset, as.character(active$contents), "not submitted"),
-  c(levels(stocks$contents), "not submitted")
+  ifelse(
+    active$in_dataset, as.character(active$contents),
+    ifelse(active$in_sag, "not submitted, in SAG", "not submitted, not in SAG")
+  ),
+  c(levels(stocks$contents), "not submitted, in SAG", "not submitted, not in SAG")
 )
 
 # only the expert groups with stocks in the dataset, most first
 submitted <- tapply(active$in_dataset, active$expert_group, sum)
 active <- active[active$expert_group %in% names(submitted)[submitted > 0], ]
 active$expert_group <- factor(active$expert_group, names(sort(submitted[submitted > 0], decreasing = TRUE)))
+
+# one box per stock, stacked in the order of the status
+active <- active[order(active$status, active$stock_code), ]
+active$stock_code <- factor(active$stock_code, unique(active$stock_code))
 ```
 
-```{r, fig.height = 9, fig.alt = "Horizontal bar charts, one panel per expert group, with one bar per data category showing the number of stocks in the stock database, divided into the stocks in the dataset, by whether they have observed and estimated, estimated only or observed only, or were taken from SAG, and the stocks not submitted."}
-ggplot(active, aes(y = factor(data_category), fill = status)) +
-  geom_bar(position = position_stack(reverse = TRUE)) +
+```{r, fig.height = 9, fig.alt = "Horizontal bar charts, one panel per expert group, with one bar per data category showing the number of stocks in the stock database, divided into the stocks in the dataset, by whether they have observed and estimated, estimated only or observed only, or were taken from SAG, and the stocks not submitted, which are grey if they have an assessment in SAG and empty if not. Each stock is outlined."}
+ggplot(active, aes(y = factor(data_category), fill = status, group = stock_code)) +
+  geom_bar(position = position_stack(reverse = TRUE), colour = "grey40", linewidth = 0.2) +
   facet_grid(expert_group ~ ., scales = "free_y", space = "free_y", switch = "y") +
   scale_x_continuous(breaks = function(limits) seq(0, limits[2], by = 2)) +
   scale_y_discrete(limits = rev) +
-  scale_fill_manual(values = c(contents_colours, "not submitted" = "grey85")) +
+  scale_fill_manual(values = c(contents_colours, "not submitted, in SAG" = "grey85", "not submitted, not in SAG" = NA)) +
+  guides(fill = guide_legend(nrow = 2, byrow = TRUE)) +
   labs(title = "Submission status: stock coverage", x = paste("stocks in", latest_year), y = "data category", fill = NULL) +
   theme_minimal() +
   theme(
@@ -207,19 +223,22 @@ knitr::kable(
 
 ## Submissions
 
-When each version of a stock assessment was submitted. A stock with more than
-one version has been corrected since it was first submitted.
+When each version of a stock assessment was submitted, or for a stock taken
+from SAG, when its data were got from SAG (hollow circles). A stock with more
+than one version has been corrected since it was first submitted.
 
-```{r, fig.height = 4.5, fig.alt = "Dates on which versions of stock assessments were submitted, by expert group, with first versions and corrections marked differently."}
+```{r, fig.height = 4.5, fig.alt = "Dates on which versions of stock assessments were submitted, by expert group, with first versions and corrections marked differently, and versions taken from SAG as hollow circles."}
 versions <- stockpile_stocks(version = "all")
 versions <- merge(versions, unique(stocks[c("stock_code", "assessment_year", "expert_group")]))
 versions$submission <- ifelse(versions$version == 1, "first version", "correction")
+versions$origin <- factor(versions$origin, c("submission", "SAG"))
 
-ggplot(versions, aes(as.Date(submitted), reorder(expert_group, as.numeric(submitted), min), colour = submission)) +
-  geom_point(size = 2.5, alpha = 0.7, position = position_jitter(width = 0, height = 0.15, seed = 1)) +
+ggplot(versions, aes(as.Date(submitted), reorder(expert_group, as.numeric(submitted), min), colour = submission, shape = origin)) +
+  geom_point(size = 2.5, alpha = 0.7, stroke = 1, position = position_jitter(width = 0, height = 0.15, seed = 1)) +
   scale_y_discrete(limits = rev) +
   scale_colour_manual(values = c("first version" = "#1b9e77", "correction" = "#d95f02")) +
-  labs(x = "submitted", y = NULL, colour = NULL) +
+  scale_shape_manual(values = c(submission = 16, SAG = 1), labels = c(submission = "submitted", SAG = "from SAG"), drop = FALSE) +
+  labs(x = "submitted", y = NULL, colour = NULL, shape = NULL) +
   theme_minimal() +
   theme(legend.position = "bottom")
 ```
