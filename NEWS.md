@@ -7,3 +7,9 @@
 * The package is renamed from FLStockpile to flstockpile, to match its
   repository, which has moved to ices-tools-prod/flstockpile. The option
   that sets the dataset location is now `flstockpile.url`.
+
+* Stocks with no FLStock submitted, such as those in data category 5, can be
+  taken from the catches, landings and discards published in SAG. The new
+  `origin` column of `stockpile_stocks()` and `stockpile_sources()` is
+  `"SAG"` for these, and `stockpile_flstock()` returns them as an `FLStock`
+  with no ages.

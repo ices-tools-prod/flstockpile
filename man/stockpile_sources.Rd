@@ -35,12 +35,16 @@ this session.}
 A data frame with one row per object:
 \describe{
 \item{stock_code, assessment_year, version}{identify the version}
+\item{origin}{\code{"submission"}, or \code{"SAG"} for an object made from the
+data in SAG, see \code{\link[=stockpile_stocks]{stockpile_stocks()}}}
 \item{type}{\code{"observed"} or \code{"estimated"}}
 \item{class}{the class of the submitted object, \code{"FLStock"} or
 \code{"FLIndex"}}
 \item{submission_id, submitted}{the submission the object came from, and
-when it was made}
-\item{file, object}{the submitted file, and the name of the object in it}
+when it was made. For an object from SAG, the submission ID is missing,
+and submitted is when the data were got from SAG}
+\item{file, object}{the submitted file, and the name of the object in it.
+For an object from SAG, the file the SAG summary table was saved to}
 \item{notes}{the notes given by the submitter}
 \item{units_assumed}{were any numbers or weights submitted with no units?
 They are then taken to be in thousands and kg}

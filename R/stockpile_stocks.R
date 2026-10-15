@@ -19,14 +19,20 @@
 #' \describe{
 #'   \item{stock_code, assessment_year, version}{identify the version}
 #'   \item{latest}{is this the most recent version of the stock assessment?}
-#'   \item{case_id}{the ICES case number the submissions were made under}
+#'   \item{origin}{`"submission"` for a version made from submitted objects,
+#'     or `"SAG"` for one made from the catches, landings and discards
+#'     published in SAG, for a stock with nothing submitted, such as one in
+#'     data category 5}
+#'   \item{case_id}{the ICES case number the submissions were made under.
+#'     Missing for a version from SAG}
 #'   \item{stock_key}{the key of the stock in the ICES Stock Database, as used
 #'     by the icesSD package}
 #'   \item{expert_group}{the ICES expert group that assesses the stock}
 #'   \item{assessment_key}{the key of the published assessment in the ICES
 #'     Stock Assessment Graphs database, as used by the icesSAG package. Missing
 #'     if the assessment is not published there}
-#'   \item{submitted}{when the most recent submission in the version was made}
+#'   \item{submitted}{when the most recent submission in the version was made,
+#'     or for a version from SAG, when the data were got from SAG}
 #'   \item{observed, estimated}{does the version have observed data, and model
 #'     estimates?}
 #'   \item{indices}{the number of survey indices}
@@ -68,12 +74,16 @@ stockpile_stocks <- function(stock_code = NULL, assessment_year = NULL, version 
 #' @return A data frame with one row per object:
 #' \describe{
 #'   \item{stock_code, assessment_year, version}{identify the version}
+#'   \item{origin}{`"submission"`, or `"SAG"` for an object made from the
+#'     data in SAG, see [stockpile_stocks()]}
 #'   \item{type}{`"observed"` or `"estimated"`}
 #'   \item{class}{the class of the submitted object, `"FLStock"` or
 #'     `"FLIndex"`}
 #'   \item{submission_id, submitted}{the submission the object came from, and
-#'     when it was made}
-#'   \item{file, object}{the submitted file, and the name of the object in it}
+#'     when it was made. For an object from SAG, the submission ID is missing,
+#'     and submitted is when the data were got from SAG}
+#'   \item{file, object}{the submitted file, and the name of the object in it.
+#'     For an object from SAG, the file the SAG summary table was saved to}
 #'   \item{notes}{the notes given by the submitter}
 #'   \item{units_assumed}{were any numbers or weights submitted with no units?
 #'     They are then taken to be in thousands and kg}

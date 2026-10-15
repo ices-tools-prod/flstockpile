@@ -20,6 +20,9 @@
 #' weights in kg, whatever units they were submitted in. A slot that was all
 #' missing values comes back empty, with the default units of FLCore.
 #'
+#' A stock from SAG (see the `origin` column of [stockpile_stocks()]) has only
+#' the catch, landings and discards, in tonnes, with no ages.
+#'
 #' @seealso [stockpile_values()] for the same values as a data frame.
 #'
 #' @examples
@@ -68,7 +71,8 @@ stockpile_flstock <- function(stock_code, assessment_year = NULL, version = "lat
 
   # the dimensions of the submitted object
   dimnames <- list(
-    age = as.character(source$min_age:source$max_age),
+    # a stock from SAG has no ages
+    age = if (is.na(source$min_age)) "all" else as.character(source$min_age:source$max_age),
     year = as.character(source$min_year:source$max_year),
     unit = unique(values$unit),
     season = unique(values$season),

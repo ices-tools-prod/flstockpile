@@ -27,7 +27,9 @@ local({
 
 This article shows what has been submitted to the dataset: which stocks,
 which years they cover, and whether there are observed data, model estimates
-or both. The stocks are grouped by the ICES expert group that assesses them.
+or both. Stocks with nothing submitted, such as those in data category 5, can
+instead have their catches, landings and discards taken from the ICES Stock
+Assessment Graphs database, SAG. The stocks are grouped by the ICES expert group that assesses them.
 The data category and species of each stock, and the other stocks of each
 expert group, are looked up in the ICES Stock Database with the
 [icesSD](https://github.com/ices-tools-prod/icesSD) package.
@@ -67,17 +69,22 @@ stock_database <- do.call(rbind, stock_database)
 # the expert group of each stock assessment is in the dataset
 stocks <- merge(stocks, stock_database[c("stock_code", "assessment_year", "data_category", "species")], all.x = TRUE)
 
-# what the dataset has for each stock assessment
+# what the dataset has for each stock assessment, or that it is from SAG
 stocks$contents <- ifelse(
-  stocks$observed & stocks$estimated, "observed and estimated",
-  ifelse(stocks$estimated, "estimated only", "observed only")
+  stocks$origin == "SAG", "from SAG",
+  ifelse(
+    stocks$observed & stocks$estimated, "observed and estimated",
+    ifelse(stocks$estimated, "estimated only", "observed only")
+  )
 )
-stocks$contents <- factor(stocks$contents, c("observed and estimated", "estimated only", "observed only"))
+stocks$contents <- factor(stocks$contents, c("observed and estimated", "estimated only", "observed only", "from SAG"))
 
 # a label for each stock assessment
 stocks$assessment <- paste0(stocks$stock_code, " (", stocks$assessment_year, ")")
 
-contents_colours <- c("observed and estimated" = "#1b9e77", "estimated only" = "#7570b3", "observed only" = "#d95f02")
+contents_colours <- c(
+  "observed and estimated" = "#1b9e77", "estimated only" = "#7570b3", "observed only" = "#d95f02", "from SAG" = "#e6ab02"
+)
 ```
 
 The dataset has `r nrow(stocks)` stock assessments, of
@@ -86,7 +93,7 @@ The dataset has `r nrow(stocks)` stock assessments, of
 
 For the most recent assessment year, each expert group's stocks in the stock
 database, by data category, with the stocks that are in the dataset coloured by
-what the dataset has for them:
+what the dataset has for them, or that they were taken from SAG:
 
 ```{r}
 latest_year <- max(stocks$assessment_year)
@@ -107,7 +114,7 @@ active <- active[active$expert_group %in% names(submitted)[submitted > 0], ]
 active$expert_group <- factor(active$expert_group, names(sort(submitted[submitted > 0], decreasing = TRUE)))
 ```
 
-```{r, fig.height = 9, fig.alt = "Horizontal bar charts, one panel per expert group, with one bar per data category showing the number of stocks in the stock database, divided into the stocks in the dataset, by whether they have observed and estimated, estimated only or observed only, and the stocks not submitted."}
+```{r, fig.height = 9, fig.alt = "Horizontal bar charts, one panel per expert group, with one bar per data category showing the number of stocks in the stock database, divided into the stocks in the dataset, by whether they have observed and estimated, estimated only or observed only, or were taken from SAG, and the stocks not submitted."}
 ggplot(active, aes(y = factor(data_category), fill = status)) +
   geom_bar(position = position_stack(reverse = TRUE)) +
   facet_grid(expert_group ~ ., scales = "free_y", space = "free_y", switch = "y") +

@@ -6,12 +6,13 @@
 # ranges, name and description. Where the submitted object has iterations, it
 # is the medians over the iterations that are compared. The numbers and
 # weights are stored in thousands and kg, so the submitted values are put in
-# those units before they are compared.
+# those units before they are compared. A stock from SAG is compared with the
+# FLStock made from the SAG summary table it was saved in.
 #
 # The dataset can be a folder or a web address, so this also checks a
 # published copy of the tables.
 #
-# Usage: Rscript check_parquet.R [dataset] [extract dir] [package dir]
+# Usage: Rscript check_parquet.R [dataset] [extract dir] [package dir] [SAG dir]
 
 library(FLCore)
 
@@ -19,6 +20,9 @@ args <- commandArgs(trailingOnly = TRUE)
 dataset <- if (length(args) >= 1) args[1] else "parquet"
 extract_dir <- if (length(args) >= 2) args[2] else "extracted"
 package_dir <- if (length(args) >= 3) args[3] else ".."
+sag_dir <- if (length(args) >= 4) args[4] else "sag"
+
+source("sag_flstock.R")
 
 devtools::load_all(package_dir, quiet = TRUE)
 options(flstockpile.url = dataset)
@@ -126,7 +130,12 @@ sources <- sources[sources$class == "FLStock", ]
 problems <- character()
 for (i in seq_len(nrow(sources))) {
   source <- sources[i, ]
-  submitted <- standard_units(read_submitted(source$submission_id, source$file, source$object))
+  submitted <- if (source$origin == "SAG") {
+    sag_flstock(file.path(sag_dir, source$file))
+  } else {
+    read_submitted(source$submission_id, source$file, source$object)
+  }
+  submitted <- standard_units(submitted)
   stored <- stockpile_flstock(source$stock_code, source$assessment_year, source$version, type = source$type)
 
   problem <- function(...) {

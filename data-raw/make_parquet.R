@@ -28,6 +28,19 @@
 # Versions are never changed or removed by a later submission, so the data as
 # it stood on any date can be found from the submitted date.
 #
+# Stocks from SAG
+#
+# Some stocks, such as those in data category 5, have no FLStock submitted,
+# because what there is to submit, the catches, landings and discards, is
+# already in SAG, the ICES Stock Assessment Graphs database. The SAG summary
+# tables saved by get_sag.R in the SAG dir are made into FLStock objects with
+# no ages, by sag_flstock.R, and each file is a version of that stock and
+# assessment year, in the order they were got from SAG. The FLStock is
+# observed, and the version has no case number, and is dated by when the table
+# was got from SAG. A stock and assessment year that has a version from a
+# submission is not taken from SAG. The origin column of stocks and sources is
+# "submission" or "SAG".
+#
 # Keys to other ICES databases
 #
 # Each stock assessment is looked up, by stock code and assessment year, in
@@ -85,6 +98,7 @@
 #   version          the version of the stock assessment
 #   latest           is this the most recent version?
 #   type             "observed" or "estimated"
+#   origin           "submission", or "SAG" for a stock from SAG
 #   case_id          the case number, e.g. "CAS-88837-N1Q8F1"
 #   submitted        when it was submitted, as "yyyy-mm-dd hh:mm:ss"
 #   submission_id    the submission ID (a GUID)
@@ -96,7 +110,7 @@
 #   expert_group     the expert group that assesses the stock
 #   assessment_key   the key of the published assessment in SAG
 #
-# Usage: Rscript make_parquet.R [html file] [extract dir] [types file] [output dir] [package dir] [SAG keys file]
+# Usage: Rscript make_parquet.R [html file] [extract dir] [types file] [output dir] [package dir] [SAG keys file] [SAG dir]
 
 library(FLCore)
 library(rvest)
@@ -111,6 +125,9 @@ types_file <- if (length(args) >= 3) args[3] else "object_types.csv"
 output_dir <- if (length(args) >= 4) args[4] else "parquet"
 package_dir <- if (length(args) >= 5) args[5] else ".."
 sag_keys_file <- if (length(args) >= 6) args[6] else "sag_keys.csv"
+sag_dir <- if (length(args) >= 7) args[7] else "sag"
+
+source("sag_flstock.R")
 
 stock_slots <- c(
   "catch", "catch.n", "catch.wt",
@@ -346,6 +363,7 @@ for (i in seq_len(nrow(submissions))) {
   files <- list.files(file.path(extract_dir, submissions$submission_id[i]), recursive = TRUE, full.names = TRUE)
   for (found in do.call(c, lapply(files, file_objects))) {
     found$submission <- i
+    found$origin <- "submission"
     found$class <- if (is_a(found$data, "FLStock")) "FLStock" else "FLIndex"
     found$units_assumed <- FALSE
     if (found$class == "FLStock") {
@@ -455,6 +473,7 @@ for (i in seq_len(nrow(submissions))) {
       assessment_year = submission$assessment_year,
       version = if (same_stock) current$version + 1L else 1L,
       case_id = submission$case_id,
+      origin = "submission",
       observed = if (same_case) current$observed,
       estimated = if (same_case) current$estimated,
       indices = if (same_case) current$indices else list()
@@ -466,7 +485,39 @@ for (i in seq_len(nrow(submissions))) {
 }
 versions[[length(versions) + 1]] <- current
 
-# 4. make the tables
+# 4. make the versions of the stocks from SAG
+
+submitted <- unique(vapply(versions, function(version) paste(version$stock_code, version$assessment_year), ""))
+sag_files <- sag_file_info(list.files(sag_dir, "\\.csv$"))
+sag_files <- sag_files[order(sag_files$stock_code, sag_files$assessment_year, sag_files$retrieved), ]
+is_submitted <- paste(sag_files$stock_code, sag_files$assessment_year) %in% submitted
+for (stock in unique(paste(sag_files$stock_code, sag_files$assessment_year)[is_submitted])) {
+  cat("SAG IGNORED ", stock, ": it has a submission\n", sep = "")
+}
+sag_files <- sag_files[!is_submitted, ]
+
+for (i in seq_len(nrow(sag_files))) {
+  sag_file <- sag_files[i, ]
+  same_stock <- i > 1 && sag_files$stock_code[i - 1] == sag_file$stock_code &&
+    sag_files$assessment_year[i - 1] == sag_file$assessment_year
+  versions[[length(versions) + 1]] <- list(
+    stock_code = sag_file$stock_code,
+    assessment_year = sag_file$assessment_year,
+    version = if (same_stock) versions[[length(versions)]]$version + 1L else 1L,
+    case_id = NA_character_,
+    origin = "SAG",
+    observed = list(
+      data = sag_flstock(file.path(sag_dir, sag_file$file)), file = sag_file$file, object = "",
+      class = "FLStock", type = "observed", units_assumed = FALSE,
+      origin = "SAG", submitted = sag_file$retrieved
+    ),
+    estimated = NULL,
+    indices = list()
+  )
+}
+cat(nrow(sag_files), "versions made from SAG\n")
+
+# 5. make the tables
 
 version_key <- function(version) {
   data.frame(stock_code = version$stock_code, assessment_year = version$assessment_year, version = version$version)
@@ -476,13 +527,23 @@ version_sources <- function(version) {
   c(Filter(Negate(is.null), list(version$observed, version$estimated)), version$indices)
 }
 
+# the submission an object came from, or for a stock from SAG, when it was got
+source_submission <- function(source) {
+  if (source$origin == "SAG") {
+    data.frame(submission_id = NA_character_, submitted = source$submitted, notes = NA_character_)
+  } else {
+    submissions[source$submission, ]
+  }
+}
+
 stocks <- lapply(versions, function(version) {
   # described by the estimated object, or the observed one if that is all there is
   sources <- version_sources(version)
   cbind(version_key(version),
     latest = NA,
+    origin = version$origin,
     case_id = version$case_id,
-    submitted = max(submissions$submitted[vapply(sources, function(x) x$submission, 1L)]),
+    submitted = max(do.call(c, lapply(sources, function(x) source_submission(x)$submitted))),
     observed = !is.null(version$observed),
     estimated = !is.null(version$estimated),
     indices = length(version$indices),
@@ -529,16 +590,17 @@ keys <- lapply(unique(stocks$assessment_year), function(year) {
 keys <- do.call(rbind, keys)
 keys <- keys[match(paste(stocks$stock_code, stocks$assessment_year), paste(keys$stock_code, keys$assessment_year)), ]
 stocks <- cbind(
-  stocks[1:5],
+  stocks[1:6],
   keys[c("stock_key", "expert_group", "assessment_key")],
-  stocks[-(1:5)]
+  stocks[-(1:6)]
 )
 rownames(stocks) <- NULL
 
 sources <- lapply(versions, function(version) {
   rows <- lapply(version_sources(version), function(source) {
-    submission <- submissions[source$submission, ]
+    submission <- source_submission(source)
     cbind(version_key(version),
+      origin = source$origin,
       type = source$type,
       class = source$class,
       submission_id = submission$submission_id,
@@ -592,7 +654,7 @@ indices <- lapply(versions, function(version) {
 })
 indices <- do.call(rbind, indices)
 
-# 5. write the tables
+# 6. write the tables
 
 dir.create(output_dir, showWarnings = FALSE)
 tables <- list(stocks = stocks, sources = sources, values = values, indices = indices)
@@ -607,10 +669,10 @@ cat(
 )
 cat(
   nrow(stocks), "versions of", nrow(unique(stocks[c("stock_code", "assessment_year")])),
-  "stock assessments, from", length(unique(sources$submission_id)), "submissions\n"
+  "stock assessments, from", length(unique(na.omit(sources$submission_id))), "submissions\n"
 )
 
-# 6. write the list of FLStock objects, made from the tables
+# 7. write the list of FLStock objects, made from the tables
 
 devtools::load_all(package_dir, quiet = TRUE)
 options(flstockpile.url = output_dir)
@@ -634,6 +696,7 @@ flstocks <- lapply(seq_len(nrow(stock_sources)), function(i) {
     version = source$version,
     latest = source$latest,
     type = source$type,
+    origin = source$origin,
     case_id = source$case_id,
     submitted = format(source$submitted, "%Y-%m-%d %H:%M:%S"),
     submission_id = source$submission_id,

@@ -39,6 +39,9 @@ An \code{FLStock} object, with the same values, ranges, name and
 description as the one submitted, except that numbers are in thousands and
 weights in kg, whatever units they were submitted in. A slot that was all
 missing values comes back empty, with the default units of FLCore.
+
+A stock from SAG (see the \code{origin} column of \code{\link[=stockpile_stocks]{stockpile_stocks()}}) has only
+the catch, landings and discards, in tonnes, with no ages.
 }
 \description{
 Get the values for one stock assessment as an \code{FLStock} object. This needs

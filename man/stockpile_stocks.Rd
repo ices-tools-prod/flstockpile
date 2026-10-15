@@ -36,14 +36,20 @@ A data frame with one row per version:
 \describe{
 \item{stock_code, assessment_year, version}{identify the version}
 \item{latest}{is this the most recent version of the stock assessment?}
-\item{case_id}{the ICES case number the submissions were made under}
+\item{origin}{\code{"submission"} for a version made from submitted objects,
+or \code{"SAG"} for one made from the catches, landings and discards
+published in SAG, for a stock with nothing submitted, such as one in
+data category 5}
+\item{case_id}{the ICES case number the submissions were made under.
+Missing for a version from SAG}
 \item{stock_key}{the key of the stock in the ICES Stock Database, as used
 by the icesSD package}
 \item{expert_group}{the ICES expert group that assesses the stock}
 \item{assessment_key}{the key of the published assessment in the ICES
 Stock Assessment Graphs database, as used by the icesSAG package. Missing
 if the assessment is not published there}
-\item{submitted}{when the most recent submission in the version was made}
+\item{submitted}{when the most recent submission in the version was made,
+or for a version from SAG, when the data were got from SAG}
 \item{observed, estimated}{does the version have observed data, and model
 estimates?}
 \item{indices}{the number of survey indices}
