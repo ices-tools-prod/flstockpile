@@ -80,7 +80,8 @@ are in the dataset are coloured by what the dataset has for them, or
 that they were taken from SAG. Of the stocks that are not in the
 dataset, those with an assessment published in SAG are grey, and those
 with none are left empty: a stock can be listed in the stock database
-without an assessment in SAG. Hover over a box to see the stock code.
+without an assessment in SAG. Hover over a box to see the stock code,
+and click on it to open the stock’s assessment in SAG.
 
 Code
 
@@ -94,8 +95,22 @@ active$data_category <- floor(as.numeric(active$data_category))
 active <- merge(active, stocks[stocks$assessment_year == latest_year, c("stock_code", "contents")], all.x = TRUE)
 active$in_dataset <- !is.na(active$contents)
 
-# is there an assessment of the stock published in SAG?
-active$in_sag <- active$stock_code %in% getListStocks(latest_year)$StockKeyLabel
+# is there an assessment of the stock published in SAG? The link to its SAG
+# record is to the assessment the dataset has, or to the only one in SAG
+published <- getListStocks(latest_year)
+active$in_sag <- active$stock_code %in% published$StockKeyLabel
+sag_keys <- tapply(published$AssessmentKey, published$StockKeyLabel, function(keys) if (length(keys) == 1) keys else NA)
+latest_stocks <- stocks[stocks$assessment_year == latest_year, ]
+active$assessment_key <- ifelse(
+  active$stock_code %in% latest_stocks$stock_code,
+  latest_stocks$assessment_key[match(active$stock_code, latest_stocks$stock_code)],
+  sag_keys[active$stock_code]
+)
+active$sag_url <- ifelse(
+  is.na(active$assessment_key), "",
+  paste0("https://standardgraphs.ices.dk/ViewCharts.aspx?key=", active$assessment_key)
+)
+active$tooltip <- ifelse(active$sag_url == "", active$stock_code, paste0(active$stock_code, "<br>click to open in SAG"))
 
 active$status <- factor(
   ifelse(
@@ -119,7 +134,7 @@ Code
 
 ``` r
 
-coverage_plot <- ggplot(active, aes(y = factor(data_category), fill = status, group = stock_code, text = stock_code)) +
+coverage_plot <- ggplot(active, aes(y = factor(data_category), fill = status, group = stock_code, text = tooltip, customdata = sag_url)) +
   geom_bar(position = position_stack(reverse = TRUE), colour = "grey40", linewidth = 0.2) +
   facet_grid(expert_group ~ ., scales = "free_y", space = "free_y", switch = "y") +
   scale_x_continuous(breaks = function(limits) seq(0, limits[2], by = 2)) +
@@ -162,9 +177,18 @@ widget$x$layout$annotations <- lapply(widget$x$layout$annotations, function(anno
 })
 widget$x$layout$shapes <- NULL
 
+# a click on a stock opens its record in SAG
 widget |>
   layout(margin = list(l = 120, b = 110), legend = list(orientation = "h", y = -0.08)) |>
-  config(displayModeBar = FALSE)
+  config(displayModeBar = FALSE) |>
+  htmlwidgets::onRender("
+    function(el) {
+      el.on('plotly_click', function(event) {
+        var url = event.points[0].customdata;
+        if (url) window.open(url, '_blank');
+      });
+    }
+  ")
 ```
 
 ### How much of each expert group’s work is in the dataset
